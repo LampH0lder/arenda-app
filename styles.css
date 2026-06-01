@@ -299,3 +299,42 @@ textarea.input{resize:vertical;min-height:70px;}
   display:flex;align-items:center;justify-content:center;transition:transform .12s;
 }
 .fab:active{transform:scale(.9);}
+
+/* ── Поиск объявления по номеру ── */
+.idsearch{display:flex;gap:8px;margin-bottom:12px;}
+.idsearch .input{flex:1;}
+.idsearch .btn{white-space:nowrap;}
+
+/* ── История отправок ── */
+.hist-ic{
+  width:40px;height:40px;flex:0 0 40px;border-radius:11px;display:flex;align-items:center;
+  justify-content:center;font-size:18px;background:rgba(52,199,123,.14);color:#34c77b;
+}
+.hist-meta{font-size:12px;color:var(--txt-3);margin-top:4px;}
+.hist-meta b{color:var(--txt-2);font-weight:600;}
+
+/* ── Очередь отправки (плавающая панель) ── */
+#sendq{
+  position:fixed;left:10px;right:10px;bottom:calc(var(--safe-bot) + 70px);
+  z-index:60;background:rgba(20,24,30,.97);border:1px solid var(--line);
+  border-radius:16px;padding:12px 14px;box-shadow:0 12px 40px rgba(0,0,0,.55);
+  backdrop-filter:blur(10px);animation:sqIn .22s ease;
+}
+@keyframes sqIn{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
+.sq-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.sq-title{font-weight:640;font-size:13.5px;display:flex;align-items:center;gap:8px;}
+.sq-x{background:none;border:none;color:var(--accent);font-size:13px;font-weight:600;padding:4px 6px;}
+.sq-spin{
+  width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.18);
+  border-top-color:var(--accent);display:inline-block;animation:rot .7s linear infinite;
+}
+.sq-list{display:flex;flex-direction:column;gap:6px;max-height:34vh;overflow:auto;}
+.sq-row{display:flex;align-items:center;gap:9px;font-size:12.5px;}
+.sq-ic{width:18px;flex:0 0 18px;text-align:center;font-size:13px;}
+.sq-row.send .sq-ic{color:var(--accent);}
+.sq-row.ok .sq-ic{color:#34c77b;}
+.sq-row.err .sq-ic{color:#ff5d5d;}
+.sq-row.wait{opacity:.6;}
+.sq-info{min-width:0;display:flex;flex-direction:column;line-height:1.25;}
+.sq-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--txt);}
+.sq-sub{font-size:11px;color:var(--txt-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
