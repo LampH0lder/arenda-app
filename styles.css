@@ -393,3 +393,16 @@ img.listing-thumb{transition:filter .35s ease;}
 .dotm.blue{background:#5b8cff;}
 .dotm.amber{background:#f5b945;}
 .leaflet-container{background:#1a1d23;font:inherit;}
+
+/* ── Карусель последних объектов (Главная) ── */
+.carousel{display:flex;gap:12px;overflow-x:auto;padding:2px 2px 8px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;}
+.carousel::-webkit-scrollbar{display:none;}
+.ccard{flex:0 0 196px;scroll-snap-align:start;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;cursor:pointer;transition:transform .1s;}
+.ccard:active{transform:scale(.98);}
+.cc-thumb{height:118px;background:var(--card-2);background-size:cover;background-position:center;position:relative;display:flex;align-items:flex-start;}
+.cc-thumb.nophoto{background:repeating-linear-gradient(135deg,#171b21,#171b21 12px,#191d24 12px,#191d24 24px);}
+.cc-thumb.nophoto::after{content:"нет фото";position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--txt-3);font-size:12px;}
+.cc-body{padding:10px 12px 12px;}
+.cc-price{font-weight:740;font-size:16px;letter-spacing:-.02em;}
+.cc-title{font-size:13px;font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cc-meta{font-size:11.5px;color:var(--txt-2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
