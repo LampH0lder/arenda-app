@@ -338,3 +338,18 @@ textarea.input{resize:vertical;min-height:70px;}
 .sq-info{min-width:0;display:flex;flex-direction:column;line-height:1.25;}
 .sq-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--txt);}
 .sq-sub{font-size:11px;color:var(--txt-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* ── Выбор нескольких объявлений (галочка на карточке) ── */
+.lc-check{
+  flex:0 0 26px;width:26px;height:26px;margin-left:10px;border-radius:50%;
+  border:2px solid var(--line);display:flex;align-items:center;justify-content:center;
+  font-size:14px;color:#fff;background:transparent;transition:.15s;cursor:pointer;
+}
+.lc-check.on{background:var(--accent);border-color:var(--accent);}
+.card.lc-sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset;}
+.sel-bar{
+  position:sticky;top:0;z-index:20;display:flex;gap:8px;align-items:center;
+  margin:0 0 12px;padding:8px;border-radius:13px;
+  background:rgba(20,24,30,.96);border:1px solid var(--line);backdrop-filter:blur(8px);
+}
+.sel-bar.hidden{display:none;}
