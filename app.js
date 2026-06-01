@@ -347,11 +347,16 @@ async function renderMatch(client, page = 0, acc = null) {
 }
 
 /* ════════════════════════ LISTINGS ════════════════════════ */
+let listingsFilter = null;
 async function renderListings(source = "all") {
   setTitle("Объекты", "последние объявления");
   removeFab();
   loading();
-  let listings = []; try { listings = await api("/listings?limit=50&source=" + source); } catch (e) {}
+  let q = "/listings?limit=50&source=" + source;
+  if (filtersActive(listingsFilter)) {
+    for (const [k, v] of Object.entries(listingsFilter)) if (v) q += `&${k}=${encodeURIComponent(v)}`;
+  }
+  let listings = []; try { listings = await api(q); } catch (e) {}
   view.innerHTML = "";
   const wrap = el(`<div class="fade-in"></div>`);
   // поиск по номеру объявления (#776 из уведомлений) — открыть конкретный объект
@@ -366,8 +371,15 @@ async function renderListings(source = "all") {
       <button data-s="exclusives" class="${source === "exclusives" ? "on" : ""}">Эксклюзивы</button>
       <button data-s="arendok" class="${source === "arendok" ? "on" : ""}">Arendok</button>
     </div>`));
+  // фильтры по параметрам (комнаты/бюджет/площадь/район/метро отдельно)
+  const on = filtersActive(listingsFilter);
+  const fbar = el(`<div class="btn-row" style="margin-bottom:12px">
+    <button class="btn ${on ? "btn-primary" : "btn-soft"} sm" id="lFilters" style="flex:1">⚙️ Фильтры${on ? " · " + esc(filtersSummary(listingsFilter)) : ""}</button>
+    ${on ? `<button class="btn btn-soft sm" id="lFiltClear">Сброс</button>` : ""}
+  </div>`);
+  wrap.appendChild(fbar);
   if (!listings.length) {
-    wrap.appendChild(el(`<div class="empty"><span class="em-ic">⌂</span>Здесь пока пусто</div>`));
+    wrap.appendChild(el(`<div class="empty"><span class="em-ic">⌂</span>${on ? "Под фильтры ничего не нашлось" : "Здесь пока пусто"}</div>`));
   } else {
     wrap.appendChild(el(`<div class="pick-hint">💡 Отмечайте варианты кружком справа — и отправляйте сразу нескольким одному клиенту</div>`));
   }
@@ -414,6 +426,13 @@ async function renderListings(source = "all") {
   };
   idbar.querySelector("#lidGo").onclick = openById;
   idbar.querySelector("#lidInput").addEventListener("keydown", (e) => { if (e.key === "Enter") openById(); });
+  fbar.querySelector("#lFilters").onclick = () => {
+    haptic(); sheetFilters(listingsFilter || {}, (f) => {
+      listingsFilter = filtersActive(f) ? f : null; renderListings(source);
+    });
+  };
+  const fc = fbar.querySelector("#lFiltClear");
+  if (fc) fc.onclick = () => { haptic(); listingsFilter = null; renderListings(source); };
   wrap.querySelectorAll(".seg button").forEach(b => b.onclick = () => {
     haptic(); stack[stack.length - 1] = () => renderListings(b.dataset.s); renderListings(b.dataset.s);
   });
@@ -538,7 +557,7 @@ async function renderHistory() {
 }
 
 /* ════════════════════════ SEARCH ════════════════════════ */
-let searchState = { text: "", results: [], page: 0, hasMore: false, sel: new Set() };
+let searchState = { text: "", results: [], page: 0, hasMore: false, sel: new Set(), filters: null, applied: null };
 async function renderSearch() {
   setTitle("Поиск вариантов", "по всей базе объявлений");
   removeFab();
@@ -552,22 +571,35 @@ async function renderSearch() {
       <span id="sVoice" style="flex:1;display:flex"></span>
       <button class="btn btn-primary" id="sGo" style="flex:1">⌕ Найти</button>
     </div>
+    <button class="btn btn-soft sm" id="sFilters" style="margin-top:10px;width:100%">⚙️ Фильтры — комнаты, бюджет, район, метро отдельно</button>
     <div id="sResults" style="margin-top:18px"></div>`;
   view.appendChild(wrap);
   $("#sVoice").replaceWith(voiceButton((text) => {
     const ta = $("#sInput"); ta.value = ta.value ? (ta.value + " " + text) : text; runSearch();
   }, "🎤 Голосом"));
   $("#sGo").onclick = runSearch;
+  $("#sFilters").onclick = () => { haptic(); sheetFilters(critToFilters(searchState.applied), applySearchFilters); };
   if (searchState.results.length) paintSearch();
 }
 async function runSearch() {
   const text = $("#sInput").value.trim();
   if (!text) return toast("Напишите критерии");
-  haptic(); searchState = { text, results: [], page: 0, hasMore: false, sel: new Set() };
+  haptic(); searchState = { text, results: [], page: 0, hasMore: false, sel: new Set(), filters: null, applied: null };
   $("#sResults").innerHTML = `<div class="loader"><div class="spin"></div></div>`;
   let data; try { data = await api("/search", { method: "POST", body: { text, page: 0 } }); }
   catch (e) { return toast("Ошибка поиска", "err"); }
-  searchState.results = data.listings; searchState.hasMore = data.has_more; searchState.crit = data.criteria; searchState.total = data.total;
+  searchState.results = data.listings; searchState.hasMore = data.has_more;
+  searchState.crit = data.criteria; searchState.total = data.total; searchState.applied = data.applied;
+  paintSearch();
+}
+// Применить структурные фильтры (раздельные район/метро) как поиск
+async function applySearchFilters(f) {
+  haptic(); searchState = { text: "", results: [], page: 0, hasMore: false, sel: new Set(), filters: f, applied: null };
+  $("#sResults").innerHTML = `<div class="loader"><div class="spin"></div></div>`;
+  let data; try { data = await api("/search", { method: "POST", body: { filters: f, page: 0 } }); }
+  catch (e) { return toast("Ошибка поиска", "err"); }
+  searchState.results = data.listings; searchState.hasMore = data.has_more;
+  searchState.crit = data.criteria; searchState.total = data.total; searchState.applied = data.applied;
   paintSearch();
 }
 function paintSearch() {
@@ -614,7 +646,8 @@ function paintSearch() {
     const more = el(`<button class="btn btn-soft more-btn" style="margin-top:6px">Ещё варианты</button>`);
     more.onclick = async () => {
       haptic(); const p = searchState.page + 1;
-      const d = await api("/search", { method: "POST", body: { text: searchState.text, page: p } });
+      const body = searchState.filters ? { filters: searchState.filters, page: p } : { text: searchState.text, page: p };
+      const d = await api("/search", { method: "POST", body });
       searchState.page = p; searchState.results.push(...d.listings); searchState.hasMore = d.has_more; paintSearch();
     };
     box.appendChild(more);
@@ -808,6 +841,82 @@ const ZONE_CHIPS = [["центр", "Центр"], ["север", "Север"], 
 
 async function applyCritText(cid, text) {
   await api(`/clients/${cid}/criteria`, { method: "POST", body: { text } });
+}
+
+/* ── Редактор фильтров (раздельные район/метро — без путаницы) ── */
+function critToFilters(c) {
+  c = c || {};
+  return {
+    rooms: c.rooms || "",
+    budget_min: c.budget_min || "", budget_max: c.budget_max || "",
+    area_min: c.area_min || "", area_max: c.area_max || "",
+    district: c.districts || "", metro: c.metro_stations || "",
+  };
+}
+function filtersActive(f) {
+  return !!(f && (f.rooms || f.budget_min || f.budget_max || f.area_min || f.area_max || f.district || f.metro));
+}
+function filtersSummary(f) {
+  if (!f) return "";
+  const p = [];
+  if (f.rooms) p.push(roomsLabel(f.rooms));
+  if (f.budget_min || f.budget_max) p.push((f.budget_min ? Math.round(f.budget_min / 1000) + "" : "до ") + (f.budget_max ? "–" + Math.round(f.budget_max / 1000) + "к" : "к+"));
+  if (f.area_min || f.area_max) p.push((f.area_min || 0) + "–" + (f.area_max || "∞") + " м²");
+  if (f.district) p.push("📍 " + f.district);
+  if (f.metro) p.push("🚇 " + f.metro);
+  return p.join(" · ");
+}
+function sheetFilters(init, onApply) {
+  init = init || {};
+  const curRooms = new Set(String(init.rooms || "").split(",").map(s => s.trim()).filter(Boolean));
+  const b = openSheet(`
+    <div class="sheet-title">Фильтры</div>
+    <div class="ed-label">Комнаты</div>
+    <div class="chipsel" id="fRooms">
+      ${ROOM_OPTS.map(([v, t]) => `<button class="chsel ${curRooms.has(v) ? "on" : ""}" data-v="${v}">${t}</button>`).join("")}
+    </div>
+    <div class="ed-label">Бюджет, ₽/мес</div>
+    <div class="two">
+      <input class="input" id="fBmin" inputmode="numeric" placeholder="от" value="${init.budget_min || ""}">
+      <input class="input" id="fBmax" inputmode="numeric" placeholder="до" value="${init.budget_max || ""}">
+    </div>
+    <div class="ed-label">Площадь, м²</div>
+    <div class="two">
+      <input class="input" id="fAmin" inputmode="numeric" placeholder="от" value="${init.area_min || ""}">
+      <input class="input" id="fAmax" inputmode="numeric" placeholder="до" value="${init.area_max || ""}">
+    </div>
+    <div class="ed-label">Район / зона</div>
+    <input class="input" id="fDistrict" placeholder="напр. Раменки, Хамовники, юго-запад" value="${esc(init.district || "")}">
+    <div class="chipsel" id="fZones" style="margin-top:8px">
+      ${ZONE_CHIPS.map(([v, t]) => `<button class="chsel sm2" data-z="${v}">${t}</button>`).join("")}
+    </div>
+    <div class="ed-label">Метро <span class="muted" style="font-weight:400">(отдельно от района)</span></div>
+    <input class="input" id="fMetro" placeholder="напр. Раменки, Фили, Университет">
+    <div class="btn-row" style="margin-top:20px">
+      <button class="btn btn-soft" id="fReset" style="flex:1">Сбросить</button>
+      <button class="btn btn-primary" id="fApply" style="flex:2">Применить</button>
+    </div>`);
+  b.querySelector("#fMetro").value = init.metro || "";
+  b.querySelectorAll("#fRooms .chsel").forEach(x => x.onclick = () => { haptic(); x.classList.toggle("on"); });
+  b.querySelectorAll("#fZones .chsel").forEach(x => x.onclick = () => {
+    haptic(); const loc = b.querySelector("#fDistrict");
+    const parts = loc.value.split(",").map(s => s.trim()).filter(Boolean);
+    if (!parts.map(p => p.toLowerCase()).includes(x.dataset.z)) { parts.push(x.dataset.z); loc.value = parts.join(", "); }
+  });
+  const num = (id) => { const v = parseInt((b.querySelector(id).value || "").replace(/\D/g, "")); return isNaN(v) ? "" : v; };
+  b.querySelector("#fReset").onclick = () => { haptic(); closeSheet(); onApply({}); };
+  b.querySelector("#fApply").onclick = () => {
+    haptic();
+    const rooms = [...b.querySelectorAll("#fRooms .chsel.on")].map(x => x.dataset.v);
+    const f = {
+      rooms: rooms.length ? rooms.join(",") : "",
+      budget_min: num("#fBmin"), budget_max: num("#fBmax"),
+      area_min: num("#fAmin"), area_max: num("#fAmax"),
+      district: b.querySelector("#fDistrict").value.trim(),
+      metro: b.querySelector("#fMetro").value.trim(),
+    };
+    closeSheet(); onApply(f);
+  };
 }
 
 function sheetEditCriteria(c) {
