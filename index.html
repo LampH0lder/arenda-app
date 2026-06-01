@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Риелти</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <header id="topbar">
+      <div class="tb-title" id="tbTitle">Риелти</div>
+      <div class="tb-sub" id="tbSub"></div>
+    </header>
+
+    <main id="view"><div class="loader"><div class="spin"></div></div></main>
+
+    <nav id="tabbar">
+      <button class="tab active" data-tab="home">
+        <span class="ic">◎</span><span>Главная</span>
+      </button>
+      <button class="tab" data-tab="clients">
+        <span class="ic">☺</span><span>Клиенты</span>
+      </button>
+      <button class="tab" data-tab="listings">
+        <span class="ic">⌂</span><span>Объекты</span>
+      </button>
+      <button class="tab" data-tab="search">
+        <span class="ic">⌕</span><span>Поиск</span>
+      </button>
+    </nav>
+  </div>
+
+  <div id="sheet" class="sheet hidden">
+    <div class="sheet-backdrop"></div>
+    <div class="sheet-body" id="sheetBody"></div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
