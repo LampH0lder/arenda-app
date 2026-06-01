@@ -378,6 +378,8 @@ async function renderListings(source = "all") {
     ${on ? `<button class="btn btn-soft sm" id="lFiltClear">Сброс</button>` : ""}
   </div>`);
   wrap.appendChild(fbar);
+  const mapBtn = el(`<button class="btn btn-soft sm" id="lMap" style="width:100%;margin-bottom:12px">🗺 Показать на карте — обвести район</button>`);
+  wrap.appendChild(mapBtn);
   if (!listings.length) {
     wrap.appendChild(el(`<div class="empty"><span class="em-ic">⌂</span>${on ? "Под фильтры ничего не нашлось" : "Здесь пока пусто"}</div>`));
   } else {
@@ -433,9 +435,175 @@ async function renderListings(source = "all") {
   };
   const fc = fbar.querySelector("#lFiltClear");
   if (fc) fc.onclick = () => { haptic(); listingsFilter = null; renderListings(source); };
+  mapBtn.onclick = () => { haptic(); go(() => renderMap(source)); };
   wrap.querySelectorAll(".seg button").forEach(b => b.onclick = () => {
     haptic(); stack[stack.length - 1] = () => renderListings(b.dataset.s); renderListings(b.dataset.s);
   });
+}
+
+/* ════════════════════════ КАРТА (обвести область) ════════════════════════ */
+let _leafletP = null;
+function ensureLeaflet() {
+  if (window.L) return Promise.resolve();
+  if (_leafletP) return _leafletP;
+  _leafletP = new Promise((resolve, reject) => {
+    const css = document.createElement("link");
+    css.rel = "stylesheet"; css.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+    document.head.appendChild(css);
+    const js = document.createElement("script");
+    js.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+    js.onload = () => resolve();
+    js.onerror = () => reject(new Error("leaflet load failed"));
+    document.head.appendChild(js);
+  });
+  return _leafletP;
+}
+
+function filterQS() {
+  if (!filtersActive(listingsFilter)) return "";
+  let q = "";
+  for (const [k, v] of Object.entries(listingsFilter)) if (v) q += `&${k}=${encodeURIComponent(v)}`;
+  return q;
+}
+
+function pointInPoly(lat, lng, poly) {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const yi = poly[i][0], xi = poly[i][1], yj = poly[j][0], xj = poly[j][1];
+    if (((yi > lat) !== (yj > lat)) && (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi)) inside = !inside;
+  }
+  return inside;
+}
+
+async function renderMap(source = "all") {
+  setTitle("Карта", "обведите район пальцем");
+  removeFab();
+  loading();
+  try { await ensureLeaflet(); } catch (e) { return toast("Карта не загрузилась (проверь интернет)", "err"); }
+  let data; try { data = await api("/map/points?source=" + source + filterQS()); } catch (e) { data = { points: [] }; }
+  view.innerHTML = "";
+  const wrap = el(`<div class="fade-in"></div>`);
+  wrap.innerHTML = `
+    <div class="map-tools">
+      <button class="btn btn-primary sm" id="mDraw">✏️ Обвести область</button>
+      <button class="btn btn-soft sm" id="mClear" style="display:none">Сбросить</button>
+      <span class="muted" id="mInfo" style="margin-left:auto;font-size:12px"></span>
+    </div>
+    <div id="map" class="map-box"></div>
+    <div class="map-legend"><span class="dotm blue"></span>точный адрес <span class="dotm amber"></span>у метро (примерно)</div>
+    <div id="mResults" style="margin-top:14px"></div>`;
+  view.appendChild(wrap);
+
+  if (!data.points.length) {
+    $("#mInfo").textContent = "";
+    $("#mResults").innerHTML = `<div class="empty"><span class="em-ic">🗺</span>Пока нечего показать на карте.<br>Координаты подгружаются в фоне — попробуй позже.</div>`;
+    return;
+  }
+
+  const map = L.map("map", { center: [55.751, 37.618], zoom: 10, zoomControl: true, attributionControl: false });
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18 }).addTo(map);
+  setTimeout(() => map.invalidateSize(), 150);
+
+  const renderer = L.canvas({ padding: 0.5 });
+  const markers = [];
+  for (const p of data.points) {
+    const c = L.circleMarker([p.lat, p.lng], {
+      renderer, radius: 5, weight: 1,
+      color: p.approx ? "#f5b945" : "#5b8cff", fillColor: p.approx ? "#f5b945" : "#5b8cff", fillOpacity: .65,
+    });
+    c.addTo(map); markers.push(c);
+  }
+  $("#mInfo").textContent = `${data.points.length} объектов`;
+  try { map.fitBounds(L.featureGroup(markers).getBounds().pad(0.08)); } catch (e) {}
+
+  const mapEl = $("#map");
+  const mDraw = $("#mDraw"), mClear = $("#mClear"), mInfo = $("#mInfo");
+  let drawing = false, pathLL = [], preview = null, poly = null;
+
+  const ptOf = (e) => {
+    const r = mapEl.getBoundingClientRect();
+    return map.containerPointToLatLng(L.point(e.clientX - r.left, e.clientY - r.top));
+  };
+  function addPt(e) {
+    const ll = ptOf(e); pathLL.push([ll.lat, ll.lng]);
+    if (!preview) preview = L.polyline(pathLL, { color: "#37d39b", weight: 3 }).addTo(map);
+    else preview.setLatLngs(pathLL);
+  }
+  function onDown(e) {
+    if (!drawing) return;
+    e.preventDefault();
+    pathLL = []; if (preview) { map.removeLayer(preview); preview = null; }
+    try { mapEl.setPointerCapture(e.pointerId); } catch (x) {}
+    addPt(e);
+    mapEl.addEventListener("pointermove", onMove);
+    mapEl.addEventListener("pointerup", onUp, { once: true });
+  }
+  function onMove(e) { e.preventDefault(); addPt(e); }
+  function onUp() { mapEl.removeEventListener("pointermove", onMove); finishDraw(); }
+
+  function setDrawMode(on) {
+    drawing = on;
+    const fns = ["dragging", "touchZoom", "doubleClickZoom", "scrollWheelZoom", "boxZoom", "keyboard"];
+    fns.forEach(f => { if (map[f]) on ? map[f].disable() : map[f].enable(); });
+    mapEl.style.cursor = on ? "crosshair" : "";
+    mapEl.classList.toggle("drawing", on);
+  }
+  function enterDraw() {
+    if (poly) { map.removeLayer(poly); poly = null; }
+    $("#mResults").innerHTML = "";
+    setDrawMode(true);
+    mDraw.style.display = "none"; mClear.style.display = "";
+    mInfo.textContent = "Веди пальцем по карте";
+    mapEl.addEventListener("pointerdown", onDown);
+  }
+  function finishDraw() {
+    setDrawMode(false);
+    mapEl.removeEventListener("pointerdown", onDown);
+    mDraw.style.display = ""; mDraw.textContent = "✏️ Обвести заново";
+    if (preview) { map.removeLayer(preview); preview = null; }
+    if (pathLL.length < 3) { mInfo.textContent = "Мало точек, попробуй ещё"; return; }
+    poly = L.polygon(pathLL, { color: "#37d39b", weight: 2, fillColor: "#37d39b", fillOpacity: .08 }).addTo(map);
+    const inside = data.points.filter(p => pointInPoly(p.lat, p.lng, pathLL));
+    mInfo.textContent = `${inside.length} в области`;
+    showMapResults(inside);
+  }
+  mDraw.onclick = () => { haptic(); enterDraw(); };
+  mClear.onclick = () => {
+    haptic(); if (poly) { map.removeLayer(poly); poly = null; }
+    mClear.style.display = "none"; mDraw.textContent = "✏️ Обвести область";
+    mInfo.textContent = `${data.points.length} объектов`; $("#mResults").innerHTML = "";
+  };
+
+  // результаты внутри области: карточки + мультивыбор + отправка
+  const sel = new Set();
+  function showMapResults(items) {
+    const box = $("#mResults"); box.innerHTML = "";
+    if (!items.length) { box.innerHTML = `<div class="empty"><span class="em-ic">🗺</span>В этой области ничего нет</div>`; return; }
+    sel.clear();
+    box.appendChild(el(`<div class="pick-hint">💡 Отмечайте кружком и отправляйте сразу нескольким одному клиенту</div>`));
+    const selBar = el(`<div class="sel-bar hidden"></div>`);
+    box.appendChild(selBar);
+    const rows = el(`<div></div>`); box.appendChild(rows);
+    function refreshBar() {
+      if (!sel.size) { selBar.classList.add("hidden"); return; }
+      selBar.classList.remove("hidden");
+      selBar.innerHTML = `<button class="btn btn-green sm" style="flex:1" data-ms>📨 Отправить выбранные (${sel.size}) одному</button>
+        <button class="btn btn-soft sm" data-mc>Сброс</button>`;
+      selBar.querySelector("[data-ms]").onclick = () => {
+        const chosen = items.filter(l => sel.has(l.id));
+        haptic(); sheetClientPicker((cid, cname) => { sel.clear(); sendSelected(chosen, cid, cname); });
+      };
+      selBar.querySelector("[data-mc]").onclick = () => { haptic(); sel.clear(); draw(); };
+    }
+    function draw() {
+      rows.innerHTML = "";
+      for (const l of items) rows.appendChild(listingCard(
+        l, () => sheetClientPicker((cid, cname) => sendListing(l, cid, cname)),
+        true, true, { checked: sel.has(l.id), onToggle: () => { sel.has(l.id) ? sel.delete(l.id) : sel.add(l.id); draw(); } }));
+      refreshBar();
+    }
+    draw();
+  }
 }
 
 function listingCard(l, onSend, openable = true, thumb = true, select = null) {
