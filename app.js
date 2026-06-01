@@ -369,9 +369,9 @@ async function renderListings(source = "all") {
   });
 }
 
-function listingCard(l, onSend, openable = true, thumb = true) {
+function listingCard(l, onSend, openable = true, thumb = true, select = null) {
   const card = el(`
-    <div class="card pad0 ${openable ? "tap" : ""}">
+    <div class="card pad0 ${openable ? "tap" : ""} ${select && select.checked ? "lc-sel" : ""}">
       ${thumb ? `<div class="card-thumb" data-thumb="${l.id}"><span class="src-badge">${esc(l.source || "")}</span></div>` : ""}
       <div class="card-body">
         <div class="row-between" style="align-items:flex-start">
@@ -380,6 +380,7 @@ function listingCard(l, onSend, openable = true, thumb = true) {
             <div class="listing-title">${esc(listingTitle(l))}</div>
             <div class="listing-meta">${esc(listingMeta(l))}</div>
           </div>
+          ${select ? `<div class="lc-check ${select.checked ? "on" : ""}" data-check>${select.checked ? "✓" : ""}</div>` : ""}
         </div>
         ${(l.geo && l.geo.length) ? `<div style="margin-top:8px">${l.geo.map(g => `<div class="geo-line">${esc(g)}</div>`).join("")}</div>` : ""}
         <div class="btn-row" style="margin-top:12px">
@@ -390,6 +391,10 @@ function listingCard(l, onSend, openable = true, thumb = true) {
       </div>
     </div>`);
   if (thumb && thumbObserver) thumbObserver.observe(card.querySelector(".card-thumb"));
+  if (select) {
+    const chk = card.querySelector("[data-check]");
+    if (chk) chk.onclick = (e) => { e.stopPropagation(); haptic(); select.onToggle(); };
+  }
   if (onSend) card.querySelector("[data-send]").onclick = (e) => { e.stopPropagation(); haptic(); onSend(); };
   const openBtn = card.querySelector("[data-open]");
   if (openBtn) openBtn.onclick = (e) => { e.stopPropagation(); haptic(); tg?.openTelegramLink ? tg.openTelegramLink(l.url) : window.open(l.url); };
@@ -511,40 +516,44 @@ async function runSearch() {
 }
 function paintSearch() {
   const box = $("#sResults"); box.innerHTML = "";
-  box.appendChild(el(`<div class="muted" style="margin:0 4px 12px">${esc(searchState.crit || "")} — найдено ${searchState.total}</div>`));
+  box.appendChild(el(`<div class="muted" style="margin:0 4px 10px">${esc(searchState.crit || "")} — найдено ${searchState.total}</div>`));
   if (!searchState.results.length) { box.appendChild(el(`<div class="empty"><span class="em-ic">⌕</span>Ничего не нашлось</div>`)); return; }
-  // мультивыбор
-  const selBar = el(`<button class="btn btn-soft sm" style="margin-bottom:12px">☑️ Выбрать несколько → одному клиенту</button>`);
-  let selectMode = false;
-  selBar.onclick = () => { selectMode = !selectMode; haptic(); renderRows(); selBar.textContent = selectMode ? "✕ Отменить выбор" : "☑️ Выбрать несколько → одному клиенту"; };
+
+  // sticky-бар: появляется, как только отметил галочкой ≥1 объявление
+  const selBar = el(`<div class="sel-bar hidden"></div>`);
   box.appendChild(selBar);
   const rows = el(`<div></div>`); box.appendChild(rows);
 
+  function refreshBar() {
+    if (!searchState.sel.size) { selBar.classList.add("hidden"); return; }
+    selBar.classList.remove("hidden");
+    selBar.innerHTML = `
+      <button class="btn btn-green sm" style="flex:1" data-multisend>📨 Отправить выбранные (${searchState.sel.size}) одному</button>
+      <button class="btn btn-soft sm" data-multiclear>Сброс</button>`;
+    selBar.querySelector("[data-multisend]").onclick = () => {
+      haptic(); sheetClientPicker((cid, cname) => sendMany([...searchState.sel], cid, cname));
+    };
+    selBar.querySelector("[data-multiclear]").onclick = () => { haptic(); searchState.sel.clear(); renderRows(); };
+  }
+  function toggle(id) {
+    searchState.sel.has(id) ? searchState.sel.delete(id) : searchState.sel.add(id);
+    renderRows();
+  }
   function renderRows() {
     rows.innerHTML = "";
     for (const l of searchState.results) {
-      if (selectMode) {
-        const on = searchState.sel.has(l.id);
-        const row = el(`<div class="card tap"><div class="client-row">
-          <div class="check ${on ? "on" : ""}">${on ? "✓" : ""}</div>
-          <div class="client-main"><div class="client-name" style="font-size:15px">${fmtMoney(l.price)} ₽ · ${esc(roomsLabel(l.rooms))}</div>
-          <div class="client-crit">${esc(listingTitle(l))}</div></div></div></div>`);
-        row.onclick = () => { haptic(); on ? searchState.sel.delete(l.id) : searchState.sel.add(l.id); renderRows(); };
-        rows.appendChild(row);
-      } else {
-        rows.appendChild(listingCard(l, () => sheetClientPicker((cid, cname) => sendListing(l, cid, cname))));
-      }
+      rows.appendChild(listingCard(
+        l,
+        () => sheetClientPicker((cid, cname) => sendListing(l, cid, cname)),
+        true, true,
+        { checked: searchState.sel.has(l.id), onToggle: () => toggle(l.id) },
+      ));
     }
-    let sendSel = rows.querySelector(".send-sel");
-    if (selectMode && searchState.sel.size) {
-      const b = el(`<button class="btn btn-green send-sel" style="margin-top:6px">📨 Отправить отмеченные (${searchState.sel.size}) одному</button>`);
-      b.onclick = () => { haptic(); sheetClientPicker((cid, cname) => sendMany([...searchState.sel], cid, cname)); };
-      rows.appendChild(b);
-    }
+    refreshBar();
   }
   renderRows();
   if (searchState.hasMore) {
-    const more = el(`<button class="btn btn-soft" style="margin-top:6px">Ещё варианты</button>`);
+    const more = el(`<button class="btn btn-soft more-btn" style="margin-top:6px">Ещё варианты</button>`);
     more.onclick = async () => {
       haptic(); const p = searchState.page + 1;
       const d = await api("/search", { method: "POST", body: { text: searchState.text, page: p } });
@@ -608,7 +617,7 @@ function sendQClearDone() {
 
 function renderSendQ() {
   let panel = $("#sendq");
-  if (!sendQ.length) { if (panel) panel.remove(); return; }
+  if (!sendQ.length) { if (panel) panel.remove(); view.style.paddingBottom = ""; return; }
   if (!panel) {
     panel = el(`<div id="sendq"></div>`);
     $("#app").appendChild(panel);
@@ -635,6 +644,9 @@ function renderSendQ() {
     </div>`;
   const x = panel.querySelector("#sqClose");
   if (x) x.onclick = () => { haptic(); sendQClearDone(); };
+  // панель фиксирована снизу и перекрывала бы низ списка (в т.ч. кнопку «Ещё») —
+  // добавляем прокрутке отступ на высоту панели, чтобы до всего можно было долистать
+  view.style.paddingBottom = (panel.offsetHeight + 26) + "px";
 }
 
 function sendListing(l, clientId, clientName) {
