@@ -682,6 +682,8 @@ async function pumpSendQ() {
       }
     }
     renderSendQ();
+    // небольшая пауза между реальными отправками — бережём лимит Telegram
+    if (sendQ.some(x => x.status === "pending" && Date.now() >= x.sendAt)) await sleep(900);
   }
   sendQWorking = false;
   renderSendQ();
