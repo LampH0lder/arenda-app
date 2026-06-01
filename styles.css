@@ -406,3 +406,11 @@ img.listing-thumb{transition:filter .35s ease;}
 .cc-price{font-weight:740;font-size:16px;letter-spacing:-.02em;}
 .cc-title{font-size:13px;font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .cc-meta{font-size:11.5px;color:var(--txt-2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* ── Ссылка «все ›» в шапке карусели (без рамки кнопки) ── */
+.link-all{background:none;border:none;color:var(--accent-2);font-size:13px;font-weight:600;cursor:pointer;padding:4px 0;width:auto;}
+.link-all:active{opacity:.6;}
+
+/* ── Убираем горизонтальное переполнение (чёрные краюшки при переходах) ── */
+html,body,#app,#view{max-width:100%;overflow-x:hidden;}
+#view>*{max-width:100%;}
