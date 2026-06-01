@@ -75,14 +75,26 @@ function voiceButton(onText, label = "🎤 Голосом") {
   return btn;
 }
 
-/* ── Ленивая подгрузка миниатюр (первое фото объекта) ── */
+/* ── Ленивая подгрузка миниатюр (первое фото объекта) ──
+   Прогрессивно: сначала мелкое (быстро, размытое), потом крупное (резкое) поверх. */
 const thumbObserver = ("IntersectionObserver" in window) ? new IntersectionObserver((entries) => {
   for (const e of entries) {
     if (!e.isIntersecting) continue;
     const node = e.target; thumbObserver.unobserve(node);
-    fetchImg(`/listings/${node.dataset.thumb}/photo`)
-      .then(url => { node.style.backgroundImage = `url(${url})`; node.classList.add("loaded"); })
-      .catch(() => node.classList.add("nophoto"));
+    const id = node.dataset.thumb;
+    fetchImg(`/listings/${id}/photo`)
+      .then(url => {
+        if (node._hi) return;  // крупное уже пришло раньше — не перетираем размытым
+        node.style.backgroundImage = `url(${url})`; node.classList.add("loaded", "lq");
+      })
+      .catch(() => { if (!node._hi) node.classList.add("nophoto"); });
+    fetchImg(`/listings/${id}/photo?q=hi`)
+      .then(url => {
+        node._hi = true;
+        node.style.backgroundImage = `url(${url})`;
+        node.classList.add("loaded"); node.classList.remove("lq", "nophoto");
+      })
+      .catch(() => {});
   }
 }, { rootMargin: "150px" }) : null;
 
@@ -354,8 +366,46 @@ async function renderListings(source = "all") {
       <button data-s="exclusives" class="${source === "exclusives" ? "on" : ""}">Эксклюзивы</button>
       <button data-s="arendok" class="${source === "arendok" ? "on" : ""}">Arendok</button>
     </div>`));
-  if (!listings.length) wrap.appendChild(el(`<div class="empty"><span class="em-ic">⌂</span>Здесь пока пусто</div>`));
-  for (const l of listings) wrap.appendChild(listingCard(l, null, true));
+  if (!listings.length) {
+    wrap.appendChild(el(`<div class="empty"><span class="em-ic">⌂</span>Здесь пока пусто</div>`));
+  } else {
+    wrap.appendChild(el(`<div class="pick-hint">💡 Отмечайте варианты кружком справа — и отправляйте сразу нескольким одному клиенту</div>`));
+  }
+  // мультивыбор по объектам (как в поиске): галочки + sticky-бар «отправить выбранные»
+  const sel = new Set();
+  const selBar = el(`<div class="sel-bar hidden"></div>`);
+  wrap.appendChild(selBar);
+  const rowsBox = el(`<div></div>`);
+  wrap.appendChild(rowsBox);
+
+  function refreshBar() {
+    if (!sel.size) { selBar.classList.add("hidden"); return; }
+    selBar.classList.remove("hidden");
+    selBar.innerHTML = `
+      <button class="btn btn-green sm" style="flex:1" data-multisend>📨 Отправить выбранные (${sel.size}) одному</button>
+      <button class="btn btn-soft sm" data-multiclear>Сброс</button>`;
+    selBar.querySelector("[data-multisend]").onclick = () => {
+      const chosen = listings.filter(l => sel.has(l.id));
+      haptic(); sheetClientPicker((cid, cname) => { sel.clear(); sendSelected(chosen, cid, cname); });
+    };
+    selBar.querySelector("[data-multiclear]").onclick = () => { haptic(); sel.clear(); renderRows(); };
+  }
+  function renderRows() {
+    rowsBox.innerHTML = "";
+    for (const l of listings) {
+      rowsBox.appendChild(listingCard(
+        l,
+        () => sheetClientPicker((cid, cname) => sendListing(l, cid, cname)),
+        true, true,
+        {
+          checked: sel.has(l.id),
+          onToggle: () => { sel.has(l.id) ? sel.delete(l.id) : sel.add(l.id); renderRows(); },
+        },
+      ));
+    }
+    refreshBar();
+  }
+  renderRows();
   view.appendChild(wrap);
   const openById = () => {
     const raw = (idbar.querySelector("#lidInput").value || "").replace(/\D/g, "");
@@ -427,9 +477,15 @@ async function renderListingDetail(id) {
       <button class="btn btn-soft" id="bBroad">📣 Рассылка</button>
     </div>`;
   view.appendChild(wrap);
-  // фото (через fetch+blob, чтобы обойти заглушку ngrok)
+  // фото (через fetch+blob, чтобы обойти заглушку ngrok) — сначала мелкое, потом резкое
   const ph = wrap.querySelector("[data-photo]");
-  fetchImg(`/listings/${id}/photo`).then(url => { ph.src = url; ph.style.display = "block"; }).catch(() => {});
+  let hiDone = false;
+  fetchImg(`/listings/${id}/photo?q=hi`).then(url => {
+    hiDone = true; ph.src = url; ph.style.display = "block"; ph.classList.remove("lq");
+  }).catch(() => {});
+  fetchImg(`/listings/${id}/photo`).then(url => {
+    if (hiDone) return; ph.src = url; ph.style.display = "block"; ph.classList.add("lq");
+  }).catch(() => {});
   $("#bSend").onclick = () => { haptic(); sheetClientPicker((cid, cname) => sendListing(l, cid, cname)); };
   $("#bBroad").onclick = () => { haptic(); sheetBroadcast(l); };
   const ob = $("#bOpen"); if (ob) ob.onclick = () => { haptic(); tg?.openTelegramLink ? tg.openTelegramLink(l.url) : window.open(l.url); };
@@ -518,6 +574,7 @@ function paintSearch() {
   const box = $("#sResults"); box.innerHTML = "";
   box.appendChild(el(`<div class="muted" style="margin:0 4px 10px">${esc(searchState.crit || "")} — найдено ${searchState.total}</div>`));
   if (!searchState.results.length) { box.appendChild(el(`<div class="empty"><span class="em-ic">⌕</span>Ничего не нашлось</div>`)); return; }
+  box.appendChild(el(`<div class="pick-hint">💡 Отмечайте варианты кружком справа — и отправляйте сразу нескольким одному клиенту</div>`));
 
   // sticky-бар: появляется, как только отметил галочкой ≥1 объявление
   const selBar = el(`<div class="sel-bar hidden"></div>`);
@@ -531,7 +588,8 @@ function paintSearch() {
       <button class="btn btn-green sm" style="flex:1" data-multisend>📨 Отправить выбранные (${searchState.sel.size}) одному</button>
       <button class="btn btn-soft sm" data-multiclear>Сброс</button>`;
     selBar.querySelector("[data-multisend]").onclick = () => {
-      haptic(); sheetClientPicker((cid, cname) => sendMany([...searchState.sel], cid, cname));
+      const chosen = searchState.results.filter(l => searchState.sel.has(l.id));
+      haptic(); sheetClientPicker((cid, cname) => { searchState.sel.clear(); sendSelected(chosen, cid, cname); });
     };
     selBar.querySelector("[data-multiclear]").onclick = () => { haptic(); searchState.sel.clear(); renderRows(); };
   }
@@ -570,13 +628,16 @@ function notConnectedPrompt() {
   setTimeout(() => switchTab("profile"), 1000);
 }
 
-/* ── Очередь отправки: видно, что варианты грузятся и уходят ── */
+/* ── Очередь отправки: видно, что грузятся и уходят, + окно ОТМЕНЫ перед отправкой ── */
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const SEND_GRACE = 5000;  // окно, в которое можно отменить отправку
 let sendQ = [], sendQSeq = 0, sendQWorking = false;
 
 function enqueueSend(l, clientId, clientName) {
   sendQ.push({
     id: ++sendQSeq, lid: l.id, clientId, client: clientName || "клиенту",
-    title: `${fmtMoney(l.price)} ₽ · ${listingTitle(l)}`, status: "wait",
+    title: `${fmtMoney(l.price)} ₽ · ${listingTitle(l)}`,
+    status: "pending", sendAt: Date.now() + SEND_GRACE,
   });
   renderSendQ(); pumpSendQ();
 }
@@ -584,12 +645,29 @@ function enqueueMany(listings, clientId, clientName) {
   for (const l of listings) enqueueSend(l, clientId, clientName);
 }
 
+function cancelSend(id) {
+  const i = sendQ.findIndex(x => x.id === id && x.status === "pending");
+  if (i < 0) return;
+  sendQ.splice(i, 1);
+  haptic(); toast("Отправка отменена", "ok"); renderSendQ();
+}
+function cancelAllPending() {
+  sendQ = sendQ.filter(x => x.status !== "pending");
+  haptic(); toast("Отправка отменена", "ok"); renderSendQ();
+}
+
 async function pumpSendQ() {
   if (sendQWorking) return;
   sendQWorking = true;
   for (;;) {
-    const item = sendQ.find(x => x.status === "wait");
+    const item = sendQ.find(x => x.status === "pending");
     if (!item) break;
+    // окно отмены: ждём истечения таймера (или пока вариант отменят/уберут)
+    while (sendQ.includes(item) && item.status === "pending" && Date.now() < item.sendAt) {
+      renderSendQ();
+      await sleep(300);
+    }
+    if (!sendQ.includes(item) || item.status !== "pending") continue;  // отменили
     item.status = "send"; renderSendQ();
     try {
       const r = await api("/send", { method: "POST", body: { client_id: item.clientId, listing_id: item.lid } });
@@ -599,8 +677,7 @@ async function pumpSendQ() {
       item.status = "err";
       if (e.message === "not_connected") {
         item.note = "нет аккаунта";
-        // снимаем остальные ожидающие — без подключения смысла нет
-        sendQ.forEach(x => { if (x.status === "wait") { x.status = "err"; x.note = "нет аккаунта"; } });
+        sendQ.forEach(x => { if (x.status === "pending") { x.status = "err"; x.note = "нет аккаунта"; } });
         renderSendQ(); sendQWorking = false; notConnectedPrompt(); return;
       }
     }
@@ -611,7 +688,7 @@ async function pumpSendQ() {
 }
 
 function sendQClearDone() {
-  sendQ = sendQ.filter(x => x.status === "wait" || x.status === "send");
+  sendQ = sendQ.filter(x => x.status === "pending" || x.status === "send");
   renderSendQ();
 }
 
@@ -622,17 +699,27 @@ function renderSendQ() {
     panel = el(`<div id="sendq"></div>`);
     $("#app").appendChild(panel);
   }
-  const active = sendQ.filter(x => x.status === "wait" || x.status === "send").length;
+  const pending = sendQ.filter(x => x.status === "pending");
+  const sending = sendQ.filter(x => x.status === "send").length;
   const ok = sendQ.filter(x => x.status === "ok").length;
   const err = sendQ.filter(x => x.status === "err").length;
-  const ic = { wait: "⏳", send: "📤", ok: "✓", err: "✕" };
-  const head = active
-    ? `Отправка… осталось ${active}`
-    : `Готово · отправлено ${ok}${err ? ", ошибок " + err : ""}`;
+  const ic = { pending: "🕒", send: "📤", ok: "✓", err: "✕" };
+  let head, headBtn = "";
+  if (pending.length) {
+    const secs = Math.max(0, Math.ceil((Math.min(...pending.map(p => p.sendAt)) - Date.now()) / 1000));
+    head = `Отправлю через ${secs} с`;
+    headBtn = `<button class="sq-x danger" id="sqCancelAll">Отменить${pending.length > 1 ? " все" : ""}</button>`;
+  } else if (sending) {
+    head = `Отправка… осталось ${sending}`;
+  } else {
+    head = `Готово · отправлено ${ok}${err ? ", ошибок " + err : ""}`;
+    headBtn = `<button class="sq-x" id="sqClose">Скрыть</button>`;
+  }
+  const spin = (pending.length || sending) ? '<span class="sq-spin"></span>' : "📨";
   panel.innerHTML = `
     <div class="sq-head">
-      <span class="sq-title">${active ? '<span class="sq-spin"></span>' : "📨"} ${esc(head)}</span>
-      ${active ? "" : `<button class="sq-x" id="sqClose">Скрыть</button>`}
+      <span class="sq-title">${spin} ${esc(head)}</span>
+      ${headBtn}
     </div>
     <div class="sq-list">
       ${sendQ.slice(-6).map(x => `
@@ -640,10 +727,15 @@ function renderSendQ() {
           <span class="sq-ic">${ic[x.status]}</span>
           <span class="sq-info"><span class="sq-name">${esc(x.title)}</span>
           <span class="sq-sub">→ ${esc(x.client)}${x.note ? " · " + esc(x.note) : ""}</span></span>
+          ${x.status === "pending" ? `<button class="sq-cancel" data-cancel="${x.id}">Отменить</button>` : ""}
         </div>`).join("")}
     </div>`;
-  const x = panel.querySelector("#sqClose");
-  if (x) x.onclick = () => { haptic(); sendQClearDone(); };
+  const ca = panel.querySelector("#sqCancelAll");
+  if (ca) ca.onclick = () => cancelAllPending();
+  const cl = panel.querySelector("#sqClose");
+  if (cl) cl.onclick = () => { haptic(); sendQClearDone(); };
+  panel.querySelectorAll("[data-cancel]").forEach(b =>
+    b.onclick = () => cancelSend(parseInt(b.dataset.cancel)));
   // панель фиксирована снизу и перекрывала бы низ списка (в т.ч. кнопку «Ещё») —
   // добавляем прокрутке отступ на высоту панели, чтобы до всего можно было долистать
   view.style.paddingBottom = (panel.offsetHeight + 26) + "px";
@@ -652,12 +744,10 @@ function renderSendQ() {
 function sendListing(l, clientId, clientName) {
   enqueueSend(l, clientId, clientName);
 }
-function sendMany(ids, clientId, clientName) {
+// Отправить выбранные объекты одному клиенту (объекты передаём напрямую)
+function sendSelected(listings, clientId, clientName) {
   closeSheet();
-  const byId = new Map((searchState.results || []).map(l => [l.id, l]));
-  const listings = ids.map(id => byId.get(id)).filter(Boolean);
   enqueueMany(listings, clientId, clientName);
-  searchState.sel.clear();
 }
 
 /* ════════════════════════ Sheets ════════════════════════ */
