@@ -13,6 +13,12 @@ if (tg) {
 const haptic = (t = "light") => { try { tg?.HapticFeedback?.impactOccurred(t); } catch (e) {} };
 const notify = (t = "success") => { try { tg?.HapticFeedback?.notificationOccurred(t); } catch (e) {} };
 
+// версия берётся из ?v=N у app.js — обновляется сама при каждом релизе
+const APP_VERSION = (() => {
+  try { const m = (document.currentScript && document.currentScript.src || "").match(/v=(\d+)/); return m ? "v" + m[1] : ""; }
+  catch (e) { return ""; }
+})();
+
 /* ── API ──
    Фронт может быть на другом домене (GitHub Pages, чистый HTTPS без заглушки),
    а данные брать с ngrok. На github.io берём API с ngrok; иначе — со своего origin.
@@ -215,17 +221,18 @@ async function renderHome() {
   view.innerHTML = "";
   const wrap = el(`<div class="fade-in"></div>`);
   wrap.innerHTML = `
+    <div class="row-between" style="margin:2px 4px 10px">
+      <div class="section-title" style="margin:0">Последние объекты</div>
+      <button class="link-all" id="homeAll">все ›</button>
+    </div>
+    <div class="carousel" id="homeCarousel"><div class="loader" style="height:150px"><div class="spin"></div></div></div>
+    <div class="section-title" style="margin-top:20px">Сводка</div>
     <div class="stats-grid">
       <div class="stat a"><div class="glow"></div><div class="num">${s.active ?? 0}</div><div class="lbl">Активные клиенты</div></div>
       <div class="stat g"><div class="glow"></div><div class="num">${s.sent_week ?? 0}</div><div class="lbl">Отправок за неделю</div></div>
       <div class="stat am"><div class="glow"></div><div class="num">${s.paused ?? 0}</div><div class="lbl">На паузе</div></div>
       <div class="stat p"><div class="glow"></div><div class="num">${s.done ?? 0}</div><div class="lbl">Нашли квартиру</div></div>
     </div>
-    <div class="row-between" style="margin:22px 4px 10px">
-      <div class="section-title" style="margin:0">Последние объекты</div>
-      <button class="link-all" id="homeAll">все ›</button>
-    </div>
-    <div class="carousel" id="homeCarousel"><div class="loader" style="height:150px"><div class="spin"></div></div></div>
     <div class="section-title">Быстрые действия</div>
     <div class="quick">
       <button class="quick-btn" id="qSearch"><span class="qi">⌕</span><span class="qt">Поиск вариантов</span><span class="qs">по всей базе</span></button>
@@ -247,6 +254,7 @@ async function renderHome() {
       <div class="muted">тёплое «доброе утро» клиентам</div></div>
       <button class="btn sm ${morning ? "btn-danger" : "btn-green"}" id="mToggle">${morning ? "Выключить" : "Включить"}</button>
     </div>`}`;
+  wrap.appendChild(el(`<div class="app-ver">Риелти · ${APP_VERSION}</div>`));
   view.appendChild(wrap);
   $("#homeAll").onclick = () => switchTab("listings");
   loadHomeCarousel();
@@ -1357,7 +1365,8 @@ async function renderProfile() {
       <div><h2>${esc(fullName)}</h2><div class="sub">${esc(uname)}</div></div>
     </div>
     ${connHtml}
-    <div class="muted" style="margin:18px 4px;font-size:12.5px">🔒 Данные ваших клиентов видите только вы. Подключение хранится в зашифрованном виде.</div>`;
+    <div class="muted" style="margin:18px 4px;font-size:12.5px">🔒 Данные ваших клиентов видите только вы. Подключение хранится в зашифрованном виде.</div>
+    <div class="app-ver">Риелти · ${APP_VERSION}</div>`;
   view.appendChild(wrap);
   const cc = $("#accConn"); if (cc) cc.onclick = () => { haptic(); sheetConnectAccount(); };
   const cd = $("#accDisc"); if (cd) cd.onclick = async () => {
