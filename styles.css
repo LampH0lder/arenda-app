@@ -348,9 +348,10 @@ textarea.input{resize:vertical;min-height:70px;}
 .lc-check.on{background:var(--accent);border-color:var(--accent);}
 .card.lc-sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset;}
 .sel-bar{
-  position:sticky;top:0;z-index:20;display:flex;gap:8px;align-items:center;
-  margin:0 0 12px;padding:8px;border-radius:13px;
-  background:rgba(20,24,30,.96);border:1px solid var(--line);backdrop-filter:blur(8px);
+  position:fixed;left:10px;right:10px;bottom:calc(var(--safe-bot) + 70px);z-index:56;
+  display:flex;gap:8px;align-items:center;padding:10px;border-radius:14px;
+  background:rgba(20,24,30,.97);border:1px solid var(--accent);
+  box-shadow:0 12px 34px rgba(0,0,0,.55);backdrop-filter:blur(10px);animation:sqIn .2s ease;
 }
 .sel-bar.hidden{display:none;}
 
@@ -431,3 +432,36 @@ html,body,#app,#view{max-width:100%;overflow-x:hidden;}
   height:248px;object-fit:cover;background:var(--card-2);transition:filter .35s ease;
 }
 .detail-photo.lq{filter:blur(8px) saturate(1.05);}
+
+/* ── Шапка с кнопкой «назад» ── */
+#topbar{display:flex;align-items:center;gap:4px;}
+.tb-head{flex:1;min-width:0;}
+.back-btn{
+  flex:0 0 auto;background:none;border:none;color:var(--accent-2);
+  font-size:32px;line-height:1;font-weight:400;padding:0 8px 0 0;cursor:pointer;
+}
+.back-btn.hidden{display:none;}
+.back-btn:active{opacity:.55;}
+
+/* ── 4 вкладки → шрифт крупнее ── */
+.tab{font-size:11.5px;}
+
+/* ── Строка поиска (в Объектах) ── */
+.search-bar{
+  width:100%;display:flex;align-items:center;gap:10px;text-align:left;
+  background:var(--bg-soft);border:1px solid var(--line);border-radius:13px;
+  padding:13px 14px;color:var(--txt-3);font-size:15px;font-family:inherit;
+  margin-bottom:12px;cursor:pointer;transition:border-color .15s;
+}
+.search-bar .sb-ic{font-size:18px;color:var(--txt-2);}
+.search-bar:active{border-color:var(--accent);}
+
+/* ── Теги-чипы в фильтрах (несколько ЖК/районов/метро) ── */
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+.tags:empty{display:none;}
+.tag{
+  display:inline-flex;align-items:center;gap:7px;background:var(--accent-soft);
+  color:var(--accent-2);border-radius:9px;padding:5px 8px 5px 11px;font-size:13px;font-weight:600;
+}
+.tag-x{cursor:pointer;font-size:16px;line-height:1;opacity:.8;}
+.tag-x:active{opacity:.5;}
