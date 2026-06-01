@@ -382,3 +382,14 @@ img.listing-thumb{transition:filter .35s ease;}
   border:none;border-radius:9px;padding:5px 10px;font-size:11.5px;font-weight:600;cursor:pointer;
 }
 .sq-x.danger{color:var(--red);}
+
+/* ── Карта (обвести область) ── */
+.map-tools{display:flex;gap:8px;align-items:center;margin-bottom:10px;}
+.map-box{height:58vh;min-height:340px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--card-2);}
+.map-box.drawing{touch-action:none;}
+.map-box.drawing .leaflet-interactive{cursor:crosshair;}
+.map-legend{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--txt-3);margin-top:8px;}
+.dotm{width:10px;height:10px;border-radius:50%;display:inline-block;margin-left:8px;}
+.dotm.blue{background:#5b8cff;}
+.dotm.amber{background:#f5b945;}
+.leaflet-container{background:#1a1d23;font:inherit;}
