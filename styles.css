@@ -424,3 +424,10 @@ html,body,#app,#view{max-width:100%;overflow-x:hidden;}
 .cc-thumb.nophoto::after{background:none;}
 .carousel{scroll-padding-left:2px;}
 .section-title{color:var(--txt-2);}
+
+/* ── Фото в детальном просмотре: во всю ширину, без чёрных уголков ── */
+.detail-photo{
+  display:block;width:calc(100% + 32px);max-width:none;margin:-6px -16px 16px;
+  height:248px;object-fit:cover;background:var(--card-2);transition:filter .35s ease;
+}
+.detail-photo.lq{filter:blur(8px) saturate(1.05);}
