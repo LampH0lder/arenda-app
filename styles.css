@@ -414,3 +414,13 @@ img.listing-thumb{transition:filter .35s ease;}
 /* ── Убираем горизонтальное переполнение (чёрные краюшки при переходах) ── */
 html,body,#app,#view{max-width:100%;overflow-x:hidden;}
 #view>*{max-width:100%;}
+
+/* ── Версия (незаметно) ── */
+.app-ver{text-align:center;color:var(--txt-3);font-size:11px;letter-spacing:.06em;margin:26px 0 8px;opacity:.7;}
+
+/* ── Лёгкий лоск ── */
+.ccard{box-shadow:0 4px 16px rgba(0,0,0,.22);}
+.cc-thumb::after{content:"";position:absolute;left:0;right:0;bottom:0;height:38px;background:linear-gradient(180deg,transparent,rgba(13,15,18,.45));pointer-events:none;}
+.cc-thumb.nophoto::after{background:none;}
+.carousel{scroll-padding-left:2px;}
+.section-title{color:var(--txt-2);}
