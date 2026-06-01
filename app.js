@@ -190,6 +190,7 @@ async function renderHome() {
       <button class="quick-btn" id="qSearch"><span class="qi">⌕</span><span class="qt">Поиск вариантов</span><span class="qs">по всей базе</span></button>
       <button class="quick-btn" id="qClients"><span class="qi">☺</span><span class="qt">Клиенты</span><span class="qs">${s.active ?? 0} активных</span></button>
       <button class="quick-btn" id="qAdd"><span class="qi">＋</span><span class="qt">Новый клиент</span><span class="qs">добавить вручную</span></button>
+      <button class="quick-btn" id="qHist"><span class="qi">↻</span><span class="qt">История отправок</span><span class="qs">что уже ушло</span></button>
       <button class="quick-btn" id="qCov"><span class="qi">▤</span><span class="qt">Охват по чатам</span><span class="qs">что собрано</span></button>
     </div>
     ${(!acc.connected) ? `
@@ -209,6 +210,7 @@ async function renderHome() {
   $("#qSearch").onclick = () => switchTab("search");
   $("#qClients").onclick = () => switchTab("clients");
   $("#qAdd").onclick = () => sheetAddClient();
+  $("#qHist").onclick = () => { haptic(); go(renderHistory); };
   $("#qCov").onclick = () => sheetCoverage();
   const connBtn = $("#connBtn"); if (connBtn) connBtn.onclick = () => { haptic(); switchTab("profile"); };
   const mt = $("#mToggle"); if (mt) mt.onclick = async () => {
@@ -323,7 +325,7 @@ async function renderMatch(client, page = 0, acc = null) {
     if (!data.total) acc.querySelector("#matchList").appendChild(el(`<div class="empty"><span class="em-ic">⌂</span>Подходящих вариантов нет</div>`));
   }
   const list = acc.querySelector("#matchList");
-  for (const l of data.listings) list.appendChild(listingCard(l, () => sendListing(l, client.id)));
+  for (const l of data.listings) list.appendChild(listingCard(l, () => sendListing(l, client.id, client.name)));
   const oldMore = acc.querySelector(".more-btn"); if (oldMore) oldMore.remove();
   if (data.has_more) {
     const more = el(`<button class="btn btn-soft more-btn" style="margin-top:6px">Ещё ${Math.min(12, data.total - (page + 1) * 12)} вариантов</button>`);
@@ -340,6 +342,12 @@ async function renderListings(source = "all") {
   let listings = []; try { listings = await api("/listings?limit=50&source=" + source); } catch (e) {}
   view.innerHTML = "";
   const wrap = el(`<div class="fade-in"></div>`);
+  // поиск по номеру объявления (#776 из уведомлений) — открыть конкретный объект
+  const idbar = el(`<div class="idsearch">
+    <input class="input" id="lidInput" inputmode="numeric" placeholder="Открыть по номеру: 776 или #776">
+    <button class="btn btn-soft sm" id="lidGo">Открыть</button>
+  </div>`);
+  wrap.appendChild(idbar);
   wrap.appendChild(el(`
     <div class="seg">
       <button data-s="all" class="${source === "all" ? "on" : ""}">Все</button>
@@ -349,6 +357,13 @@ async function renderListings(source = "all") {
   if (!listings.length) wrap.appendChild(el(`<div class="empty"><span class="em-ic">⌂</span>Здесь пока пусто</div>`));
   for (const l of listings) wrap.appendChild(listingCard(l, null, true));
   view.appendChild(wrap);
+  const openById = () => {
+    const raw = (idbar.querySelector("#lidInput").value || "").replace(/\D/g, "");
+    if (!raw) return toast("Введите номер объявления");
+    haptic(); go(() => renderListingDetail(parseInt(raw)));
+  };
+  idbar.querySelector("#lidGo").onclick = openById;
+  idbar.querySelector("#lidInput").addEventListener("keydown", (e) => { if (e.key === "Enter") openById(); });
   wrap.querySelectorAll(".seg button").forEach(b => b.onclick = () => {
     haptic(); stack[stack.length - 1] = () => renderListings(b.dataset.s); renderListings(b.dataset.s);
   });
@@ -410,11 +425,56 @@ async function renderListingDetail(id) {
   // фото (через fetch+blob, чтобы обойти заглушку ngrok)
   const ph = wrap.querySelector("[data-photo]");
   fetchImg(`/listings/${id}/photo`).then(url => { ph.src = url; ph.style.display = "block"; }).catch(() => {});
-  $("#bSend").onclick = () => { haptic(); sheetClientPicker((cid) => sendListing(l, cid)); };
+  $("#bSend").onclick = () => { haptic(); sheetClientPicker((cid, cname) => sendListing(l, cid, cname)); };
   $("#bBroad").onclick = () => { haptic(); sheetBroadcast(l); };
   const ob = $("#bOpen"); if (ob) ob.onclick = () => { haptic(); tg?.openTelegramLink ? tg.openTelegramLink(l.url) : window.open(l.url); };
 }
 const kv = (k, v) => `<div class="kv"><span class="k">${esc(k)}</span><span class="v">${esc(String(v))}</span></div>`;
+
+/* ════════════════════════ ИСТОРИЯ ОТПРАВОК ════════════════════════ */
+function fmtSent(s) {
+  if (!s) return "";
+  const d = new Date(s.endsWith("Z") || s.includes("+") ? s : s + "Z");
+  if (isNaN(d)) return "";
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  const yest = new Date(now); yest.setDate(now.getDate() - 1);
+  const time = d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+  if (sameDay) return "сегодня " + time;
+  if (d.toDateString() === yest.toDateString()) return "вчера " + time;
+  return d.toLocaleDateString("ru-RU", { day: "numeric", month: "short" }) + " " + time;
+}
+
+async function renderHistory() {
+  setTitle("История отправок", "что уже ушло клиентам");
+  removeFab();
+  loading();
+  let items = []; try { items = await api("/history"); } catch (e) {}
+  view.innerHTML = "";
+  const wrap = el(`<div class="fade-in"></div>`);
+  if (!items.length) {
+    wrap.appendChild(el(`<div class="empty"><span class="em-ic">↻</span>Пока ничего не отправляли</div>`));
+    view.appendChild(wrap); return;
+  }
+  wrap.appendChild(el(`<div class="muted" style="margin:2px 4px 12px">Последние ${items.length} отправок</div>`));
+  for (const it of items) {
+    const row = el(`
+      <div class="card tap hist-row">
+        <div class="client-row">
+          <div class="hist-ic">📤</div>
+          <div class="client-main">
+            <div class="client-name" style="font-size:15px">${fmtMoney(it.price)} ₽ · ${esc(roomsLabel(it.rooms) || "")}</div>
+            <div class="client-crit">${esc(listingTitle(it))}</div>
+            <div class="hist-meta">→ <b>${esc(it.client_name || "клиент")}</b> · ${esc(fmtSent(it.sent_at))} · #${it.id}</div>
+          </div>
+          <div class="chev">›</div>
+        </div>
+      </div>`);
+    row.onclick = () => { haptic(); go(() => renderListingDetail(it.id)); };
+    wrap.appendChild(row);
+  }
+  view.appendChild(wrap);
+}
 
 /* ════════════════════════ SEARCH ════════════════════════ */
 let searchState = { text: "", results: [], page: 0, hasMore: false, sel: new Set() };
@@ -472,13 +532,13 @@ function paintSearch() {
         row.onclick = () => { haptic(); on ? searchState.sel.delete(l.id) : searchState.sel.add(l.id); renderRows(); };
         rows.appendChild(row);
       } else {
-        rows.appendChild(listingCard(l, () => sheetClientPicker((cid) => sendListing(l, cid))));
+        rows.appendChild(listingCard(l, () => sheetClientPicker((cid, cname) => sendListing(l, cid, cname))));
       }
     }
     let sendSel = rows.querySelector(".send-sel");
     if (selectMode && searchState.sel.size) {
       const b = el(`<button class="btn btn-green send-sel" style="margin-top:6px">📨 Отправить отмеченные (${searchState.sel.size}) одному</button>`);
-      b.onclick = () => { haptic(); sheetClientPicker((cid) => sendMany([...searchState.sel], cid)); };
+      b.onclick = () => { haptic(); sheetClientPicker((cid, cname) => sendMany([...searchState.sel], cid, cname)); };
       rows.appendChild(b);
     }
   }
@@ -500,21 +560,92 @@ function notConnectedPrompt() {
   toast("Сначала подключите свой Telegram в «Профиле»", "err");
   setTimeout(() => switchTab("profile"), 1000);
 }
-async function sendListing(l, clientId) {
-  toast("Отправляю…");
-  try {
-    const r = await api("/send", { method: "POST", body: { client_id: clientId, listing_id: l.id } });
-    if (r.sent) { notify("success"); toast("Отправлено клиенту ✓", "ok"); }
-    else { notify("error"); toast("Не удалось отправить", "err"); }
-  } catch (e) { if (e.message === "not_connected") return notConnectedPrompt(); toast("Ошибка: " + e.message, "err"); }
+
+/* ── Очередь отправки: видно, что варианты грузятся и уходят ── */
+let sendQ = [], sendQSeq = 0, sendQWorking = false;
+
+function enqueueSend(l, clientId, clientName) {
+  sendQ.push({
+    id: ++sendQSeq, lid: l.id, clientId, client: clientName || "клиенту",
+    title: `${fmtMoney(l.price)} ₽ · ${listingTitle(l)}`, status: "wait",
+  });
+  renderSendQ(); pumpSendQ();
 }
-async function sendMany(ids, clientId) {
-  closeSheet(); toast(`Отправляю ${ids.length} вариантов…`);
-  try {
-    const r = await api("/send", { method: "POST", body: { client_id: clientId, listing_ids: ids } });
-    notify("success"); toast(`Отправлено: ${r.sent}${r.failed ? ", ошибок " + r.failed : ""}`, "ok");
-    searchState.sel.clear();
-  } catch (e) { if (e.message === "not_connected") return notConnectedPrompt(); toast("Ошибка: " + e.message, "err"); }
+function enqueueMany(listings, clientId, clientName) {
+  for (const l of listings) enqueueSend(l, clientId, clientName);
+}
+
+async function pumpSendQ() {
+  if (sendQWorking) return;
+  sendQWorking = true;
+  for (;;) {
+    const item = sendQ.find(x => x.status === "wait");
+    if (!item) break;
+    item.status = "send"; renderSendQ();
+    try {
+      const r = await api("/send", { method: "POST", body: { client_id: item.clientId, listing_id: item.lid } });
+      item.status = r.sent ? "ok" : "err";
+      if (r.sent) notify("success");
+    } catch (e) {
+      item.status = "err";
+      if (e.message === "not_connected") {
+        item.note = "нет аккаунта";
+        // снимаем остальные ожидающие — без подключения смысла нет
+        sendQ.forEach(x => { if (x.status === "wait") { x.status = "err"; x.note = "нет аккаунта"; } });
+        renderSendQ(); sendQWorking = false; notConnectedPrompt(); return;
+      }
+    }
+    renderSendQ();
+  }
+  sendQWorking = false;
+  renderSendQ();
+}
+
+function sendQClearDone() {
+  sendQ = sendQ.filter(x => x.status === "wait" || x.status === "send");
+  renderSendQ();
+}
+
+function renderSendQ() {
+  let panel = $("#sendq");
+  if (!sendQ.length) { if (panel) panel.remove(); return; }
+  if (!panel) {
+    panel = el(`<div id="sendq"></div>`);
+    $("#app").appendChild(panel);
+  }
+  const active = sendQ.filter(x => x.status === "wait" || x.status === "send").length;
+  const ok = sendQ.filter(x => x.status === "ok").length;
+  const err = sendQ.filter(x => x.status === "err").length;
+  const ic = { wait: "⏳", send: "📤", ok: "✓", err: "✕" };
+  const head = active
+    ? `Отправка… осталось ${active}`
+    : `Готово · отправлено ${ok}${err ? ", ошибок " + err : ""}`;
+  panel.innerHTML = `
+    <div class="sq-head">
+      <span class="sq-title">${active ? '<span class="sq-spin"></span>' : "📨"} ${esc(head)}</span>
+      ${active ? "" : `<button class="sq-x" id="sqClose">Скрыть</button>`}
+    </div>
+    <div class="sq-list">
+      ${sendQ.slice(-6).map(x => `
+        <div class="sq-row ${x.status}">
+          <span class="sq-ic">${ic[x.status]}</span>
+          <span class="sq-info"><span class="sq-name">${esc(x.title)}</span>
+          <span class="sq-sub">→ ${esc(x.client)}${x.note ? " · " + esc(x.note) : ""}</span></span>
+        </div>`).join("")}
+    </div>`;
+  const x = panel.querySelector("#sqClose");
+  if (x) x.onclick = () => { haptic(); sendQClearDone(); };
+}
+
+function sendListing(l, clientId, clientName) {
+  enqueueSend(l, clientId, clientName);
+}
+function sendMany(ids, clientId, clientName) {
+  closeSheet();
+  const byId = new Map((searchState.results || []).map(l => [l.id, l]));
+  const listings = ids.map(id => byId.get(id)).filter(Boolean);
+  enqueueMany(listings, clientId, clientName);
+  searchState.sel.clear();
 }
 
 /* ════════════════════════ Sheets ════════════════════════ */
@@ -533,7 +664,7 @@ async function sheetClientPicker(onPick, status = "active") {
       <div class="avatar" data-av="${c.id}">${esc(initials(c.name))}</div>
       <div class="client-main"><div class="client-name">${esc(c.name)}</div>
       <div class="client-crit">${esc(critSummary(c))}</div></div></div></div>`);
-    row.onclick = () => { haptic(); closeSheet(); onPick(c.id); };
+    row.onclick = () => { haptic(); closeSheet(); onPick(c.id, c.name); };
     list.appendChild(row); lazyAvatar(row.querySelector("[data-av]"), c);
   }
 }
