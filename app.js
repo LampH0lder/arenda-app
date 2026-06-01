@@ -163,6 +163,7 @@ function switchTab(tab) {
   else if (tab === "clients") go(() => renderClients());
   else if (tab === "listings") go(() => renderListings());
   else if (tab === "search") go(renderSearch);
+  else if (tab === "profile") go(renderProfile);
 }
 document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => switchTab(t.dataset.tab)));
 view.addEventListener("scroll", () => $("#topbar").classList.toggle("scrolled", view.scrollTop > 6));
@@ -172,7 +173,9 @@ async function renderHome() {
   setTitle("Главная", "помощник риелтора");
   loading();
   let s = {}; try { s = await api("/stats"); } catch (e) {}
-  let morning = false; try { morning = (await api("/morning")).enabled; } catch (e) {}
+  let mo = {}; try { mo = await api("/morning"); } catch (e) {}
+  const morning = !!mo.enabled, ownerOnly = !!mo.owner_only;
+  let acc = {}; try { acc = await api("/account"); } catch (e) {}
   view.innerHTML = "";
   const wrap = el(`<div class="fade-in"></div>`);
   wrap.innerHTML = `
@@ -189,18 +192,26 @@ async function renderHome() {
       <button class="quick-btn" id="qAdd"><span class="qi">＋</span><span class="qt">Новый клиент</span><span class="qs">добавить вручную</span></button>
       <button class="quick-btn" id="qCov"><span class="qi">▤</span><span class="qt">Охват по чатам</span><span class="qs">что собрано</span></button>
     </div>
+    ${(!acc.connected) ? `
+    <div class="card" id="connCard" style="border-color:var(--accent);margin-top:6px">
+      <div style="font-weight:640;margin-bottom:4px">📲 Подключите свой Telegram</div>
+      <div class="muted" style="margin-bottom:10px">Чтобы отправлять варианты клиентам от вашего имени.</div>
+      <button class="btn btn-primary sm" id="connBtn">Подключить</button>
+    </div>` : ""}
+    ${ownerOnly ? "" : `
     <div class="section-title">Утренняя рассылка</div>
     <div class="card row-between">
       <div><div style="font-weight:640">${morning ? "Включена" : "Выключена"}</div>
       <div class="muted">тёплое «доброе утро» клиентам</div></div>
       <button class="btn sm ${morning ? "btn-danger" : "btn-green"}" id="mToggle">${morning ? "Выключить" : "Включить"}</button>
-    </div>`;
+    </div>`}`;
   view.appendChild(wrap);
   $("#qSearch").onclick = () => switchTab("search");
   $("#qClients").onclick = () => switchTab("clients");
   $("#qAdd").onclick = () => sheetAddClient();
   $("#qCov").onclick = () => sheetCoverage();
-  $("#mToggle").onclick = async (e) => {
+  const connBtn = $("#connBtn"); if (connBtn) connBtn.onclick = () => { haptic(); switchTab("profile"); };
+  const mt = $("#mToggle"); if (mt) mt.onclick = async () => {
     haptic();
     const r = await api("/morning", { method: "POST", body: { enabled: !morning } });
     toast(r.enabled ? "Утренняя рассылка включена" : "Выключена", "ok"); renderHome();
@@ -484,13 +495,18 @@ function paintSearch() {
 }
 
 /* ════════════════════════ Отправка ════════════════════════ */
+function notConnectedPrompt() {
+  notify("error");
+  toast("Сначала подключите свой Telegram в «Профиле»", "err");
+  setTimeout(() => switchTab("profile"), 1000);
+}
 async function sendListing(l, clientId) {
   toast("Отправляю…");
   try {
     const r = await api("/send", { method: "POST", body: { client_id: clientId, listing_id: l.id } });
     if (r.sent) { notify("success"); toast("Отправлено клиенту ✓", "ok"); }
     else { notify("error"); toast("Не удалось отправить", "err"); }
-  } catch (e) { toast("Ошибка: " + e.message, "err"); }
+  } catch (e) { if (e.message === "not_connected") return notConnectedPrompt(); toast("Ошибка: " + e.message, "err"); }
 }
 async function sendMany(ids, clientId) {
   closeSheet(); toast(`Отправляю ${ids.length} вариантов…`);
@@ -498,7 +514,7 @@ async function sendMany(ids, clientId) {
     const r = await api("/send", { method: "POST", body: { client_id: clientId, listing_ids: ids } });
     notify("success"); toast(`Отправлено: ${r.sent}${r.failed ? ", ошибок " + r.failed : ""}`, "ok");
     searchState.sel.clear();
-  } catch (e) { toast("Ошибка: " + e.message, "err"); }
+  } catch (e) { if (e.message === "not_connected") return notConnectedPrompt(); toast("Ошибка: " + e.message, "err"); }
 }
 
 /* ════════════════════════ Sheets ════════════════════════ */
@@ -682,6 +698,112 @@ async function sheetCoverage() {
     const fmt = (s) => s ? new Date(s).toLocaleDateString("ru-RU", { day: "numeric", month: "short" }) : "—";
     box.appendChild(el(`<div class="card"><div class="row-between"><b>${esc(r.source)}</b><span class="chip accent">${r.count}</span></div>
       <div class="muted" style="margin-top:6px">с ${fmt(r.first)} по ${fmt(r.last)}</div></div>`));
+  }
+}
+
+/* ════════════════════════ PROFILE / ACCOUNT ════════════════════════ */
+const TG_USER = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) || {};
+
+async function renderProfile() {
+  setTitle("Профиль", "ваш аккаунт");
+  removeFab();
+  loading();
+  let acc = {}; try { acc = await api("/account"); } catch (e) {}
+  view.innerHTML = "";
+  const wrap = el(`<div class="fade-in"></div>`);
+  const uname = TG_USER.username ? "@" + TG_USER.username : (TG_USER.id ? "id " + TG_USER.id : "");
+  const fullName = [TG_USER.first_name, TG_USER.last_name].filter(Boolean).join(" ") || "Вы";
+
+  let connHtml;
+  if (acc.owner) {
+    connHtml = `<div class="card"><div class="row-between">
+      <div><div style="font-weight:640">✅ Аккаунт владельца</div>
+      <div class="muted">отправка вариантов работает</div></div></div></div>`;
+  } else if (acc.connected) {
+    connHtml = `<div class="card">
+      <div class="row-between"><div>
+        <div style="font-weight:640">✅ Telegram подключён</div>
+        <div class="muted">${esc(acc.name || "")}${acc.username ? " · @" + esc(acc.username) : ""}${acc.phone ? " · " + esc(acc.phone) : ""}</div>
+      </div></div>
+      <button class="btn btn-danger sm" id="accDisc" style="margin-top:12px">Отключить аккаунт</button>
+    </div>`;
+  } else {
+    connHtml = `<div class="card">
+      <div style="font-weight:640;margin-bottom:6px">📲 Подключите свой Telegram</div>
+      <div class="muted" style="margin-bottom:12px">Чтобы отправлять варианты клиентам <b>от вашего имени</b>. Без этого подбор и клиенты работают, но кнопка «Отправить» будет недоступна.</div>
+      <button class="btn btn-primary" id="accConn">Подключить Telegram</button>
+    </div>`;
+  }
+
+  wrap.innerHTML = `
+    <div class="detail-hero">
+      <div class="avatar" style="font-size:22px">${esc(initials(fullName))}</div>
+      <div><h2>${esc(fullName)}</h2><div class="sub">${esc(uname)}</div></div>
+    </div>
+    ${connHtml}
+    <div class="muted" style="margin:18px 4px;font-size:12.5px">🔒 Данные ваших клиентов видите только вы. Подключение хранится в зашифрованном виде.</div>`;
+  view.appendChild(wrap);
+  const cc = $("#accConn"); if (cc) cc.onclick = () => { haptic(); sheetConnectAccount(); };
+  const cd = $("#accDisc"); if (cd) cd.onclick = async () => {
+    if (!confirm("Отключить ваш Telegram-аккаунт от бота?")) return;
+    haptic(); try { await api("/account/disconnect", { method: "POST", body: {} }); toast("Аккаунт отключён", "ok"); renderProfile(); }
+    catch (e) { toast("Ошибка", "err"); }
+  };
+}
+
+function sheetConnectAccount() {
+  stepPhone();
+  function stepPhone() {
+    const b = openSheet(`<div class="sheet-title">Подключение Telegram</div>
+      <div class="muted" style="margin-bottom:12px">Введите номер телефона вашего Telegram (в формате +7…). Придёт код в Telegram.</div>
+      <div class="field"><input class="input" id="cPhone" inputmode="tel" placeholder="+79991234567"></div>
+      <button class="btn btn-primary" id="cNext">Получить код</button>
+      <div class="muted" style="margin-top:12px;font-size:12px">🔒 Код и пароль не сохраняются. Хранится только зашифрованная сессия для отправки от вашего имени.</div>`);
+    b.querySelector("#cNext").onclick = async () => {
+      const phone = b.querySelector("#cPhone").value.trim();
+      if (!phone) return toast("Введите номер");
+      haptic(); b.querySelector("#cNext").textContent = "Отправляю код…"; b.querySelector("#cNext").disabled = true;
+      try { await api("/account/start", { method: "POST", body: { phone } }); stepCode(); }
+      catch (e) { toast("Ошибка: " + e.message, "err"); b.querySelector("#cNext").textContent = "Получить код"; b.querySelector("#cNext").disabled = false; }
+    };
+  }
+  function stepCode() {
+    const b = openSheet(`<div class="sheet-title">Код из Telegram</div>
+      <div class="muted" style="margin-bottom:12px">Введите код, который пришёл в Telegram (в чат от Telegram).</div>
+      <div class="field"><input class="input" id="cCode" inputmode="numeric" placeholder="12345"></div>
+      <button class="btn btn-primary" id="cNext">Подтвердить</button>`);
+    b.querySelector("#cNext").onclick = async () => {
+      const code = b.querySelector("#cCode").value.trim();
+      if (!code) return toast("Введите код");
+      haptic(); b.querySelector("#cNext").disabled = true;
+      try {
+        const r = await api("/account/code", { method: "POST", body: { code } });
+        if (r.status === "password_needed") return stepPassword();
+        if (r.status === "connected") return done(r);
+        toast("Не удалось войти", "err"); b.querySelector("#cNext").disabled = false;
+      } catch (e) { toast("Ошибка: " + e.message, "err"); b.querySelector("#cNext").disabled = false; }
+    };
+  }
+  function stepPassword() {
+    const b = openSheet(`<div class="sheet-title">Облачный пароль (2FA)</div>
+      <div class="muted" style="margin-bottom:12px">У аккаунта включён облачный пароль. Введите его.</div>
+      <div class="field"><input class="input" id="cPwd" type="password" placeholder="пароль"></div>
+      <button class="btn btn-primary" id="cNext">Войти</button>`);
+    b.querySelector("#cNext").onclick = async () => {
+      const password = b.querySelector("#cPwd").value;
+      if (!password) return toast("Введите пароль");
+      haptic(); b.querySelector("#cNext").disabled = true;
+      try {
+        const r = await api("/account/password", { method: "POST", body: { password } });
+        if (r.status === "connected") return done(r);
+        toast("Неверный пароль", "err"); b.querySelector("#cNext").disabled = false;
+      } catch (e) { toast("Ошибка: " + e.message, "err"); b.querySelector("#cNext").disabled = false; }
+    };
+  }
+  function done(r) {
+    closeSheet(); notify("success");
+    toast("Telegram подключён ✓ " + (r.name || ""), "ok");
+    renderProfile();
   }
 }
 
