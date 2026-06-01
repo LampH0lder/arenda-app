@@ -41,6 +41,51 @@ async function fetchImg(path) {
   return URL.createObjectURL(await r.blob());
 }
 
+/* ── Голосовой ввод: запись через микрофон -> Whisper на бэке -> текст ── */
+function voiceButton(onText, label = "🎤 Голосом") {
+  const btn = el(`<button class="btn btn-soft sm voicebtn">${label}</button>`);
+  let rec = null, chunks = [], stream = null;
+  btn.onclick = async () => {
+    if (rec && rec.state === "recording") { rec.stop(); return; }
+    if (!navigator.mediaDevices?.getUserMedia) { toast("Микрофон недоступен", "err"); return; }
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (e) { toast("Нет доступа к микрофону", "err"); return; }
+    chunks = [];
+    try { rec = new MediaRecorder(stream); }
+    catch (e) { rec = new MediaRecorder(stream, { mimeType: "audio/webm" }); }
+    rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+    rec.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      btn.textContent = "⏳ Распознаю…"; btn.disabled = true; btn.classList.remove("rec");
+      const blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
+      try {
+        const r = await fetch(API_BASE + "/api/transcribe", {
+          method: "POST", headers: { ...BASE_HEADERS, "Content-Type": blob.type }, body: blob,
+        });
+        const j = await r.json();
+        if (j.text && j.text.trim()) { onText(j.text.trim()); notify("success"); toast("Распознал ✓", "ok"); }
+        else toast("Не расслышал, попробуй ещё", "err");
+      } catch (e) { toast("Ошибка распознавания", "err"); }
+      btn.textContent = label; btn.disabled = false;
+    };
+    rec.start(); haptic("medium");
+    btn.textContent = "⏹ Стоп — записываю…"; btn.classList.add("rec");
+  };
+  return btn;
+}
+
+/* ── Ленивая подгрузка миниатюр (первое фото объекта) ── */
+const thumbObserver = ("IntersectionObserver" in window) ? new IntersectionObserver((entries) => {
+  for (const e of entries) {
+    if (!e.isIntersecting) continue;
+    const node = e.target; thumbObserver.unobserve(node);
+    fetchImg(`/listings/${node.dataset.thumb}/photo`)
+      .then(url => { node.style.backgroundImage = `url(${url})`; node.classList.add("loaded"); })
+      .catch(() => node.classList.add("nophoto"));
+  }
+}, { rootMargin: "150px" }) : null;
+
 /* ── helpers ── */
 const $ = (s, r = document) => r.querySelector(s);
 const view = $("#view");
@@ -277,35 +322,48 @@ async function renderMatch(client, page = 0, acc = null) {
 }
 
 /* ════════════════════════ LISTINGS ════════════════════════ */
-async function renderListings() {
+async function renderListings(source = "all") {
   setTitle("Объекты", "последние объявления");
   removeFab();
   loading();
-  let listings = []; try { listings = await api("/listings?limit=40"); } catch (e) {}
+  let listings = []; try { listings = await api("/listings?limit=50&source=" + source); } catch (e) {}
   view.innerHTML = "";
   const wrap = el(`<div class="fade-in"></div>`);
-  if (!listings.length) wrap.appendChild(el(`<div class="empty"><span class="em-ic">⌂</span>База пуста — соберите объявления</div>`));
+  wrap.appendChild(el(`
+    <div class="seg">
+      <button data-s="all" class="${source === "all" ? "on" : ""}">Все</button>
+      <button data-s="exclusives" class="${source === "exclusives" ? "on" : ""}">Эксклюзивы</button>
+      <button data-s="arendok" class="${source === "arendok" ? "on" : ""}">Arendok</button>
+    </div>`));
+  if (!listings.length) wrap.appendChild(el(`<div class="empty"><span class="em-ic">⌂</span>Здесь пока пусто</div>`));
   for (const l of listings) wrap.appendChild(listingCard(l, null, true));
   view.appendChild(wrap);
+  wrap.querySelectorAll(".seg button").forEach(b => b.onclick = () => {
+    haptic(); stack[stack.length - 1] = () => renderListings(b.dataset.s); renderListings(b.dataset.s);
+  });
 }
 
-function listingCard(l, onSend, openable = true) {
+function listingCard(l, onSend, openable = true, thumb = true) {
   const card = el(`
-    <div class="card ${openable ? "tap" : ""}">
-      <div class="row-between" style="align-items:flex-start">
-        <div style="min-width:0">
-          <div class="listing-price">${fmtMoney(l.price)} ₽<span class="muted" style="font-size:13px;font-weight:500">/мес</span></div>
-          <div class="listing-title">${esc(listingTitle(l))}</div>
-          <div class="listing-meta">${esc(listingMeta(l))}</div>
+    <div class="card pad0 ${openable ? "tap" : ""}">
+      ${thumb ? `<div class="card-thumb" data-thumb="${l.id}"><span class="src-badge">${esc(l.source || "")}</span></div>` : ""}
+      <div class="card-body">
+        <div class="row-between" style="align-items:flex-start">
+          <div style="min-width:0">
+            <div class="listing-price">${fmtMoney(l.price)} ₽<span class="muted" style="font-size:13px;font-weight:500">/мес</span></div>
+            <div class="listing-title">${esc(listingTitle(l))}</div>
+            <div class="listing-meta">${esc(listingMeta(l))}</div>
+          </div>
+        </div>
+        ${(l.geo && l.geo.length) ? `<div style="margin-top:8px">${l.geo.map(g => `<div class="geo-line">${esc(g)}</div>`).join("")}</div>` : ""}
+        <div class="btn-row" style="margin-top:12px">
+          ${onSend ? `<button class="btn btn-green sm" style="flex:1" data-send>📤 Отправить</button>` : ""}
+          ${l.url ? `<button class="btn btn-soft sm" style="flex:1" data-open>👁 Пост</button>` : ""}
+          <button class="btn btn-soft sm" style="flex:1" data-detail>Подробнее</button>
         </div>
       </div>
-      ${(l.geo && l.geo.length) ? `<div style="margin-top:8px">${l.geo.map(g => `<div class="geo-line">${esc(g)}</div>`).join("")}</div>` : ""}
-      <div class="btn-row" style="margin-top:12px">
-        ${onSend ? `<button class="btn btn-green sm" style="flex:1" data-send>📤 Отправить</button>` : ""}
-        ${l.url ? `<button class="btn btn-soft sm" style="flex:1" data-open>👁 Открыть пост</button>` : ""}
-        <button class="btn btn-soft sm" style="flex:1" data-detail>Подробнее</button>
-      </div>
     </div>`);
+  if (thumb && thumbObserver) thumbObserver.observe(card.querySelector(".card-thumb"));
   if (onSend) card.querySelector("[data-send]").onclick = (e) => { e.stopPropagation(); haptic(); onSend(); };
   const openBtn = card.querySelector("[data-open]");
   if (openBtn) openBtn.onclick = (e) => { e.stopPropagation(); haptic(); tg?.openTelegramLink ? tg.openTelegramLink(l.url) : window.open(l.url); };
@@ -356,11 +414,17 @@ async function renderSearch() {
   const wrap = el(`<div class="fade-in"></div>`);
   wrap.innerHTML = `
     <div class="field">
-      <textarea class="input" id="sInput" placeholder="Напишите критерии: «2к юго-запад до 150», «студия у метро Фили 60 метров»…">${esc(searchState.text)}</textarea>
+      <textarea class="input" id="sInput" placeholder="Напишите или надиктуйте: «2к юго-запад до 150», «студия у метро Фили 60 метров»…">${esc(searchState.text)}</textarea>
     </div>
-    <button class="btn btn-primary" id="sGo">⌕ Найти варианты</button>
+    <div class="btn-row">
+      <span id="sVoice" style="flex:1;display:flex"></span>
+      <button class="btn btn-primary" id="sGo" style="flex:1">⌕ Найти</button>
+    </div>
     <div id="sResults" style="margin-top:18px"></div>`;
   view.appendChild(wrap);
+  $("#sVoice").replaceWith(voiceButton((text) => {
+    const ta = $("#sInput"); ta.value = ta.value ? (ta.value + " " + text) : text; runSearch();
+  }, "🎤 Голосом"));
   $("#sGo").onclick = runSearch;
   if (searchState.results.length) paintSearch();
 }
@@ -462,9 +526,13 @@ function sheetAddClient() {
   const b = openSheet(`<div class="sheet-title">Новый клиент</div>
     <div class="field"><label>Имя</label><input class="input" id="nName" placeholder="Например, Вероника"></div>
     <div class="field"><label>Telegram (@username или id) — чтобы писать ему</label><input class="input" id="nUser" placeholder="@username"></div>
-    <div class="field"><label>Критерии текстом (необязательно)</label>
-    <textarea class="input" id="nCrit" placeholder="2к юго-запад до 150, с животными"></textarea></div>
+    <div class="field"><label>Критерии — текстом или голосом (необязательно)</label>
+    <textarea class="input" id="nCrit" placeholder="2к юго-запад до 150, с животными"></textarea>
+    <div class="btn-row" style="margin-top:8px"><span id="nVoice" style="flex:1;display:flex"></span></div></div>
     <button class="btn btn-primary" id="nSave">Создать клиента</button>`);
+  b.querySelector("#nVoice").replaceWith(voiceButton((text) => {
+    const ta = b.querySelector("#nCrit"); ta.value = ta.value ? (ta.value + " " + text) : text;
+  }, "🎤 Надиктовать критерии"));
   b.querySelector("#nSave").onclick = async () => {
     const name = b.querySelector("#nName").value.trim();
     if (!name) return toast("Введите имя");
@@ -482,19 +550,90 @@ function sheetAddClient() {
   };
 }
 
+const ROOM_OPTS = [["студия", "Студия"], ["1", "1"], ["2", "2"], ["3", "3"], ["4", "4"], ["5", "5+"]];
+const ZONE_CHIPS = [["центр", "Центр"], ["север", "Север"], ["юг", "Юг"], ["запад", "Запад"],
+  ["восток", "Восток"], ["северо-запад", "С-З"], ["северо-восток", "С-В"],
+  ["юго-запад", "Ю-З"], ["юго-восток", "Ю-В"]];
+
+async function applyCritText(cid, text) {
+  await api(`/clients/${cid}/criteria`, { method: "POST", body: { text } });
+}
+
 function sheetEditCriteria(c) {
-  const b = openSheet(`<div class="sheet-title">Изменить критерии</div>
-    <div class="muted" style="margin-bottom:12px">Напишите обычным текстом — что добавить/поменять.<br>Напр.: «3к, до 200, запад», «убери метро», «вся москва», «с животными».</div>
-    <div class="field"><textarea class="input" id="eCrit" placeholder="2к юго-запад до 150"></textarea></div>
-    <button class="btn btn-primary" id="eSave">Применить</button>`);
-  b.querySelector("#eSave").onclick = async () => {
-    const text = b.querySelector("#eCrit").value.trim();
-    if (!text) return toast("Напишите критерии");
+  const curRooms = new Set(String(c.rooms || "").split(",").map(s => s.trim()).filter(Boolean));
+  const b = openSheet(`
+    <div class="sheet-title">Критерии · ${esc(c.name)}</div>
+    <div class="btn-row" style="margin-bottom:6px">
+      <span id="vSlot" style="flex:1;display:flex"></span>
+      <button class="btn btn-soft sm" id="eTextToggle" style="flex:1">✍️ Текстом</button>
+    </div>
+    <div id="eTextBox" style="display:none;margin:8px 0 4px">
+      <textarea class="input" id="eCrit" placeholder="2к юго-запад до 150, с животными"></textarea>
+      <button class="btn btn-primary sm" id="eParse" style="margin-top:8px">Применить текст</button>
+    </div>
+
+    <div class="ed-label">Комнаты</div>
+    <div class="chipsel" id="edRooms">
+      ${ROOM_OPTS.map(([v, t]) => `<button class="chsel ${curRooms.has(v) ? "on" : ""}" data-v="${v}">${t}</button>`).join("")}
+    </div>
+
+    <div class="ed-label">Бюджет, ₽/мес</div>
+    <div class="two">
+      <input class="input" id="edBmin" inputmode="numeric" placeholder="от" value="${c.budget_min || ""}">
+      <input class="input" id="edBmax" inputmode="numeric" placeholder="до" value="${c.budget_max || ""}">
+    </div>
+
+    <div class="ed-label">Площадь, м²</div>
+    <div class="two">
+      <input class="input" id="edAmin" inputmode="numeric" placeholder="от" value="${c.area_min || ""}">
+      <input class="input" id="edAmax" inputmode="numeric" placeholder="до" value="${c.area_max || ""}">
+    </div>
+
+    <div class="ed-label">Район / зона / метро</div>
+    <input class="input" id="edLoc" placeholder="напр. юго-запад, Хамовники, Фили"
+      value="${esc([c.districts, c.metro_stations].filter(Boolean).join(", "))}">
+    <div class="chipsel" id="edZones" style="margin-top:8px">
+      ${ZONE_CHIPS.map(([v, t]) => `<button class="chsel sm2" data-z="${v}">${t}</button>`).join("")}
+    </div>
+
+    <div class="ed-label">Питомцы</div>
+    <div class="chipsel"><button class="chsel ${c.has_pets ? "on" : ""}" id="edPets">🐾 С животными</button></div>
+
+    <button class="btn btn-primary" id="edSave" style="margin-top:20px">Сохранить критерии</button>
+  `);
+
+  const reopen = () => { closeSheet(); go(() => renderClientDetail(c.id), false); };
+  b.querySelector("#vSlot").replaceWith(voiceButton(async (text) => {
+    await applyCritText(c.id, text); notify("success"); toast("Применил голос ✓", "ok"); reopen();
+  }, "🎤 Надиктовать"));
+  b.querySelector("#eTextToggle").onclick = () => {
+    const box = b.querySelector("#eTextBox"); box.style.display = box.style.display === "none" ? "block" : "none";
+  };
+  b.querySelector("#eParse").onclick = async () => {
+    const t = b.querySelector("#eCrit").value.trim(); if (!t) return toast("Впиши текст");
+    haptic(); await applyCritText(c.id, t); toast("Применил ✓", "ok"); reopen();
+  };
+  b.querySelectorAll("#edRooms .chsel").forEach(x => x.onclick = () => { haptic(); x.classList.toggle("on"); });
+  b.querySelectorAll("#edZones .chsel").forEach(x => x.onclick = () => {
+    haptic(); const loc = b.querySelector("#edLoc");
+    const parts = loc.value.split(",").map(s => s.trim()).filter(Boolean);
+    if (!parts.map(p => p.toLowerCase()).includes(x.dataset.z)) { parts.push(x.dataset.z); loc.value = parts.join(", "); }
+  });
+  b.querySelector("#edPets").onclick = (e) => { haptic(); e.currentTarget.classList.toggle("on"); };
+  b.querySelector("#edSave").onclick = async () => {
     haptic();
+    const rooms = [...b.querySelectorAll("#edRooms .chsel.on")].map(x => x.dataset.v);
+    const num = (id) => { const v = parseInt((b.querySelector(id).value || "").replace(/\D/g, "")); return isNaN(v) ? null : v; };
+    const body = {
+      rooms: rooms.length ? rooms.join(",") : null,
+      budget_min: num("#edBmin"), budget_max: num("#edBmax"),
+      area_min: num("#edAmin"), area_max: num("#edAmax"),
+      has_pets: b.querySelector("#edPets").classList.contains("on"),
+      location_text: b.querySelector("#edLoc").value.trim(),
+    };
     try {
-      await api(`/clients/${c.id}/criteria`, { method: "POST", body: { text } });
-      closeSheet(); notify("success"); toast("Критерии обновлены ✓", "ok");
-      go(() => renderClientDetail(c.id), false);
+      await api(`/clients/${c.id}/criteria_structured`, { method: "POST", body });
+      notify("success"); toast("Критерии сохранены ✓", "ok"); reopen();
     } catch (e) { toast("Ошибка: " + e.message, "err"); }
   };
 }
