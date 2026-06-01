@@ -172,6 +172,24 @@ function updateBack() {
 }
 tg?.BackButton?.onClick(() => { haptic(); back(); });
 
+/* ── Свайп от левого края вправо → назад (как в iOS) ── */
+let _swipe = null;
+document.addEventListener("touchstart", (e) => {
+  if (e.touches.length !== 1) { _swipe = null; return; }
+  const t = e.touches[0];
+  // только от самого левого края, не на скроллящихся/интерактивных элементах
+  if (t.clientX > 30) { _swipe = null; return; }
+  if (e.target.closest(".carousel,.map-box,.leaflet-container,textarea,input,.sheet,.seg")) { _swipe = null; return; }
+  _swipe = { x: t.clientX, y: t.clientY };
+}, { passive: true });
+document.addEventListener("touchend", (e) => {
+  if (!_swipe) return;
+  const t = e.changedTouches[0];
+  const dx = t.clientX - _swipe.x, dy = t.clientY - _swipe.y;
+  _swipe = null;
+  if (dx > 70 && Math.abs(dy) < 45 && stack.length > 1) { haptic(); back(); }
+}, { passive: true });
+
 let activeTab = "home";
 function switchTab(tab) {
   activeTab = tab; stack = [];
@@ -205,7 +223,7 @@ async function renderHome() {
     </div>
     <div class="row-between" style="margin:22px 4px 10px">
       <div class="section-title" style="margin:0">Последние объекты</div>
-      <button class="btn-ghost" id="homeAll" style="width:auto;padding:0;font-size:13px">все ›</button>
+      <button class="link-all" id="homeAll">все ›</button>
     </div>
     <div class="carousel" id="homeCarousel"><div class="loader" style="height:150px"><div class="spin"></div></div></div>
     <div class="section-title">Быстрые действия</div>
@@ -721,7 +739,7 @@ async function renderListingDetail(id) {
       ${l.district ? kv("Район", l.district) : ""}
       ${kv("Источник", l.source || "—")}
     </div>
-    ${l.raw_text ? `<div class="section-title">Текст объявления</div><div class="card muted" style="white-space:pre-wrap;color:var(--txt)">${esc(l.raw_text)}</div>` : ""}
+    ${l.raw_text ? `<div class="section-title">Текст объявления</div><div class="card muted" style="white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;color:var(--txt)">${esc(l.raw_text)}</div>` : ""}
     <div class="btn btn-green" id="bSend" style="margin-top:18px">📤 Отправить клиенту</div>
     <div class="btn-row" style="margin-top:10px">
       ${l.url ? `<button class="btn btn-soft" id="bOpen">👁 Открыть пост</button>` : ""}
