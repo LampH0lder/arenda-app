@@ -183,8 +183,8 @@ let _swipe = null;
 document.addEventListener("touchstart", (e) => {
   if (e.touches.length !== 1) { _swipe = null; return; }
   const t = e.touches[0];
-  // только от самого левого края, не на скроллящихся/интерактивных элементах
-  if (t.clientX > 30) { _swipe = null; return; }
+  // от левого края (~48px), не на скроллящихся/интерактивных элементах
+  if (t.clientX > 48) { _swipe = null; return; }
   if (e.target.closest(".carousel,.map-box,.leaflet-container,textarea,input,.sheet,.seg")) { _swipe = null; return; }
   _swipe = { x: t.clientX, y: t.clientY };
 }, { passive: true });
@@ -193,7 +193,8 @@ document.addEventListener("touchend", (e) => {
   const t = e.changedTouches[0];
   const dx = t.clientX - _swipe.x, dy = t.clientY - _swipe.y;
   _swipe = null;
-  if (dx > 70 && Math.abs(dy) < 45 && stack.length > 1) { haptic(); back(); }
+  // явный горизонтальный свайп вправо
+  if (dx > 55 && dx > Math.abs(dy) * 1.4 && stack.length > 1) { haptic(); back(); }
 }, { passive: true });
 
 let activeTab = "home";
@@ -236,7 +237,7 @@ async function renderHome() {
     <div class="section-title">Быстрые действия</div>
     <div class="quick">
       <button class="quick-btn" id="qSearch"><span class="qi">⌕</span><span class="qt">Поиск вариантов</span><span class="qs">по всей базе</span></button>
-      <button class="quick-btn" id="qClients"><span class="qi">☺</span><span class="qt">Клиенты</span><span class="qs">${s.active ?? 0} активных</span></button>
+      <button class="quick-btn" id="qClients"><span class="qi">&#9786;&#65038;</span><span class="qt">Клиенты</span><span class="qs">${s.active ?? 0} активных</span></button>
       <button class="quick-btn" id="qAdd"><span class="qi">＋</span><span class="qt">Новый клиент</span><span class="qs">добавить вручную</span></button>
       <button class="quick-btn" id="qHist"><span class="qi">↻</span><span class="qt">История отправок</span><span class="qs">что уже ушло</span></button>
       <button class="quick-btn" id="qCov"><span class="qi">▤</span><span class="qt">Охват по чатам</span><span class="qs">что собрано</span></button>
@@ -306,7 +307,7 @@ async function renderClients(status = "active") {
       <button data-s="done" class="${status === "done" ? "on" : ""}">Архив</button>
     </div>`));
   if (!clients.length) {
-    wrap.appendChild(el(`<div class="empty"><span class="em-ic">☺</span>Пока нет клиентов в этой группе</div>`));
+    wrap.appendChild(el(`<div class="empty"><span class="em-ic">&#9786;&#65038;</span>Пока нет клиентов в этой группе</div>`));
   }
   for (const c of clients) {
     const row = el(`
@@ -736,7 +737,7 @@ async function renderListingDetail(id) {
   view.innerHTML = "";
   const wrap = el(`<div class="fade-in"></div>`);
   wrap.innerHTML = `
-    <img class="listing-thumb" data-photo style="display:none">
+    <img class="detail-photo" data-photo style="display:none">
     <div class="listing-price" style="font-size:26px">${fmtMoney(l.price)} ₽ <span class="muted" style="font-size:14px;font-weight:500">/мес</span></div>
     <div class="listing-title" style="font-size:18px;margin:4px 0 14px">${esc(listingTitle(l))}</div>
     <div class="card">
