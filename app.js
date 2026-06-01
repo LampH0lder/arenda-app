@@ -13,11 +13,8 @@ if (tg) {
 const haptic = (t = "light") => { try { tg?.HapticFeedback?.impactOccurred(t); } catch (e) {} };
 const notify = (t = "success") => { try { tg?.HapticFeedback?.notificationOccurred(t); } catch (e) {} };
 
-// версия берётся из ?v=N у app.js — обновляется сама при каждом релизе
-const APP_VERSION = (() => {
-  try { const m = (document.currentScript && document.currentScript.src || "").match(/v=(\d+)/); return m ? "v" + m[1] : ""; }
-  catch (e) { return ""; }
-})();
+// показываемая версия (фиксированная семантическая); кэш-бастер ?v=N — отдельно и невидим
+const APP_VERSION = "v1.0.1";
 
 /* ── API ──
    Фронт может быть на другом домене (GitHub Pages, чистый HTTPS без заглушки),
@@ -173,10 +170,13 @@ let stack = [];
 function go(fn, push = true) { if (push) stack.push(fn); fn(); updateBack(); }
 function back() { if (stack.length > 1) { stack.pop(); stack[stack.length - 1](); updateBack(); } }
 function updateBack() {
-  if (!tg?.BackButton) return;
-  if (stack.length > 1) { tg.BackButton.show(); } else { tg.BackButton.hide(); }
+  const show = stack.length > 1;
+  const bb = $("#backBtn"); if (bb) bb.classList.toggle("hidden", !show);
+  const tb = $("#topbar"); if (tb) tb.classList.toggle("has-back", show);
+  if (tg?.BackButton) { show ? tg.BackButton.show() : tg.BackButton.hide(); }
 }
 tg?.BackButton?.onClick(() => { haptic(); back(); });
+$("#backBtn")?.addEventListener("click", () => { haptic(); back(); });
 
 /* ── Свайп от левого края вправо → назад (как в iOS) ── */
 let _swipe = null;
@@ -205,7 +205,6 @@ function switchTab(tab) {
   if (tab === "home") go(renderHome);
   else if (tab === "clients") go(() => renderClients());
   else if (tab === "listings") go(() => renderListings());
-  else if (tab === "search") go(renderSearch);
   else if (tab === "profile") go(renderProfile);
 }
 document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => switchTab(t.dataset.tab)));
@@ -259,7 +258,7 @@ async function renderHome() {
   view.appendChild(wrap);
   $("#homeAll").onclick = () => switchTab("listings");
   loadHomeCarousel();
-  $("#qSearch").onclick = () => switchTab("search");
+  $("#qSearch").onclick = () => { haptic(); go(renderSearch); };
   $("#qClients").onclick = () => switchTab("clients");
   $("#qAdd").onclick = () => sheetAddClient();
   $("#qHist").onclick = () => { haptic(); go(renderHistory); };
@@ -425,12 +424,9 @@ async function renderListings(source = "all") {
   } catch (e) {}
   view.innerHTML = "";
   const wrap = el(`<div class="fade-in"></div>`);
-  // поиск по номеру объявления (#776 из уведомлений) — открыть конкретный объект
-  const idbar = el(`<div class="idsearch">
-    <input class="input" id="lidInput" inputmode="numeric" placeholder="Открыть по номеру: 776 или #776">
-    <button class="btn btn-soft sm" id="lidGo">Открыть</button>
-  </div>`);
-  wrap.appendChild(idbar);
+  // строка поиска — по тапу открывает полноценное меню поиска и фильтров
+  const searchBar = el(`<button class="search-bar" id="oSearch"><span class="sb-ic">⌕</span><span>Поиск вариантов и фильтры…</span></button>`);
+  wrap.appendChild(searchBar);
   wrap.appendChild(el(`
     <div class="seg">
       <button data-s="all" class="${source === "all" ? "on" : ""}">Все</button>
@@ -444,8 +440,6 @@ async function renderListings(source = "all") {
     ${on ? `<button class="btn btn-soft sm" id="lFiltClear">Сброс</button>` : ""}
   </div>`);
   wrap.appendChild(fbar);
-  const mapBtn = el(`<button class="btn btn-soft sm" id="lMap" style="width:100%;margin-bottom:12px">🗺 Показать на карте — обвести район</button>`);
-  wrap.appendChild(mapBtn);
   if (!listings.length) {
     wrap.appendChild(el(`<div class="empty"><span class="em-ic">⌂</span>${on ? "Под фильтры ничего не нашлось" : "Здесь пока пусто"}</div>`));
   }
@@ -485,13 +479,7 @@ async function renderListings(source = "all") {
   }
   renderRows();
   view.appendChild(wrap);
-  const openById = () => {
-    const raw = (idbar.querySelector("#lidInput").value || "").replace(/\D/g, "");
-    if (!raw) return toast("Введите номер объявления");
-    haptic(); go(() => renderListingDetail(parseInt(raw)));
-  };
-  idbar.querySelector("#lidGo").onclick = openById;
-  idbar.querySelector("#lidInput").addEventListener("keydown", (e) => { if (e.key === "Enter") openById(); });
+  searchBar.onclick = () => { haptic(); go(renderSearch); };
   fbar.querySelector("#lFilters").onclick = () => {
     haptic(); sheetFilters(listingsFilter || {}, (f) => {
       listingsFilter = filtersActive(f) ? f : null; renderListings(source);
@@ -499,7 +487,6 @@ async function renderListings(source = "all") {
   };
   const fc = fbar.querySelector("#lFiltClear");
   if (fc) fc.onclick = () => { haptic(); listingsFilter = null; renderListings(source); };
-  mapBtn.onclick = () => { haptic(); go(() => renderMap(source)); };
   wrap.querySelectorAll(".seg button").forEach(b => b.onclick = () => {
     haptic(); stack[stack.length - 1] = () => renderListings(b.dataset.s); renderListings(b.dataset.s);
   });
@@ -831,6 +818,10 @@ async function renderSearch() {
       <button class="btn btn-primary" id="sGo" style="flex:1">⌕ Найти</button>
     </div>
     <button class="btn btn-soft sm" id="sFilters" style="margin-top:10px;width:100%">⚙️ Фильтры — комнаты, бюджет, ЖК, район/метро, область на карте</button>
+    <div class="idsearch" style="margin-top:10px">
+      <input class="input" id="lidInput" inputmode="numeric" placeholder="Открыть объект по номеру: #776">
+      <button class="btn btn-soft sm" id="lidGo">Открыть</button>
+    </div>
     <div id="sResults" style="margin-top:18px"></div>`;
   view.appendChild(wrap);
   $("#sVoice").replaceWith(voiceButton((text) => {
@@ -838,6 +829,13 @@ async function renderSearch() {
   }, "🎤 Голосом"));
   $("#sGo").onclick = runSearch;
   $("#sFilters").onclick = () => { haptic(); sheetFilters(searchState.filters || critToFilters(searchState.applied), applySearchFilters); };
+  const openById = () => {
+    const raw = ($("#lidInput").value || "").replace(/\D/g, "");
+    if (!raw) return toast("Введите номер объявления");
+    haptic(); go(() => renderListingDetail(parseInt(raw)));
+  };
+  $("#lidGo").onclick = openById;
+  $("#lidInput").addEventListener("keydown", (e) => { if (e.key === "Enter") openById(); });
   if (searchState.results.length) paintSearch();
 }
 async function runSearch() {
@@ -1149,30 +1147,59 @@ function sheetFilters(init, onApply) {
       <input class="input" id="fAmin" inputmode="numeric" placeholder="от" value="${init.area_min || ""}">
       <input class="input" id="fAmax" inputmode="numeric" placeholder="до" value="${init.area_max || ""}">
     </div>
-    <div class="ed-label">ЖК</div>
-    <input class="input" id="fJk" placeholder="напр. Сердце Столицы, Символ" value="${esc(init.jk || "")}">
+    <div class="ed-label">ЖК <span class="muted" style="font-weight:400">— Enter добавляет, можно несколько</span></div>
+    <div class="tags" id="fJkTags"></div>
+    <input class="input" id="fJk" placeholder="введите ЖК и нажмите Enter">
     <div class="ed-label">Местоположение</div>
     <button class="btn ${poly ? "btn-primary" : "btn-soft"} sm" id="fArea" style="width:100%;margin-bottom:8px">
       ${poly ? "🗺 Область задана ✓ — изменить" : "🗺 Обвести область на карте"}
     </button>
     ${poly ? `<button class="btn btn-soft sm" id="fAreaClear" style="width:100%;margin-bottom:8px">Убрать область</button>` : ""}
-    <input class="input" id="fDistrict" placeholder="или район/зона: Раменки, Хамовники, юго-запад" value="${esc(init.district || "")}">
+    <div class="tags" id="fDistTags"></div>
+    <input class="input" id="fDistrict" placeholder="район/зона + Enter (Раменки, юго-запад…)">
     <div class="chipsel" id="fZones" style="margin-top:8px">
       ${ZONE_CHIPS.map(([v, t]) => `<button class="chsel sm2" data-z="${v}">${t}</button>`).join("")}
     </div>
-    <div class="ed-label">Метро <span class="muted" style="font-weight:400">(отдельно от района)</span></div>
-    <input class="input" id="fMetro" placeholder="напр. Раменки, Фили, Университет">
+    <div class="ed-label">Метро <span class="muted" style="font-weight:400">(отдельно; Enter добавляет)</span></div>
+    <div class="tags" id="fMetroTags"></div>
+    <input class="input" id="fMetro" placeholder="станция + Enter (Фили, Университет…)">
     <div class="btn-row" style="margin-top:20px">
       <button class="btn btn-soft" id="fReset" style="flex:1">Сбросить</button>
       <button class="btn btn-primary" id="fApply" style="flex:2">Применить</button>
     </div>`);
-  b.querySelector("#fMetro").value = init.metro || "";
+  // поле-теги: Enter/запятая добавляют значение чипом, можно несколько
+  function tagify(inputId, tagsId, initialCSV) {
+    const input = b.querySelector(inputId), box = b.querySelector(tagsId);
+    let tags = String(initialCSV || "").split(",").map(s => s.trim()).filter(Boolean);
+    function render() {
+      box.innerHTML = "";
+      tags.forEach((t, i) => {
+        const chip = el(`<span class="tag">${esc(t)}<span class="tag-x">×</span></span>`);
+        chip.querySelector(".tag-x").onclick = () => { haptic(); tags.splice(i, 1); render(); };
+        box.appendChild(chip);
+      });
+    }
+    function commit() {
+      const parts = input.value.split(",").map(s => s.trim()).filter(Boolean);
+      for (const p of parts) if (!tags.some(t => t.toLowerCase() === p.toLowerCase())) tags.push(p);
+      if (parts.length) { input.value = ""; render(); }
+    }
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === ",") { e.preventDefault(); haptic(); commit(); }
+    });
+    input.addEventListener("blur", commit);
+    render();
+    return {
+      get: () => { commit(); return tags.join(", "); },
+      add: (v) => { if (v && !tags.some(t => t.toLowerCase() === v.toLowerCase())) { tags.push(v); render(); } },
+    };
+  }
+  const jkTags = tagify("#fJk", "#fJkTags", init.jk);
+  const distTags = tagify("#fDistrict", "#fDistTags", init.district);
+  const metroTags = tagify("#fMetro", "#fMetroTags", init.metro);
+
   b.querySelectorAll("#fRooms .chsel").forEach(x => x.onclick = () => { haptic(); x.classList.toggle("on"); });
-  b.querySelectorAll("#fZones .chsel").forEach(x => x.onclick = () => {
-    haptic(); const loc = b.querySelector("#fDistrict");
-    const parts = loc.value.split(",").map(s => s.trim()).filter(Boolean);
-    if (!parts.map(p => p.toLowerCase()).includes(x.dataset.z)) { parts.push(x.dataset.z); loc.value = parts.join(", "); }
-  });
+  b.querySelectorAll("#fZones .chsel").forEach(x => x.onclick = () => { haptic(); distTags.add(x.dataset.z); });
   const num = (id) => { const v = parseInt((b.querySelector(id).value || "").replace(/\D/g, "")); return isNaN(v) ? "" : v; };
   const readForm = () => {
     const rooms = [...b.querySelectorAll("#fRooms .chsel.on")].map(x => x.dataset.v);
@@ -1180,9 +1207,9 @@ function sheetFilters(init, onApply) {
       rooms: rooms.length ? rooms.join(",") : "",
       budget_min: num("#fBmin"), budget_max: num("#fBmax"),
       area_min: num("#fAmin"), area_max: num("#fAmax"),
-      jk: b.querySelector("#fJk").value.trim(),
-      district: b.querySelector("#fDistrict").value.trim(),
-      metro: b.querySelector("#fMetro").value.trim(),
+      jk: jkTags.get(),
+      district: distTags.get(),
+      metro: metroTags.get(),
       polygon: poly, source: init.source || "",
     };
   };
