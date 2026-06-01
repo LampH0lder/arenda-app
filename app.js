@@ -35,10 +35,26 @@ async function api(path, opts = {}) {
 
 // Картинку нельзя грузить простым <img src> (cross-origin не добавит заголовок и
 // упрётся в заглушку ngrok). Тянем через fetch с заголовком и отдаём blob-URL.
+// Кэшируем в Cache Storage по URL → при повторном открытии/прокрутке мгновенно,
+// без повторной качки через медленный туннель (главный буст превью).
+const IMG_CACHE = "img-v1";
 async function fetchImg(path) {
-  const r = await fetch(API_BASE + "/api" + path, { headers: BASE_HEADERS });
+  const url = API_BASE + "/api" + path;
+  let cache = null;
+  try { cache = await caches.open(IMG_CACHE); } catch (e) {}
+  if (cache) {
+    try {
+      const hit = await cache.match(url);
+      if (hit) return URL.createObjectURL(await hit.blob());
+    } catch (e) {}
+  }
+  const r = await fetch(url, { headers: BASE_HEADERS });
   if (!r.ok) throw new Error("img " + r.status);
-  return URL.createObjectURL(await r.blob());
+  const blob = await r.blob();
+  if (cache) {
+    try { await cache.put(url, new Response(blob, { headers: { "Content-Type": blob.type } })); } catch (e) {}
+  }
+  return URL.createObjectURL(blob);
 }
 
 /* ── Голосовой ввод: запись через микрофон -> Whisper на бэке -> текст ── */
@@ -76,27 +92,17 @@ function voiceButton(onText, label = "🎤 Голосом") {
 }
 
 /* ── Ленивая подгрузка миниатюр (первое фото объекта) ──
-   Прогрессивно: сначала мелкое (быстро, размытое), потом крупное (резкое) поверх. */
+   В сетке грузим ОДНО мелкое превью (быстро, кэшируется). Крупное-резкое — только
+   в детальном просмотре. Так на сетку 1 запрос на карточку, а не два. */
 const thumbObserver = ("IntersectionObserver" in window) ? new IntersectionObserver((entries) => {
   for (const e of entries) {
     if (!e.isIntersecting) continue;
     const node = e.target; thumbObserver.unobserve(node);
-    const id = node.dataset.thumb;
-    fetchImg(`/listings/${id}/photo`)
-      .then(url => {
-        if (node._hi) return;  // крупное уже пришло раньше — не перетираем размытым
-        node.style.backgroundImage = `url(${url})`; node.classList.add("loaded", "lq");
-      })
-      .catch(() => { if (!node._hi) node.classList.add("nophoto"); });
-    fetchImg(`/listings/${id}/photo?q=hi`)
-      .then(url => {
-        node._hi = true;
-        node.style.backgroundImage = `url(${url})`;
-        node.classList.add("loaded"); node.classList.remove("lq", "nophoto");
-      })
-      .catch(() => {});
+    fetchImg(`/listings/${node.dataset.thumb}/photo`)
+      .then(url => { node.style.backgroundImage = `url(${url})`; node.classList.add("loaded"); })
+      .catch(() => node.classList.add("nophoto"));
   }
-}, { rootMargin: "150px" }) : null;
+}, { rootMargin: "300px" }) : null;
 
 /* ── helpers ── */
 const $ = (s, r = document) => r.querySelector(s);
@@ -197,6 +203,11 @@ async function renderHome() {
       <div class="stat am"><div class="glow"></div><div class="num">${s.paused ?? 0}</div><div class="lbl">На паузе</div></div>
       <div class="stat p"><div class="glow"></div><div class="num">${s.done ?? 0}</div><div class="lbl">Нашли квартиру</div></div>
     </div>
+    <div class="row-between" style="margin:22px 4px 10px">
+      <div class="section-title" style="margin:0">Последние объекты</div>
+      <button class="btn-ghost" id="homeAll" style="width:auto;padding:0;font-size:13px">все ›</button>
+    </div>
+    <div class="carousel" id="homeCarousel"><div class="loader" style="height:150px"><div class="spin"></div></div></div>
     <div class="section-title">Быстрые действия</div>
     <div class="quick">
       <button class="quick-btn" id="qSearch"><span class="qi">⌕</span><span class="qt">Поиск вариантов</span><span class="qs">по всей базе</span></button>
@@ -219,6 +230,8 @@ async function renderHome() {
       <button class="btn sm ${morning ? "btn-danger" : "btn-green"}" id="mToggle">${morning ? "Выключить" : "Включить"}</button>
     </div>`}`;
   view.appendChild(wrap);
+  $("#homeAll").onclick = () => switchTab("listings");
+  loadHomeCarousel();
   $("#qSearch").onclick = () => switchTab("search");
   $("#qClients").onclick = () => switchTab("clients");
   $("#qAdd").onclick = () => sheetAddClient();
@@ -230,6 +243,27 @@ async function renderHome() {
     const r = await api("/morning", { method: "POST", body: { enabled: !morning } });
     toast(r.enabled ? "Утренняя рассылка включена" : "Выключена", "ok"); renderHome();
   };
+}
+
+async function loadHomeCarousel() {
+  let items = []; try { items = await api("/listings?limit=12"); } catch (e) {}
+  const box = $("#homeCarousel"); if (!box) return;
+  if (!items.length) { box.innerHTML = `<div class="muted" style="padding:6px 4px">Пока нет объектов</div>`; return; }
+  box.innerHTML = "";
+  for (const l of items) {
+    const it = el(`
+      <div class="ccard">
+        <div class="cc-thumb" data-thumb="${l.id}"><span class="src-badge">${esc(l.source || "")}</span></div>
+        <div class="cc-body">
+          <div class="cc-price">${fmtMoney(l.price)} ₽</div>
+          <div class="cc-title">${esc(listingTitle(l))}</div>
+          <div class="cc-meta">${esc(listingMeta(l))}</div>
+        </div>
+      </div>`);
+    it.onclick = () => { haptic(); go(() => renderListingDetail(l.id)); };
+    box.appendChild(it);
+    if (thumbObserver) thumbObserver.observe(it.querySelector(".cc-thumb"));
+  }
 }
 
 /* ════════════════════════ CLIENTS ════════════════════════ */
@@ -382,8 +416,6 @@ async function renderListings(source = "all") {
   wrap.appendChild(mapBtn);
   if (!listings.length) {
     wrap.appendChild(el(`<div class="empty"><span class="em-ic">⌂</span>${on ? "Под фильтры ничего не нашлось" : "Здесь пока пусто"}</div>`));
-  } else {
-    wrap.appendChild(el(`<div class="pick-hint">💡 Отмечайте варианты кружком справа — и отправляйте сразу нескольким одному клиенту</div>`));
   }
   // мультивыбор по объектам (как в поиске): галочки + sticky-бар «отправить выбранные»
   const sel = new Set();
@@ -580,7 +612,6 @@ async function renderMap(source = "all") {
     const box = $("#mResults"); box.innerHTML = "";
     if (!items.length) { box.innerHTML = `<div class="empty"><span class="em-ic">🗺</span>В этой области ничего нет</div>`; return; }
     sel.clear();
-    box.appendChild(el(`<div class="pick-hint">💡 Отмечайте кружком и отправляйте сразу нескольким одному клиенту</div>`));
     const selBar = el(`<div class="sel-bar hidden"></div>`);
     box.appendChild(selBar);
     const rows = el(`<div></div>`); box.appendChild(rows);
@@ -623,7 +654,7 @@ function listingCard(l, onSend, openable = true, thumb = true, select = null) {
         <div class="btn-row" style="margin-top:12px">
           ${onSend ? `<button class="btn btn-green sm" style="flex:1" data-send>📤 Отправить</button>` : ""}
           ${l.url ? `<button class="btn btn-soft sm" style="flex:1" data-open>👁 Пост</button>` : ""}
-          <button class="btn btn-soft sm" style="flex:1" data-detail>Подробнее</button>
+          <button class="btn btn-soft sm" style="flex:1" data-detail>Подробнее ›</button>
         </div>
       </div>
     </div>`);
@@ -636,6 +667,8 @@ function listingCard(l, onSend, openable = true, thumb = true, select = null) {
   const openBtn = card.querySelector("[data-open]");
   if (openBtn) openBtn.onclick = (e) => { e.stopPropagation(); haptic(); tg?.openTelegramLink ? tg.openTelegramLink(l.url) : window.open(l.url); };
   card.querySelector("[data-detail]").onclick = (e) => { e.stopPropagation(); haptic(); go(() => renderListingDetail(l.id)); };
+  // тап по любому месту карточки → подробнее (кнопки/галочка перехватывают свой клик)
+  if (openable) card.onclick = () => { haptic(); go(() => renderListingDetail(l.id)); };
   return card;
 }
 
@@ -774,7 +807,6 @@ function paintSearch() {
   const box = $("#sResults"); box.innerHTML = "";
   box.appendChild(el(`<div class="muted" style="margin:0 4px 10px">${esc(searchState.crit || "")} — найдено ${searchState.total}</div>`));
   if (!searchState.results.length) { box.appendChild(el(`<div class="empty"><span class="em-ic">⌕</span>Ничего не нашлось</div>`)); return; }
-  box.appendChild(el(`<div class="pick-hint">💡 Отмечайте варианты кружком справа — и отправляйте сразу нескольким одному клиенту</div>`));
 
   // sticky-бар: появляется, как только отметил галочкой ≥1 объявление
   const selBar = el(`<div class="sel-bar hidden"></div>`);
@@ -840,6 +872,8 @@ function enqueueSend(l, clientId, clientName) {
     title: `${fmtMoney(l.price)} ₽ · ${listingTitle(l)}`,
     status: "pending", sendAt: Date.now() + SEND_GRACE,
   });
+  // греем тяжёлые ассеты прямо сейчас (в окно отмены 5с) → отправка будет мгновенной
+  api(`/listings/${l.id}/prewarm`, { method: "POST", body: {} }).catch(() => {});
   renderSendQ(); pumpSendQ();
 }
 function enqueueMany(listings, clientId, clientName) {
@@ -1018,11 +1052,11 @@ function critToFilters(c) {
     rooms: c.rooms || "",
     budget_min: c.budget_min || "", budget_max: c.budget_max || "",
     area_min: c.area_min || "", area_max: c.area_max || "",
-    district: c.districts || "", metro: c.metro_stations || "",
+    district: c.districts || "", metro: c.metro_stations || "", jk: c.jk_name || "",
   };
 }
 function filtersActive(f) {
-  return !!(f && (f.rooms || f.budget_min || f.budget_max || f.area_min || f.area_max || f.district || f.metro));
+  return !!(f && (f.rooms || f.budget_min || f.budget_max || f.area_min || f.area_max || f.district || f.metro || f.jk));
 }
 function filtersSummary(f) {
   if (!f) return "";
@@ -1030,6 +1064,7 @@ function filtersSummary(f) {
   if (f.rooms) p.push(roomsLabel(f.rooms));
   if (f.budget_min || f.budget_max) p.push((f.budget_min ? Math.round(f.budget_min / 1000) + "" : "до ") + (f.budget_max ? "–" + Math.round(f.budget_max / 1000) + "к" : "к+"));
   if (f.area_min || f.area_max) p.push((f.area_min || 0) + "–" + (f.area_max || "∞") + " м²");
+  if (f.jk) p.push("🏙 " + f.jk);
   if (f.district) p.push("📍 " + f.district);
   if (f.metro) p.push("🚇 " + f.metro);
   return p.join(" · ");
@@ -1053,6 +1088,8 @@ function sheetFilters(init, onApply) {
       <input class="input" id="fAmin" inputmode="numeric" placeholder="от" value="${init.area_min || ""}">
       <input class="input" id="fAmax" inputmode="numeric" placeholder="до" value="${init.area_max || ""}">
     </div>
+    <div class="ed-label">ЖК</div>
+    <input class="input" id="fJk" placeholder="напр. Сердце Столицы, Символ" value="${esc(init.jk || "")}">
     <div class="ed-label">Район / зона</div>
     <input class="input" id="fDistrict" placeholder="напр. Раменки, Хамовники, юго-запад" value="${esc(init.district || "")}">
     <div class="chipsel" id="fZones" style="margin-top:8px">
@@ -1080,6 +1117,7 @@ function sheetFilters(init, onApply) {
       rooms: rooms.length ? rooms.join(",") : "",
       budget_min: num("#fBmin"), budget_max: num("#fBmax"),
       area_min: num("#fAmin"), area_max: num("#fAmax"),
+      jk: b.querySelector("#fJk").value.trim(),
       district: b.querySelector("#fDistrict").value.trim(),
       metro: b.querySelector("#fMetro").value.trim(),
     };
