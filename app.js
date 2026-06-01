@@ -357,14 +357,20 @@ async function renderClientDetail(id) {
   $("#bStatus").onclick = () => sheetStatus(c);
 }
 
-async function renderMatch(client, page = 0, acc = null) {
+async function renderMatch(client, page = 0, acc = null, filter = null) {
   setTitle("Подбор", client.name);
   if (!acc) loading();
-  let data; try { data = await api(`/clients/${client.id}/match?page=${page}`); } catch (e) { return toast("Ошибка подбора", "err"); }
+  let data;
+  try { data = await api(`/clients/${client.id}/match`, { method: "POST", body: { page, filters: filter || {} } }); }
+  catch (e) { return toast("Ошибка подбора", "err"); }
   if (!acc) {
     view.innerHTML = "";
     acc = el(`<div class="fade-in"></div>`);
-    acc.appendChild(el(`<div class="muted" style="margin:2px 4px 12px">Найдено ${data.total} вариантов под критерии</div>`));
+    const on = filtersActive(filter);
+    const fb = el(`<button class="btn ${on ? "btn-primary" : "btn-soft"} sm" style="width:100%;margin-bottom:10px">⚙️ Фильтры${on ? " · " + esc(filtersSummary(filter)) : " — сузить подбор (вкл. область на карте)"}</button>`);
+    fb.onclick = () => { haptic(); sheetFilters(filter || {}, (f) => renderMatch(client, 0, null, filtersActive(f) ? f : null)); };
+    acc.appendChild(fb);
+    acc.appendChild(el(`<div class="muted" style="margin:2px 4px 12px">Найдено ${data.total} вариантов${on ? " (с фильтрами)" : " под критерии"}</div>`));
     const listWrap = el(`<div id="matchList"></div>`);
     acc.appendChild(listWrap);
     view.appendChild(acc);
@@ -375,7 +381,7 @@ async function renderMatch(client, page = 0, acc = null) {
   const oldMore = acc.querySelector(".more-btn"); if (oldMore) oldMore.remove();
   if (data.has_more) {
     const more = el(`<button class="btn btn-soft more-btn" style="margin-top:6px">Ещё ${Math.min(12, data.total - (page + 1) * 12)} вариантов</button>`);
-    more.onclick = () => { haptic(); more.remove(); renderMatch(client, page + 1, acc); };
+    more.onclick = () => { haptic(); more.remove(); renderMatch(client, page + 1, acc, filter); };
     acc.appendChild(more);
   }
 }
@@ -386,11 +392,10 @@ async function renderListings(source = "all") {
   setTitle("Объекты", "последние объявления");
   removeFab();
   loading();
-  let q = "/listings?limit=50&source=" + source;
-  if (filtersActive(listingsFilter)) {
-    for (const [k, v] of Object.entries(listingsFilter)) if (v) q += `&${k}=${encodeURIComponent(v)}`;
-  }
-  let listings = []; try { listings = await api(q); } catch (e) {}
+  let listings = [];
+  try {
+    listings = await api("/listings/query", { method: "POST", body: { source, limit: 50, filters: listingsFilter || {} } });
+  } catch (e) {}
   view.innerHTML = "";
   const wrap = el(`<div class="fade-in"></div>`);
   // поиск по номеру объявления (#776 из уведомлений) — открыть конкретный объект
@@ -494,7 +499,10 @@ function ensureLeaflet() {
 function filterQS() {
   if (!filtersActive(listingsFilter)) return "";
   let q = "";
-  for (const [k, v] of Object.entries(listingsFilter)) if (v) q += `&${k}=${encodeURIComponent(v)}`;
+  for (const [k, v] of Object.entries(listingsFilter)) {
+    if (!v || k === "polygon" || k === "source" || typeof v === "object") continue;
+    q += `&${k}=${encodeURIComponent(v)}`;
+  }
   return q;
 }
 
@@ -507,8 +515,8 @@ function pointInPoly(lat, lng, poly) {
   return inside;
 }
 
-async function renderMap(source = "all") {
-  setTitle("Карта", "обведите район пальцем");
+async function renderMap(source = "all", pick = null, initialPoly = null) {
+  setTitle(pick ? "Выбор области" : "Карта", "обведите район пальцем");
   removeFab();
   loading();
   try { await ensureLeaflet(); } catch (e) { return toast("Карта не загрузилась (проверь интернет)", "err"); }
@@ -588,16 +596,21 @@ async function renderMap(source = "all") {
     mInfo.textContent = "Веди пальцем по карте";
     mapEl.addEventListener("pointerdown", onDown);
   }
+  function drawPoly(p) {
+    if (poly) { map.removeLayer(poly); }
+    poly = L.polygon(p, { color: "#37d39b", weight: 2, fillColor: "#37d39b", fillOpacity: .08 }).addTo(map);
+    return data.points.filter(pt => pointInPoly(pt.lat, pt.lng, p)).length;
+  }
   function finishDraw() {
     setDrawMode(false);
     mapEl.removeEventListener("pointerdown", onDown);
     mDraw.style.display = ""; mDraw.textContent = "✏️ Обвести заново";
     if (preview) { map.removeLayer(preview); preview = null; }
     if (pathLL.length < 3) { mInfo.textContent = "Мало точек, попробуй ещё"; return; }
-    poly = L.polygon(pathLL, { color: "#37d39b", weight: 2, fillColor: "#37d39b", fillOpacity: .08 }).addTo(map);
-    const inside = data.points.filter(p => pointInPoly(p.lat, p.lng, pathLL));
-    mInfo.textContent = `${inside.length} в области`;
-    showMapResults(inside);
+    const cnt = drawPoly(pathLL);
+    mInfo.textContent = `${cnt} в области`;
+    if (pick) showApplyBar(pathLL.slice(), cnt);
+    else showMapResults(data.points.filter(p => pointInPoly(p.lat, p.lng, pathLL)));
   }
   mDraw.onclick = () => { haptic(); enterDraw(); };
   mClear.onclick = () => {
@@ -605,6 +618,24 @@ async function renderMap(source = "all") {
     mClear.style.display = "none"; mDraw.textContent = "✏️ Обвести область";
     mInfo.textContent = `${data.points.length} объектов`; $("#mResults").innerHTML = "";
   };
+
+  // режим ВЫБОРА области для фильтра: рисуешь → «Применить область»
+  function showApplyBar(p, n) {
+    const box = $("#mResults"); box.innerHTML = "";
+    box.appendChild(el(`<div style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn btn-primary" id="mApplyArea">✅ Применить область (${n})</button>
+      <button class="btn btn-soft" id="mNoArea">Без области</button>
+    </div>`));
+    box.querySelector("#mApplyArea").onclick = () => { haptic(); pick(p); back(); };
+    box.querySelector("#mNoArea").onclick = () => { haptic(); pick(null); back(); };
+  }
+  if (pick && initialPoly && initialPoly.length >= 3) {
+    const cnt = drawPoly(initialPoly);
+    mClear.style.display = ""; mDraw.textContent = "✏️ Обвести заново";
+    mInfo.textContent = `${cnt} в области`;
+    showApplyBar(initialPoly, cnt);
+    try { map.fitBounds(poly.getBounds().pad(0.2)); } catch (e) {}
+  }
 
   // результаты внутри области: карточки + мультивыбор + отправка
   const sel = new Set();
@@ -772,14 +803,14 @@ async function renderSearch() {
       <span id="sVoice" style="flex:1;display:flex"></span>
       <button class="btn btn-primary" id="sGo" style="flex:1">⌕ Найти</button>
     </div>
-    <button class="btn btn-soft sm" id="sFilters" style="margin-top:10px;width:100%">⚙️ Фильтры — комнаты, бюджет, район, метро отдельно</button>
+    <button class="btn btn-soft sm" id="sFilters" style="margin-top:10px;width:100%">⚙️ Фильтры — комнаты, бюджет, ЖК, район/метро, область на карте</button>
     <div id="sResults" style="margin-top:18px"></div>`;
   view.appendChild(wrap);
   $("#sVoice").replaceWith(voiceButton((text) => {
     const ta = $("#sInput"); ta.value = ta.value ? (ta.value + " " + text) : text; runSearch();
   }, "🎤 Голосом"));
   $("#sGo").onclick = runSearch;
-  $("#sFilters").onclick = () => { haptic(); sheetFilters(critToFilters(searchState.applied), applySearchFilters); };
+  $("#sFilters").onclick = () => { haptic(); sheetFilters(searchState.filters || critToFilters(searchState.applied), applySearchFilters); };
   if (searchState.results.length) paintSearch();
 }
 async function runSearch() {
@@ -863,7 +894,7 @@ function notConnectedPrompt() {
 
 /* ── Очередь отправки: видно, что грузятся и уходят, + окно ОТМЕНЫ перед отправкой ── */
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-const SEND_GRACE = 5000;  // окно, в которое можно отменить отправку
+const SEND_GRACE = 3000;  // короткое окно отмены (не ETA отправки — отправка идёт уже после)
 let sendQ = [], sendQSeq = 0, sendQWorking = false;
 
 function enqueueSend(l, clientId, clientName) {
@@ -944,10 +975,10 @@ function renderSendQ() {
   let head, headBtn = "";
   if (pending.length) {
     const secs = Math.max(0, Math.ceil((Math.min(...pending.map(p => p.sendAt)) - Date.now()) / 1000));
-    head = `Отправлю через ${secs} с`;
+    head = `Можно отменить · ${secs} с`;
     headBtn = `<button class="sq-x danger" id="sqCancelAll">Отменить${pending.length > 1 ? " все" : ""}</button>`;
   } else if (sending) {
-    head = `Отправка… осталось ${sending}`;
+    head = `Отправляю…${sending > 1 ? " (" + sending + ")" : ""}`;
   } else {
     head = `Готово · отправлено ${ok}${err ? ", ошибок " + err : ""}`;
     headBtn = `<button class="sq-x" id="sqClose">Скрыть</button>`;
@@ -1055,8 +1086,9 @@ function critToFilters(c) {
     district: c.districts || "", metro: c.metro_stations || "", jk: c.jk_name || "",
   };
 }
+function hasArea(f) { return !!(f && Array.isArray(f.polygon) && f.polygon.length >= 3); }
 function filtersActive(f) {
-  return !!(f && (f.rooms || f.budget_min || f.budget_max || f.area_min || f.area_max || f.district || f.metro || f.jk));
+  return !!(f && (f.rooms || f.budget_min || f.budget_max || f.area_min || f.area_max || f.district || f.metro || f.jk || hasArea(f)));
 }
 function filtersSummary(f) {
   if (!f) return "";
@@ -1067,10 +1099,12 @@ function filtersSummary(f) {
   if (f.jk) p.push("🏙 " + f.jk);
   if (f.district) p.push("📍 " + f.district);
   if (f.metro) p.push("🚇 " + f.metro);
+  if (hasArea(f)) p.push("🗺 область");
   return p.join(" · ");
 }
 function sheetFilters(init, onApply) {
   init = init || {};
+  let poly = hasArea(init) ? init.polygon : null;
   const curRooms = new Set(String(init.rooms || "").split(",").map(s => s.trim()).filter(Boolean));
   const b = openSheet(`
     <div class="sheet-title">Фильтры</div>
@@ -1090,8 +1124,12 @@ function sheetFilters(init, onApply) {
     </div>
     <div class="ed-label">ЖК</div>
     <input class="input" id="fJk" placeholder="напр. Сердце Столицы, Символ" value="${esc(init.jk || "")}">
-    <div class="ed-label">Район / зона</div>
-    <input class="input" id="fDistrict" placeholder="напр. Раменки, Хамовники, юго-запад" value="${esc(init.district || "")}">
+    <div class="ed-label">Местоположение</div>
+    <button class="btn ${poly ? "btn-primary" : "btn-soft"} sm" id="fArea" style="width:100%;margin-bottom:8px">
+      ${poly ? "🗺 Область задана ✓ — изменить" : "🗺 Обвести область на карте"}
+    </button>
+    ${poly ? `<button class="btn btn-soft sm" id="fAreaClear" style="width:100%;margin-bottom:8px">Убрать область</button>` : ""}
+    <input class="input" id="fDistrict" placeholder="или район/зона: Раменки, Хамовники, юго-запад" value="${esc(init.district || "")}">
     <div class="chipsel" id="fZones" style="margin-top:8px">
       ${ZONE_CHIPS.map(([v, t]) => `<button class="chsel sm2" data-z="${v}">${t}</button>`).join("")}
     </div>
@@ -1109,20 +1147,30 @@ function sheetFilters(init, onApply) {
     if (!parts.map(p => p.toLowerCase()).includes(x.dataset.z)) { parts.push(x.dataset.z); loc.value = parts.join(", "); }
   });
   const num = (id) => { const v = parseInt((b.querySelector(id).value || "").replace(/\D/g, "")); return isNaN(v) ? "" : v; };
-  b.querySelector("#fReset").onclick = () => { haptic(); closeSheet(); onApply({}); };
-  b.querySelector("#fApply").onclick = () => {
-    haptic();
+  const readForm = () => {
     const rooms = [...b.querySelectorAll("#fRooms .chsel.on")].map(x => x.dataset.v);
-    const f = {
+    return {
       rooms: rooms.length ? rooms.join(",") : "",
       budget_min: num("#fBmin"), budget_max: num("#fBmax"),
       area_min: num("#fAmin"), area_max: num("#fAmax"),
       jk: b.querySelector("#fJk").value.trim(),
       district: b.querySelector("#fDistrict").value.trim(),
       metro: b.querySelector("#fMetro").value.trim(),
+      polygon: poly, source: init.source || "",
     };
-    closeSheet(); onApply(f);
   };
+  // обвести область на карте — сохраняем текущие поля, уходим на карту, возвращаемся
+  b.querySelector("#fArea").onclick = () => {
+    haptic(); const cur = readForm(); closeSheet();
+    go(() => renderMap(cur.source || "all", (p) => {
+      cur.polygon = (p && p.length >= 3) ? p : null;
+      sheetFilters(cur, onApply);
+    }, poly));
+  };
+  const ac = b.querySelector("#fAreaClear");
+  if (ac) ac.onclick = () => { haptic(); poly = null; const cur = readForm(); cur.polygon = null; closeSheet(); sheetFilters(cur, onApply); };
+  b.querySelector("#fReset").onclick = () => { haptic(); closeSheet(); onApply({}); };
+  b.querySelector("#fApply").onclick = () => { haptic(); closeSheet(); onApply(readForm()); };
 }
 
 function sheetEditCriteria(c) {
