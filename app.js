@@ -203,6 +203,7 @@ function switchTab(tab) {
   document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tab));
   haptic();
   if (tab === "home") go(renderHome);
+  else if (tab === "fdg") go(renderAutopost);
   else if (tab === "clients") go(() => renderClients());
   else if (tab === "listings") go(() => renderListings());
   else if (tab === "profile") go(renderProfile);
@@ -230,18 +231,13 @@ async function renderHome() {
     <div class="stats-grid">
       <div class="stat a"><div class="glow"></div><div class="num">${s.active ?? 0}</div><div class="lbl">Активные клиенты</div></div>
       <div class="stat g"><div class="glow"></div><div class="num">${s.sent_week ?? 0}</div><div class="lbl">Отправок за неделю</div></div>
-      <div class="stat am"><div class="glow"></div><div class="num">${s.paused ?? 0}</div><div class="lbl">На паузе</div></div>
-      <div class="stat p"><div class="glow"></div><div class="num">${s.done ?? 0}</div><div class="lbl">Нашли квартиру</div></div>
     </div>
     <div class="section-title">Быстрые действия</div>
     <div class="quick">
       <button class="quick-btn" id="qSearch"><span class="qi">⌕</span><span class="qt">Поиск вариантов</span><span class="qs">по всей базе</span></button>
-      <button class="quick-btn" id="qClients"><span class="qi">&#9786;&#65038;</span><span class="qt">Клиенты</span><span class="qs">${s.active ?? 0} активных</span></button>
-      <button class="quick-btn" id="qAdd"><span class="qi">＋</span><span class="qt">Новый клиент</span><span class="qs">добавить вручную</span></button>
       <button class="quick-btn" id="qHist"><span class="qi">↻</span><span class="qt">История отправок</span><span class="qs">что уже ушло</span></button>
       <button class="quick-btn" id="qScan"><span class="qi">⇣</span><span class="qt">Собрать объявления</span><span class="qs">за период</span></button>
       <button class="quick-btn" id="qCov"><span class="qi">▤</span><span class="qt">Охват по чатам</span><span class="qs">что собрано</span></button>
-      ${ownerOnly ? "" : `<button class="quick-btn" id="qFdg"><span class="qi">🏢</span><span class="qt">ФДГ</span><span class="qs">выложить на Arendok</span></button>`}
     </div>
     ${(!acc.connected) ? `
     <div class="card" id="connCard" style="border-color:var(--accent);margin-top:6px">
@@ -261,12 +257,9 @@ async function renderHome() {
   $("#homeAll").onclick = () => switchTab("listings");
   loadHomeCarousel();
   $("#qSearch").onclick = () => { haptic(); go(renderSearch); };
-  $("#qClients").onclick = () => switchTab("clients");
-  $("#qAdd").onclick = () => sheetAddClient();
   $("#qHist").onclick = () => { haptic(); go(renderHistory); };
   $("#qScan").onclick = () => sheetScan();
   $("#qCov").onclick = () => sheetCoverage();
-  { const qf = $("#qFdg"); if (qf) qf.onclick = () => { haptic(); go(renderAutopost); }; }
   const connBtn = $("#connBtn"); if (connBtn) connBtn.onclick = () => { haptic(); switchTab("profile"); };
   const mt = $("#mToggle"); if (mt) mt.onclick = async () => {
     haptic();
