@@ -1346,26 +1346,45 @@ function sheetBroadcast(l) {
 }
 
 function sheetScan() {
+  const today = new Date().toISOString().slice(0, 10);
   const b = openSheet(`<div class="sheet-title">Собрать объявления</div>
-    <div class="muted" style="margin-bottom:14px">Пройдусь по истории каналов и подберу пропущенные посты за период (в т.ч. отредактированные/упущенные).</div>
-    <div style="display:flex;flex-direction:column;gap:10px">
-      <button class="btn btn-soft" data-d="1">За сегодня</button>
-      <button class="btn btn-soft" data-d="3">За 3 дня</button>
-      <button class="btn btn-soft" data-d="7">За неделю</button>
+    <div class="muted" style="margin-bottom:14px">Пройдусь по истории каналов и подберу пропущенные посты (в т.ч. отредактированные/упущенные).</div>
+    <div class="chipsel" id="scanPresets">
+      <button class="chsel" data-d="1">Сегодня</button>
+      <button class="chsel" data-d="3">3 дня</button>
+      <button class="chsel" data-d="7">Неделя</button>
+      <button class="chsel" data-d="30">Месяц</button>
+      <button class="chsel" data-d="0">Всё время</button>
+    </div>
+    <div class="ed-label" style="margin-top:12px">Или с конкретной даты</div>
+    <div class="idsearch">
+      <input class="input" type="date" id="scanDate" max="${today}">
+      <button class="btn btn-soft sm" id="scanDateGo">Собрать</button>
     </div>
     <div id="scanRes" class="muted" style="margin-top:14px"></div>`);
-  b.querySelectorAll("[data-d]").forEach(x => x.onclick = async () => {
+
+  let busy = false;
+  async function runScan(body, label) {
+    if (busy) return; busy = true;
     haptic();
     const res = b.querySelector("#scanRes");
-    res.innerHTML = `<span class="sq-spin"></span> Собираю… это может занять до минуты.`;
-    b.querySelectorAll("[data-d]").forEach(y => y.disabled = true);
+    res.innerHTML = `<span class="sq-spin"></span> Собираю${label ? " (" + label + ")" : ""}… может занять до пары минут.`;
+    b.querySelectorAll("button").forEach(y => y.disabled = true);
     try {
-      const r = await api("/scan", { method: "POST", body: { days: parseInt(x.dataset.d) } });
+      const r = await api("/scan", { method: "POST", body });
       res.innerHTML = `Готово ✓ Добавлено <b>${r.added}</b>, пропущено ${r.skipped}, просмотрено ${r.seen}.`;
       notify("success");
     } catch (e) { res.textContent = "Ошибка: " + (e.message || e); }
-    b.querySelectorAll("[data-d]").forEach(y => y.disabled = false);
-  });
+    b.querySelectorAll("button").forEach(y => y.disabled = false);
+    busy = false;
+  }
+  b.querySelectorAll("#scanPresets .chsel").forEach(x => x.onclick = () =>
+    runScan({ days: parseInt(x.dataset.d) }, x.textContent));
+  b.querySelector("#scanDateGo").onclick = () => {
+    const d = b.querySelector("#scanDate").value;
+    if (!d) return toast("Выберите дату");
+    runScan({ since: d }, "с " + d);
+  };
 }
 
 async function sheetCoverage() {
