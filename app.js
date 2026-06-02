@@ -692,6 +692,7 @@ function listingCard(l, onSend, openable = true, thumb = true, select = null) {
             <div class="listing-price">${fmtMoney(l.price)} ₽<span class="muted" style="font-size:13px;font-weight:500">/мес</span></div>
             <div class="listing-title">${esc(listingTitle(l))}</div>
             <div class="listing-meta">${esc(listingMeta(l))}</div>
+            ${l.exclusive ? `<div class="excl-line">🔑 Эксклюзив${l.exclusive_owner ? ": " + esc(l.exclusive_owner) : ""}</div>` : ""}
           </div>
           ${select ? `<div class="lc-check ${select.checked ? "on" : ""}" data-check>${select.checked ? "✓" : ""}</div>` : ""}
         </div>
@@ -734,6 +735,7 @@ async function renderListingDetail(id) {
       ${l.metro ? kv("Метро", l.metro) : ""}
       ${l.district ? kv("Район", l.district) : ""}
       ${kv("Источник", l.source || "—")}
+      ${l.exclusive ? kv("Эксклюзив", l.exclusive_owner || "да") : ""}
     </div>
     ${l.raw_text ? `<div class="section-title">Текст объявления</div><div class="card muted" style="white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;color:var(--txt)">${esc(l.raw_text)}</div>` : ""}
     <div class="btn btn-green" id="bSend" style="margin-top:18px">📤 Отправить клиенту</div>
