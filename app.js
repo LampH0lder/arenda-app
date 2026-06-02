@@ -802,57 +802,78 @@ async function renderHistory() {
 }
 
 /* ── ФДГ: публикация объявления на Arendok из ссылки Циан/Авито ── */
+const AP_MAX = 10;
 async function renderAutopost() {
-  setTitle("ФДГ — выложить на Arendok", "ссылка Циан → объявление");
+  setTitle("ФДГ — выложить на Arendok", "ссылки Циан → объявления");
   removeFab();
   view.innerHTML = "";
   const wrap = el(`<div class="fade-in"></div>`);
   wrap.appendChild(el(`<div class="card">
-    <div class="ed-label">Ссылка на объявление (Циан/Авито)</div>
-    <input class="input" id="apUrl" placeholder="https://www.cian.ru/rent/flat/..." autocomplete="off" inputmode="url">
+    <div class="ed-label">Ссылки (Циан/Авито) — до ${AP_MAX}, каждая с новой строки</div>
+    <textarea class="input" id="apUrls" rows="4" placeholder="https://www.cian.ru/rent/flat/...&#10;https://www.avito.ru/..." autocomplete="off" inputmode="url" style="resize:vertical;min-height:88px;font-family:inherit"></textarea>
     <button class="btn btn-primary" id="apGo" style="margin-top:10px;width:100%">Обработать</button>
-    <div class="muted" style="margin-top:8px">Распарсю объявление, почищу фото антизнаком и покажу превью перед публикацией.</div>
+    <div class="muted" style="margin-top:8px">Обработаю все по очереди (парсинг + чистка фото). Перед публикацией каждого покажу превью — подтверждаешь сам.</div>
   </div>`));
-  const res = el(`<div id="apRes" style="margin-top:12px"></div>`);
-  wrap.appendChild(res);
+  const q = el(`<div id="apQueue" style="margin-top:12px"></div>`);
+  wrap.appendChild(q);
   view.appendChild(wrap);
 
   $("#apGo").onclick = async () => {
-    const url = ($("#apUrl").value || "").trim();
-    if (!url) return toast("Вставь ссылку", "err");
+    const raw = ($("#apUrls").value || "").trim();
+    if (!raw) return toast("Вставь хотя бы одну ссылку", "err");
+    let urls = [...new Set(raw.split(/\s+/).map(s => s.trim()).filter(Boolean))];
+    if (!urls.length) return toast("Не нашёл ссылок", "err");
+    if (urls.length > AP_MAX) { toast(`Максимум ${AP_MAX} за раз — беру первые ${AP_MAX}`, "err"); urls = urls.slice(0, AP_MAX); }
     haptic();
-    $("#apGo").disabled = true;
-    res.innerHTML = `<div class="card"><span class="sq-spin"></span> Обрабатываю… парсинг + чистка фото, до минуты.</div>`;
-    let id;
-    try {
-      const r = await api("/autopost/prepare", { method: "POST", body: { url } });
-      id = r.id;
-    } catch (e) {
-      res.innerHTML = ""; $("#apGo").disabled = false;
-      return toast("Ошибка: " + (e.message || e), "err");
-    }
-    apPoll(id, res, "preview", (st) => apRenderPreview(id, st, res));
+    const btn = $("#apGo"); btn.disabled = true;
+    $("#apUrls").value = "";
+    for (const url of urls) await apEnqueueOne(url, q);
+    btn.disabled = false;
   };
 }
 
-async function apPoll(id, res, waitStatus, onReady) {
+async function apEnqueueOne(url, q) {
+  const item = el(`<div class="card ap-item fade-in">
+    <div class="row-between" style="gap:8px;align-items:flex-start">
+      <div class="muted ap-url" style="word-break:break-all;flex:1;font-size:12px">${esc(url)}</div>
+      <span class="ap-st" style="white-space:nowrap;font-size:12px">⏳ в очереди</span>
+    </div>
+    <div class="ap-body"></div>
+  </div>`);
+  q.appendChild(item);
+  const stEl = item.querySelector(".ap-st");
+  const body = item.querySelector(".ap-body");
+  let id;
+  try {
+    const r = await api("/autopost/prepare", { method: "POST", body: { url } });
+    id = r.id;
+  } catch (e) {
+    stEl.textContent = "❌ " + (e.message || e);
+    item.style.borderColor = "var(--danger)";
+    return;
+  }
+  stEl.textContent = "⏳ обрабатываю…";
+  apPollItem(id, stEl, body);  // fire-and-forget: каждый элемент опрашивается параллельно
+}
+
+async function apPollItem(id, stEl, body) {
   for (let i = 0; i < 80; i++) {
     await sleep(3000);
     let st;
     try { st = await api(`/autopost/${id}`); } catch (e) { continue; }
-    if (st.status === waitStatus) return onReady(st);
+    if (st.status === "processing") { stEl.textContent = "⏳ парсинг + фото…"; continue; }
+    if (st.status === "preview") { stEl.textContent = "👀 готово"; return apRenderPreview(id, st, body, stEl); }
     if (st.status === "error") {
-      res.innerHTML = `<div class="card" style="border-color:var(--danger)">❌ ${esc(st.error || "ошибка")}</div>`;
-      const g = $("#apGo"); if (g) g.disabled = false;
+      stEl.textContent = "❌ ошибка";
+      body.innerHTML = `<div class="muted" style="color:var(--danger);margin-top:6px">${esc(st.error || "ошибка")}</div>`;
       return;
     }
-    if (st.status === "done") return onReady(st);  // на случай publish
+    if (st.status === "done") { stEl.textContent = "✅ опубликовано"; return; }
   }
-  res.innerHTML = `<div class="card">Долго обрабатывается — проверь бота.</div>`;
-  const g = $("#apGo"); if (g) g.disabled = false;
+  stEl.textContent = "⏳ долго…";
 }
 
-function apRenderPreview(id, st, res) {
+function apRenderPreview(id, st, body, stEl) {
   const d = st.data || {};
   const rooms = d.rooms === 0 ? "Студия" : (d.rooms ? d.rooms + "к" : "?к");
   const L = [];
@@ -865,43 +886,57 @@ function apRenderPreview(id, st, res) {
   if (d.bath_count) L.push(`🚿 Санузлов: ${d.bath_count}`);
   if (d.deposit) L.push(`💼 Залог: ${esc(d.deposit)}`);
   if (d.owner_phone) L.push(`📞 ${esc(d.owner_phone)}${d.owner_name ? " (" + esc(d.owner_name) + ")" : ""}`);
-  res.innerHTML = "";
-  const card = el(`<div class="card fade-in">
-    <div style="font-weight:680;font-size:16px">${esc(d.title || "Объявление")}</div>
+  body.innerHTML = `
+    <div style="font-weight:680;font-size:15px;margin-top:8px">${esc(d.title || "Объявление")}</div>
     <div class="muted" style="margin:3px 0 8px">${rooms} • ${d.area || "?"} м² • ${fmtMoney(d.price)} ₽/мес</div>
     <div style="font-size:13px;line-height:1.75">${L.join("<br>")}</div>
-    <div class="ap-photos" id="apPhotos"></div>
+    <div class="ap-photos" id="apPhotos-${id}"></div>
     <div class="muted" style="margin-top:6px">📷 Чистых фото: ${st.photos || 0}</div>
     <div style="display:flex;gap:8px;margin-top:12px">
-      <button class="btn btn-primary" id="apPub" style="flex:1">✅ Опубликовать</button>
-      <button class="btn btn-soft" id="apCancel">Отмена</button>
-    </div>
-  </div>`);
-  res.appendChild(card);
-  const ph = card.querySelector("#apPhotos");
+      <button class="btn btn-primary" id="apPub-${id}" style="flex:1">✅ Опубликовать</button>
+      <button class="btn btn-soft" id="apCancel-${id}">Отмена</button>
+    </div>`;
+  const ph = body.querySelector(`#apPhotos-${id}`);
   const n = Math.min(st.photos || 0, 6);
   for (let i = 0; i < n; i++) {
     const im = el(`<div class="ap-thumb"></div>`);
     ph.appendChild(im);
     fetchImg(`/autopost/${id}/photo/${i}`).then(u => { im.style.backgroundImage = `url(${u})`; }).catch(() => {});
   }
-  card.querySelector("#apPub").onclick = async () => {
+  body.querySelector(`#apPub-${id}`).onclick = async () => {
     haptic();
-    res.innerHTML = `<div class="card"><span class="sq-spin"></span> Публикую на arendok.ru… ~минуту.</div>`;
+    stEl.textContent = "📝 публикую…";
+    body.innerHTML = `<div class="muted" style="margin-top:8px"><span class="sq-spin"></span> Публикую на arendok.ru… ~минуту.</div>`;
     try { await api(`/autopost/${id}/publish`, { method: "POST" }); }
-    catch (e) { res.innerHTML = `<div class="card" style="border-color:var(--danger)">❌ ${esc(e.message || e)}</div>`; return; }
-    apPoll(id, res, "done", (s) => {
-      res.innerHTML = `<div class="card" style="border-color:var(--green)">✅ <b>Опубликовано на Arendok!</b><br>${s.arendok_url ? `<a href="${esc(s.arendok_url)}" target="_blank" style="color:var(--accent);word-break:break-all">${esc(s.arendok_url)}</a>` : "Объявление создано."}</div>`;
-      if (typeof notify === "function") notify("success");
-    });
+    catch (e) { stEl.textContent = "❌ ошибка"; body.innerHTML = `<div class="muted" style="color:var(--danger);margin-top:6px">${esc(e.message || e)}</div>`; return; }
+    apPollDone(id, stEl, body);
   };
-  card.querySelector("#apCancel").onclick = async () => {
+  body.querySelector(`#apCancel-${id}`).onclick = async () => {
     haptic();
     try { await api(`/autopost/${id}/cancel`, { method: "POST" }); } catch (e) {}
-    res.innerHTML = "";
-    const g = $("#apGo"); if (g) g.disabled = false;
-    toast("Отменено", "ok");
+    stEl.textContent = "✖ отменено";
+    body.innerHTML = "";
   };
+}
+
+async function apPollDone(id, stEl, body) {
+  for (let i = 0; i < 80; i++) {
+    await sleep(3000);
+    let st;
+    try { st = await api(`/autopost/${id}`); } catch (e) { continue; }
+    if (st.status === "done") {
+      stEl.textContent = "✅ опубликовано";
+      body.innerHTML = `<div style="margin-top:8px;color:var(--green)">✅ <b>Опубликовано!</b>${st.arendok_url ? `<br><a href="${esc(st.arendok_url)}" target="_blank" style="color:var(--accent);word-break:break-all">${esc(st.arendok_url)}</a>` : ""}</div>`;
+      if (typeof notify === "function") notify("success");
+      return;
+    }
+    if (st.status === "error") {
+      stEl.textContent = "❌ ошибка";
+      body.innerHTML = `<div class="muted" style="color:var(--danger);margin-top:6px">${esc(st.error || "ошибка")}</div>`;
+      return;
+    }
+  }
+  stEl.textContent = "⏳ долго…";
 }
 
 /* ════════════════════════ SEARCH ════════════════════════ */
