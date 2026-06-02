@@ -465,3 +465,6 @@ html,body,#app,#view{max-width:100%;overflow-x:hidden;}
 }
 .tag-x{cursor:pointer;font-size:16px;line-height:1;opacity:.8;}
 .tag-x:active{opacity:.5;}
+
+/* ── Метка эксклюзива ── */
+.excl-line{font-size:12px;font-weight:600;color:var(--amber);margin-top:5px;}
