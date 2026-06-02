@@ -833,36 +833,50 @@ async function renderAutopost() {
 }
 
 async function apEnqueueOne(url, q) {
+  const state = { alive: true, id: null, published: false };
   const item = el(`<div class="card ap-item fade-in">
     <div class="row-between" style="gap:8px;align-items:flex-start">
       <div class="muted ap-url" style="word-break:break-all;flex:1;font-size:12px">${esc(url)}</div>
-      <span class="ap-st" style="white-space:nowrap;font-size:12px">⏳ в очереди</span>
+      <div style="display:flex;align-items:center;gap:6px;white-space:nowrap">
+        <span class="ap-st" style="font-size:12px">⏳ в очереди</span>
+        <button class="ap-rm" title="Убрать из очереди" style="background:none;border:none;color:var(--muted);font-size:17px;line-height:1;cursor:pointer;padding:0 2px">✕</button>
+      </div>
     </div>
     <div class="ap-body"></div>
   </div>`);
   q.appendChild(item);
   const stEl = item.querySelector(".ap-st");
   const body = item.querySelector(".ap-body");
-  let id;
+  item.querySelector(".ap-rm").onclick = async () => {
+    if (state.published) return toast("Уже опубликовано — из очереди не убрать", "err");
+    haptic();
+    state.alive = false;
+    if (state.id != null) { try { await api(`/autopost/${state.id}/cancel`, { method: "POST" }); } catch (e) {} }
+    item.remove();
+    toast("Убрано из очереди", "ok");
+  };
   try {
     const r = await api("/autopost/prepare", { method: "POST", body: { url } });
-    id = r.id;
+    state.id = r.id;
   } catch (e) {
     stEl.textContent = "❌ " + (e.message || e);
     item.style.borderColor = "var(--danger)";
     return;
   }
+  if (!state.alive) { try { await api(`/autopost/${state.id}/cancel`, { method: "POST" }); } catch (e) {} return; }
   stEl.textContent = "⏳ обрабатываю…";
-  apPollItem(id, stEl, body);  // fire-and-forget: каждый элемент опрашивается параллельно
+  apPollItem(state, stEl, body);  // fire-and-forget: каждый элемент опрашивается параллельно
 }
 
-async function apPollItem(id, stEl, body) {
+async function apPollItem(state, stEl, body) {
   for (let i = 0; i < 80; i++) {
     await sleep(3000);
+    if (!state.alive) return;
     let st;
-    try { st = await api(`/autopost/${id}`); } catch (e) { continue; }
+    try { st = await api(`/autopost/${state.id}`); } catch (e) { continue; }
+    if (!state.alive) return;
     if (st.status === "processing") { stEl.textContent = "⏳ парсинг + фото…"; continue; }
-    if (st.status === "preview") { stEl.textContent = "👀 готово"; return apRenderPreview(id, st, body, stEl); }
+    if (st.status === "preview") { stEl.textContent = "👀 готово"; return apRenderPreview(state, st, body, stEl); }
     if (st.status === "error") {
       stEl.textContent = "❌ ошибка";
       body.innerHTML = `<div class="muted" style="color:var(--danger);margin-top:6px">${esc(st.error || "ошибка")}</div>`;
@@ -873,7 +887,8 @@ async function apPollItem(id, stEl, body) {
   stEl.textContent = "⏳ долго…";
 }
 
-function apRenderPreview(id, st, body, stEl) {
+function apRenderPreview(state, st, body, stEl) {
+  const id = state.id;
   const d = st.data || {};
   const rooms = d.rooms === 0 ? "Студия" : (d.rooms ? d.rooms + "к" : "?к");
   const L = [];
@@ -905,25 +920,27 @@ function apRenderPreview(id, st, body, stEl) {
   }
   body.querySelector(`#apPub-${id}`).onclick = async () => {
     haptic();
+    state.published = true;
     stEl.textContent = "📝 публикую…";
     body.innerHTML = `<div class="muted" style="margin-top:8px"><span class="sq-spin"></span> Публикую на arendok.ru… ~минуту.</div>`;
     try { await api(`/autopost/${id}/publish`, { method: "POST" }); }
-    catch (e) { stEl.textContent = "❌ ошибка"; body.innerHTML = `<div class="muted" style="color:var(--danger);margin-top:6px">${esc(e.message || e)}</div>`; return; }
-    apPollDone(id, stEl, body);
+    catch (e) { state.published = false; stEl.textContent = "❌ ошибка"; body.innerHTML = `<div class="muted" style="color:var(--danger);margin-top:6px">${esc(e.message || e)}</div>`; return; }
+    apPollDone(state, stEl, body);
   };
   body.querySelector(`#apCancel-${id}`).onclick = async () => {
     haptic();
+    state.alive = false;
     try { await api(`/autopost/${id}/cancel`, { method: "POST" }); } catch (e) {}
     stEl.textContent = "✖ отменено";
     body.innerHTML = "";
   };
 }
 
-async function apPollDone(id, stEl, body) {
+async function apPollDone(state, stEl, body) {
   for (let i = 0; i < 80; i++) {
     await sleep(3000);
     let st;
-    try { st = await api(`/autopost/${id}`); } catch (e) { continue; }
+    try { st = await api(`/autopost/${state.id}`); } catch (e) { continue; }
     if (st.status === "done") {
       stEl.textContent = "✅ опубликовано";
       body.innerHTML = `<div style="margin-top:8px;color:var(--green)">✅ <b>Опубликовано!</b>${st.arendok_url ? `<br><a href="${esc(st.arendok_url)}" target="_blank" style="color:var(--accent);word-break:break-all">${esc(st.arendok_url)}</a>` : ""}</div>`;
