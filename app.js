@@ -241,6 +241,7 @@ async function renderHome() {
       <button class="quick-btn" id="qHist"><span class="qi">↻</span><span class="qt">История отправок</span><span class="qs">что уже ушло</span></button>
       <button class="quick-btn" id="qScan"><span class="qi">⇣</span><span class="qt">Собрать объявления</span><span class="qs">за период</span></button>
       <button class="quick-btn" id="qCov"><span class="qi">▤</span><span class="qt">Охват по чатам</span><span class="qs">что собрано</span></button>
+      ${ownerOnly ? "" : `<button class="quick-btn" id="qFdg"><span class="qi">🏢</span><span class="qt">ФДГ</span><span class="qs">выложить на Arendok</span></button>`}
     </div>
     ${(!acc.connected) ? `
     <div class="card" id="connCard" style="border-color:var(--accent);margin-top:6px">
@@ -265,6 +266,7 @@ async function renderHome() {
   $("#qHist").onclick = () => { haptic(); go(renderHistory); };
   $("#qScan").onclick = () => sheetScan();
   $("#qCov").onclick = () => sheetCoverage();
+  { const qf = $("#qFdg"); if (qf) qf.onclick = () => { haptic(); go(renderAutopost); }; }
   const connBtn = $("#connBtn"); if (connBtn) connBtn.onclick = () => { haptic(); switchTab("profile"); };
   const mt = $("#mToggle"); if (mt) mt.onclick = async () => {
     haptic();
@@ -804,6 +806,109 @@ async function renderHistory() {
     wrap.appendChild(row);
   }
   view.appendChild(wrap);
+}
+
+/* ── ФДГ: публикация объявления на Arendok из ссылки Циан/Авито ── */
+async function renderAutopost() {
+  setTitle("ФДГ — выложить на Arendok", "ссылка Циан → объявление");
+  removeFab();
+  view.innerHTML = "";
+  const wrap = el(`<div class="fade-in"></div>`);
+  wrap.appendChild(el(`<div class="card">
+    <div class="ed-label">Ссылка на объявление (Циан/Авито)</div>
+    <input class="input" id="apUrl" placeholder="https://www.cian.ru/rent/flat/..." autocomplete="off" inputmode="url">
+    <button class="btn btn-primary" id="apGo" style="margin-top:10px;width:100%">Обработать</button>
+    <div class="muted" style="margin-top:8px">Распарсю объявление, почищу фото антизнаком и покажу превью перед публикацией.</div>
+  </div>`));
+  const res = el(`<div id="apRes" style="margin-top:12px"></div>`);
+  wrap.appendChild(res);
+  view.appendChild(wrap);
+
+  $("#apGo").onclick = async () => {
+    const url = ($("#apUrl").value || "").trim();
+    if (!url) return toast("Вставь ссылку", "err");
+    haptic();
+    $("#apGo").disabled = true;
+    res.innerHTML = `<div class="card"><span class="sq-spin"></span> Обрабатываю… парсинг + чистка фото, до минуты.</div>`;
+    let id;
+    try {
+      const r = await api("/autopost/prepare", { method: "POST", body: { url } });
+      id = r.id;
+    } catch (e) {
+      res.innerHTML = ""; $("#apGo").disabled = false;
+      return toast("Ошибка: " + (e.message || e), "err");
+    }
+    apPoll(id, res, "preview", (st) => apRenderPreview(id, st, res));
+  };
+}
+
+async function apPoll(id, res, waitStatus, onReady) {
+  for (let i = 0; i < 80; i++) {
+    await sleep(3000);
+    let st;
+    try { st = await api(`/autopost/${id}`); } catch (e) { continue; }
+    if (st.status === waitStatus) return onReady(st);
+    if (st.status === "error") {
+      res.innerHTML = `<div class="card" style="border-color:var(--danger)">❌ ${esc(st.error || "ошибка")}</div>`;
+      const g = $("#apGo"); if (g) g.disabled = false;
+      return;
+    }
+    if (st.status === "done") return onReady(st);  // на случай publish
+  }
+  res.innerHTML = `<div class="card">Долго обрабатывается — проверь бота.</div>`;
+  const g = $("#apGo"); if (g) g.disabled = false;
+}
+
+function apRenderPreview(id, st, res) {
+  const d = st.data || {};
+  const rooms = d.rooms === 0 ? "Студия" : (d.rooms ? d.rooms + "к" : "?к");
+  const L = [];
+  const addr = [d.street, d.house_number].filter(Boolean).join(" ");
+  if (addr) L.push(`📍 ${esc(addr)}`);
+  if (d.metro) L.push(`🚇 ${esc(d.metro)}`);
+  if (d.district) L.push(`🏙 ${esc(d.district)}`);
+  if (d.jk_name) L.push(`🏠 ЖК ${esc(d.jk_name)}`);
+  if (d.floor) L.push(`🪜 Этаж ${d.floor}/${d.total_floors || "?"}`);
+  if (d.bath_count) L.push(`🚿 Санузлов: ${d.bath_count}`);
+  if (d.deposit) L.push(`💼 Залог: ${esc(d.deposit)}`);
+  if (d.owner_phone) L.push(`📞 ${esc(d.owner_phone)}${d.owner_name ? " (" + esc(d.owner_name) + ")" : ""}`);
+  res.innerHTML = "";
+  const card = el(`<div class="card fade-in">
+    <div style="font-weight:680;font-size:16px">${esc(d.title || "Объявление")}</div>
+    <div class="muted" style="margin:3px 0 8px">${rooms} • ${d.area || "?"} м² • ${fmtMoney(d.price)} ₽/мес</div>
+    <div style="font-size:13px;line-height:1.75">${L.join("<br>")}</div>
+    <div class="ap-photos" id="apPhotos"></div>
+    <div class="muted" style="margin-top:6px">📷 Чистых фото: ${st.photos || 0}</div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn btn-primary" id="apPub" style="flex:1">✅ Опубликовать</button>
+      <button class="btn btn-soft" id="apCancel">Отмена</button>
+    </div>
+  </div>`);
+  res.appendChild(card);
+  const ph = card.querySelector("#apPhotos");
+  const n = Math.min(st.photos || 0, 6);
+  for (let i = 0; i < n; i++) {
+    const im = el(`<div class="ap-thumb"></div>`);
+    ph.appendChild(im);
+    fetchImg(`/autopost/${id}/photo/${i}`).then(u => { im.style.backgroundImage = `url(${u})`; }).catch(() => {});
+  }
+  card.querySelector("#apPub").onclick = async () => {
+    haptic();
+    res.innerHTML = `<div class="card"><span class="sq-spin"></span> Публикую на arendok.ru… ~минуту.</div>`;
+    try { await api(`/autopost/${id}/publish`, { method: "POST" }); }
+    catch (e) { res.innerHTML = `<div class="card" style="border-color:var(--danger)">❌ ${esc(e.message || e)}</div>`; return; }
+    apPoll(id, res, "done", (s) => {
+      res.innerHTML = `<div class="card" style="border-color:var(--green)">✅ <b>Опубликовано на Arendok!</b><br>${s.arendok_url ? `<a href="${esc(s.arendok_url)}" target="_blank" style="color:var(--accent);word-break:break-all">${esc(s.arendok_url)}</a>` : "Объявление создано."}</div>`;
+      if (typeof notify === "function") notify("success");
+    });
+  };
+  card.querySelector("#apCancel").onclick = async () => {
+    haptic();
+    try { await api(`/autopost/${id}/cancel`, { method: "POST" }); } catch (e) {}
+    res.innerHTML = "";
+    const g = $("#apGo"); if (g) g.disabled = false;
+    toast("Отменено", "ok");
+  };
 }
 
 /* ════════════════════════ SEARCH ════════════════════════ */
