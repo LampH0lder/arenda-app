@@ -239,6 +239,7 @@ async function renderHome() {
       <button class="quick-btn" id="qClients"><span class="qi">&#9786;&#65038;</span><span class="qt">Клиенты</span><span class="qs">${s.active ?? 0} активных</span></button>
       <button class="quick-btn" id="qAdd"><span class="qi">＋</span><span class="qt">Новый клиент</span><span class="qs">добавить вручную</span></button>
       <button class="quick-btn" id="qHist"><span class="qi">↻</span><span class="qt">История отправок</span><span class="qs">что уже ушло</span></button>
+      <button class="quick-btn" id="qScan"><span class="qi">⇣</span><span class="qt">Собрать объявления</span><span class="qs">за период</span></button>
       <button class="quick-btn" id="qCov"><span class="qi">▤</span><span class="qt">Охват по чатам</span><span class="qs">что собрано</span></button>
     </div>
     ${(!acc.connected) ? `
@@ -262,6 +263,7 @@ async function renderHome() {
   $("#qClients").onclick = () => switchTab("clients");
   $("#qAdd").onclick = () => sheetAddClient();
   $("#qHist").onclick = () => { haptic(); go(renderHistory); };
+  $("#qScan").onclick = () => sheetScan();
   $("#qCov").onclick = () => sheetCoverage();
   const connBtn = $("#connBtn"); if (connBtn) connBtn.onclick = () => { haptic(); switchTab("profile"); };
   const mt = $("#mToggle"); if (mt) mt.onclick = async () => {
@@ -1340,6 +1342,29 @@ function sheetBroadcast(l) {
     api("/broadcast", { method: "POST", body: { listing_id: l.id, group: g } })
       .then(r => { closeSheet(); notify("success"); toast(`Рассылка запущена (${r.queued} клиентов)`, "ok"); })
       .catch(e => toast("Ошибка: " + e.message, "err"));
+  });
+}
+
+function sheetScan() {
+  const b = openSheet(`<div class="sheet-title">Собрать объявления</div>
+    <div class="muted" style="margin-bottom:14px">Пройдусь по истории каналов и подберу пропущенные посты за период (в т.ч. отредактированные/упущенные).</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn btn-soft" data-d="1">За сегодня</button>
+      <button class="btn btn-soft" data-d="3">За 3 дня</button>
+      <button class="btn btn-soft" data-d="7">За неделю</button>
+    </div>
+    <div id="scanRes" class="muted" style="margin-top:14px"></div>`);
+  b.querySelectorAll("[data-d]").forEach(x => x.onclick = async () => {
+    haptic();
+    const res = b.querySelector("#scanRes");
+    res.innerHTML = `<span class="sq-spin"></span> Собираю… это может занять до минуты.`;
+    b.querySelectorAll("[data-d]").forEach(y => y.disabled = true);
+    try {
+      const r = await api("/scan", { method: "POST", body: { days: parseInt(x.dataset.d) } });
+      res.innerHTML = `Готово ✓ Добавлено <b>${r.added}</b>, пропущено ${r.skipped}, просмотрено ${r.seen}.`;
+      notify("success");
+    } catch (e) { res.textContent = "Ошибка: " + (e.message || e); }
+    b.querySelectorAll("[data-d]").forEach(y => y.disabled = false);
   });
 }
 
