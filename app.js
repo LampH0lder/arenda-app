@@ -803,9 +803,20 @@ async function renderHistory() {
 
 /* ── ФДГ: публикация объявления на Arendok из ссылки Циан/Авито ── */
 const AP_MAX = 10;
+// активные poll-циклы по posting_id. При повторном заходе во вкладку ФДГ глушим
+// старые (alive=false), иначе их опросы висят фоном и могут рисовать дубли.
+const apStates = new Map();
+function apTrack(state) {
+  const prev = apStates.get(state.id);
+  if (prev && prev !== state) prev.alive = false;
+  apStates.set(state.id, state);
+}
 async function renderAutopost() {
   setTitle("ФДГ — выложить на Arendok", "ссылки Циан → объявления");
   removeFab();
+  // глушим poll-циклы прошлого рендера (карточки пересоздаются с нуля ниже)
+  apStates.forEach(s => { s.alive = false; });
+  apStates.clear();
   view.innerHTML = "";
   const wrap = el(`<div class="fade-in"></div>`);
   wrap.appendChild(el(`<div class="card">
@@ -870,6 +881,7 @@ async function apEnqueueOne(url, q) {
   try {
     const r = await api("/autopost/prepare", { method: "POST", body: { url } });
     state.id = r.id;
+    apTrack(state);
   } catch (e) {
     stEl.textContent = "❌ " + (e.message || e);
     item.style.borderColor = "var(--danger)";
@@ -884,6 +896,7 @@ async function apEnqueueOne(url, q) {
 async function apRestoreItem(rec, q) {
   const { state, stEl, body } = apBuildItem(rec.url, q);
   state.id = rec.id;
+  apTrack(state);
   // превью готово и данные пришли прямо в списке → рисуем сразу, без второго запроса
   if (rec.status === "preview" && rec.data) {
     stEl.textContent = "👀 готово";
@@ -964,6 +977,7 @@ function apRenderPreview(state, st, body, stEl) {
 async function apPollDone(state, stEl, body) {
   for (let i = 0; i < 80; i++) {
     await sleep(3000);
+    if (!state.alive) return;  // вкладку пересоздали — этот цикл больше не нужен
     let st;
     try { st = await api(`/autopost/${state.id}`); } catch (e) { continue; }
     if (st.status === "done") {
