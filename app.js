@@ -818,6 +818,13 @@ async function renderAutopost() {
   wrap.appendChild(q);
   view.appendChild(wrap);
 
+  // восстановить активные обработки (в очереди/парсятся/готовы) — чтобы при выходе
+  // и возврате в ФДГ не терять состояние ссылок, что ещё крутятся.
+  try {
+    const r = await api("/autopost/list");
+    for (const rec of (r.items || [])) apRestoreItem(rec, q);
+  } catch (e) {}
+
   $("#apGo").onclick = async () => {
     const raw = ($("#apUrls").value || "").trim();
     if (!raw) return toast("Вставь хотя бы одну ссылку", "err");
@@ -832,11 +839,11 @@ async function renderAutopost() {
   };
 }
 
-async function apEnqueueOne(url, q) {
+function apBuildItem(url, q) {
   const state = { alive: true, id: null, published: false };
   const item = el(`<div class="card ap-item fade-in">
     <div class="row-between" style="gap:8px;align-items:flex-start">
-      <div class="muted ap-url" style="word-break:break-all;flex:1;font-size:12px">${esc(url)}</div>
+      <div class="muted ap-url" style="word-break:break-all;flex:1;font-size:12px">${esc(url || "")}</div>
       <div style="display:flex;align-items:center;gap:6px;white-space:nowrap">
         <span class="ap-st" style="font-size:12px">⏳ в очереди</span>
         <button class="ap-rm" title="Убрать из очереди" style="background:none;border:none;color:var(--muted);font-size:17px;line-height:1;cursor:pointer;padding:0 2px">✕</button>
@@ -855,6 +862,11 @@ async function apEnqueueOne(url, q) {
     item.remove();
     toast("Убрано из очереди", "ok");
   };
+  return { state, item, stEl, body };
+}
+
+async function apEnqueueOne(url, q) {
+  const { state, item, stEl, body } = apBuildItem(url, q);
   try {
     const r = await api("/autopost/prepare", { method: "POST", body: { url } });
     state.id = r.id;
@@ -866,6 +878,19 @@ async function apEnqueueOne(url, q) {
   if (!state.alive) { try { await api(`/autopost/${state.id}/cancel`, { method: "POST" }); } catch (e) {} return; }
   stEl.textContent = "⏳ обрабатываю…";
   apPollItem(state, stEl, body);  // fire-and-forget: каждый элемент опрашивается параллельно
+}
+
+// Восстановить карточку уже идущей обработки (при повторном заходе в ФДГ).
+async function apRestoreItem(rec, q) {
+  const { state, stEl, body } = apBuildItem(rec.url, q);
+  state.id = rec.id;
+  if (rec.status === "preview") {
+    stEl.textContent = "👀 готово";
+    try { return apRenderPreview(state, await api(`/autopost/${rec.id}`), body, stEl); }
+    catch (e) {}
+  }
+  stEl.textContent = "⏳ обрабатываю…";
+  apPollItem(state, stEl, body);
 }
 
 async function apPollItem(state, stEl, body) {
