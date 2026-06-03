@@ -884,13 +884,13 @@ async function apEnqueueOne(url, q) {
 async function apRestoreItem(rec, q) {
   const { state, stEl, body } = apBuildItem(rec.url, q);
   state.id = rec.id;
-  if (rec.status === "preview") {
+  // превью готово и данные пришли прямо в списке → рисуем сразу, без второго запроса
+  if (rec.status === "preview" && rec.data) {
     stEl.textContent = "👀 готово";
-    try { return apRenderPreview(state, await api(`/autopost/${rec.id}`), body, stEl); }
-    catch (e) {}
+    return apRenderPreview(state, rec, body, stEl);
   }
   stEl.textContent = "⏳ обрабатываю…";
-  apPollItem(state, stEl, body);
+  apPollItem(state, stEl, body);  // ещё в работе → опрашиваем, превью нарисуется само
 }
 
 async function apPollItem(state, stEl, body) {
