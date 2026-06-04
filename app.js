@@ -1605,7 +1605,8 @@ async function renderProfile() {
   if (acc.owner) {
     connHtml = `<div class="card"><div class="row-between">
       <div><div style="font-weight:640">✅ Аккаунт владельца</div>
-      <div class="muted">отправка вариантов работает</div></div></div></div>`;
+      <div class="muted">отправка вариантов работает</div></div></div>
+      <button class="btn btn-primary sm" id="admBtn" style="margin-top:12px">⚙️ Админ-панель</button></div>`;
   } else if (acc.connected) {
     connHtml = `<div class="card">
       <div class="row-between"><div>
@@ -1631,6 +1632,7 @@ async function renderProfile() {
     <div class="muted" style="margin:18px 4px;font-size:12.5px">🔒 Данные ваших клиентов видите только вы. Подключение хранится в зашифрованном виде.</div>
     <div class="app-ver">Риелти · ${APP_VERSION}</div>`;
   view.appendChild(wrap);
+  const ab = $("#admBtn"); if (ab) ab.onclick = () => { haptic(); location.href = (API_BASE || "") + "/admin?tgauth=" + AUTHQ; };
   const cc = $("#accConn"); if (cc) cc.onclick = () => { haptic(); sheetConnectAccount(); };
   const cd = $("#accDisc"); if (cd) cd.onclick = async () => {
     if (!confirm("Отключить ваш Telegram-аккаунт от бота?")) return;
