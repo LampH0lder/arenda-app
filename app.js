@@ -1,4 +1,4 @@
-/* ──────────────────────────────────────────────────────────────────────────
+﻿/* ──────────────────────────────────────────────────────────────────────────
    Риелти — Telegram Mini App. Тёмный минимализм. Vanilla JS, без сборки.
    ────────────────────────────────────────────────────────────────────────── */
 const tg = window.Telegram?.WebApp;
@@ -14,7 +14,7 @@ const haptic = (t = "light") => { try { tg?.HapticFeedback?.impactOccurred(t); }
 const notify = (t = "success") => { try { tg?.HapticFeedback?.notificationOccurred(t); } catch (e) {} };
 
 // показываемая версия (фиксированная семантическая); кэш-бастер ?v=N — отдельно и невидим
-const APP_VERSION = "v1.0.4";
+const APP_VERSION = "v1.0.5";
 
 /* ── API ──
    Фронт может быть на другом домене (GitHub Pages, чистый HTTPS без заглушки),
@@ -1670,7 +1670,11 @@ async function renderProfile() {
   if (ark.owner) {
     arkHtml = `<div class="card"><div class="row-between">
       <div><div style="font-weight:640">🏠 Arendok · профиль владельца</div>
-      <div class="muted">ФДГ публикуется через ваш кабинет</div></div></div></div>`;
+      <div class="muted">${ark.personal ? "ФДГ публикуется через ваш <b>личный</b> профиль (вход по капче)" : "ФДГ публикуется через файловую сессию кабинета"}</div></div></div>
+      ${ark.personal
+        ? `<button class="btn btn-danger sm" id="arkDisc" style="margin-top:12px">Отключить личный профиль</button>`
+        : `<button class="btn btn-primary sm" id="arkConn" style="margin-top:12px">🔑 Войти по капче (как риелтор)</button>`}
+      </div>`;
   } else if (ark.connected) {
     arkHtml = `<div class="card"><div class="row-between"><div>
       <div style="font-weight:640">🏠 Arendok подключён</div>
