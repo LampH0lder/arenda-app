@@ -14,7 +14,7 @@ const haptic = (t = "light") => { try { tg?.HapticFeedback?.impactOccurred(t); }
 const notify = (t = "success") => { try { tg?.HapticFeedback?.notificationOccurred(t); } catch (e) {} };
 
 // показываемая версия (фиксированная семантическая); кэш-бастер ?v=N — отдельно и невидим
-const APP_VERSION = "v1.0.3";
+const APP_VERSION = "v1.0.4";
 
 /* ── API ──
    Фронт может быть на другом домене (GitHub Pages, чистый HTTPS без заглушки),
@@ -140,11 +140,16 @@ function critSummary(c) {
   if (c.metro_stations) p.push("м." + c.metro_stations);
   return p.join(" · ") || "критерии не заданы";
 }
+function commissionLabel(l) {
+  if (l.commission == null) return null;
+  return l.commission === 0 ? "💸 без комиссии" : "💸 комиссия " + l.commission + "%";
+}
 function listingTitle(l) {
-  if (l.jk_name) return "ЖК " + l.jk_name;
-  if (l.address) return l.address;
-  if (l.district) return l.district;
-  return "Объект #" + l.id;
+  const anons = l.is_announcement ? "📢 Анонс · " : "";
+  if (l.jk_name) return anons + "ЖК " + l.jk_name;
+  if (l.address) return anons + l.address;
+  if (l.district) return anons + l.district;
+  return anons + "Объект #" + l.id;
 }
 function listingMeta(l) {
   const p = [];
@@ -152,6 +157,8 @@ function listingMeta(l) {
   if (l.area) p.push(l.area + " м²");
   if (l.floor && l.total_floors) p.push(l.floor + "/" + l.total_floors + " эт");
   if (l.metro) p.push("м. " + l.metro);
+  const cm = commissionLabel(l);
+  if (cm) p.push(cm);
   return p.join(" · ");
 }
 
@@ -732,6 +739,8 @@ async function renderListingDetail(id) {
       ${(l.floor && l.total_floors) ? kv("Этаж", l.floor + " / " + l.total_floors) : ""}
       ${l.metro ? kv("Метро", l.metro) : ""}
       ${l.district ? kv("Район", l.district) : ""}
+      ${l.commission != null ? kv("Комиссия", l.commission === 0 ? "без комиссии" : l.commission + "%") : ""}
+      ${l.is_announcement ? kv("Статус", "📢 Анонс — фото пока нет, объект не актуален") : ""}
       ${kv("Источник", l.source || "—")}
       ${l.exclusive ? kv("Эксклюзив", l.exclusive_owner || "да") : ""}
     </div>
