@@ -14,7 +14,7 @@ const haptic = (t = "light") => { try { tg?.HapticFeedback?.impactOccurred(t); }
 const notify = (t = "success") => { try { tg?.HapticFeedback?.notificationOccurred(t); } catch (e) {} };
 
 // показываемая версия (фиксированная семантическая); кэш-бастер ?v=N — отдельно и невидим
-const APP_VERSION = "v1.0.2";
+const APP_VERSION = "v1.0.3";
 
 /* ── API ──
    Фронт может быть на другом домене (GitHub Pages, чистый HTTPS без заглушки),
@@ -230,7 +230,8 @@ async function renderHome() {
     <div class="section-title" style="margin-top:20px">Сводка</div>
     <div class="stats-grid">
       <div class="stat a"><div class="glow"></div><div class="num">${s.active ?? 0}</div><div class="lbl">Активные клиенты</div></div>
-      <div class="stat g"><div class="glow"></div><div class="num">${s.sent_week ?? 0}</div><div class="lbl">Отправок за неделю</div></div>
+      <div class="stat g"><div class="glow"></div><div class="num">${s.sent_today ?? 0}</div><div class="lbl">Отправок сегодня</div></div>
+      <div class="stat am"><div class="glow"></div><div class="num">${s.fdg_today ?? 0}</div><div class="lbl">ФДГ сегодня</div></div>
     </div>
     <div class="section-title">Быстрые действия</div>
     <div class="quick">
@@ -997,6 +998,14 @@ async function apPollDone(state, stEl, body) {
 
 /* ════════════════════════ SEARCH ════════════════════════ */
 let searchState = { text: "", results: [], page: 0, hasMore: false, sel: new Set(), filters: null, applied: null };
+let searchSource = "all";       // all | exclusives | arendok
+let searchCommMax = null;       // null=любая | 0=без комиссии | 50=до 50%
+function searchChipBody() {
+  const b = {};
+  if (searchSource && searchSource !== "all") b.source = searchSource;
+  if (searchCommMax !== null) b.commission_max = searchCommMax;
+  return b;
+}
 async function renderSearch() {
   setTitle("Поиск вариантов", "по всей базе объявлений");
   removeFab();
@@ -1011,6 +1020,16 @@ async function renderSearch() {
       <button class="btn btn-primary" id="sGo" style="flex:1">⌕ Найти</button>
     </div>
     <button class="btn btn-soft sm" id="sFilters" style="margin-top:10px;width:100%">⚙️ Фильтры — комнаты, бюджет, ЖК, район/метро, область на карте</button>
+    <div class="seg sm" id="srcSeg" style="margin-top:10px">
+      <button data-src="all" class="${searchSource === "all" ? "on" : ""}">Все</button>
+      <button data-src="exclusives" class="${searchSource === "exclusives" ? "on" : ""}">Эксклюзивы</button>
+      <button data-src="arendok" class="${searchSource === "arendok" ? "on" : ""}">Arendok</button>
+    </div>
+    <div class="seg sm" id="commSeg" style="margin-top:8px">
+      <button data-cm="" class="${searchCommMax === null ? "on" : ""}">Любая комиссия</button>
+      <button data-cm="0" class="${searchCommMax === 0 ? "on" : ""}">Без комиссии</button>
+      <button data-cm="50" class="${searchCommMax === 50 ? "on" : ""}">До 50%</button>
+    </div>
     <div class="idsearch" style="margin-top:10px">
       <input class="input" id="lidInput" inputmode="numeric" placeholder="Открыть объект по номеру: #776">
       <button class="btn btn-soft sm" id="lidGo">Открыть</button>
@@ -1021,6 +1040,20 @@ async function renderSearch() {
     const ta = $("#sInput"); ta.value = ta.value ? (ta.value + " " + text) : text; runSearch();
   }, "🎤 Голосом"));
   $("#sGo").onclick = runSearch;
+  function reSearch() {
+    if (searchState.text) runSearch();
+    else if (searchState.filters) applySearchFilters(searchState.filters);
+  }
+  $("#srcSeg").querySelectorAll("button").forEach(b => b.onclick = () => {
+    haptic(); searchSource = b.dataset.src;
+    $("#srcSeg").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+    reSearch();
+  });
+  $("#commSeg").querySelectorAll("button").forEach(b => b.onclick = () => {
+    haptic(); searchCommMax = b.dataset.cm === "" ? null : parseInt(b.dataset.cm);
+    $("#commSeg").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+    reSearch();
+  });
   $("#sFilters").onclick = () => { haptic(); sheetFilters(searchState.filters || critToFilters(searchState.applied), applySearchFilters); };
   const openById = () => {
     const raw = ($("#lidInput").value || "").replace(/\D/g, "");
@@ -1036,7 +1069,7 @@ async function runSearch() {
   if (!text) return toast("Напишите критерии");
   haptic(); searchState = { text, results: [], page: 0, hasMore: false, sel: new Set(), filters: null, applied: null };
   $("#sResults").innerHTML = `<div class="loader"><div class="spin"></div></div>`;
-  let data; try { data = await api("/search", { method: "POST", body: { text, page: 0 } }); }
+  let data; try { data = await api("/search", { method: "POST", body: { text, page: 0, ...searchChipBody() } }); }
   catch (e) { return toast("Ошибка поиска", "err"); }
   searchState.results = data.listings; searchState.hasMore = data.has_more;
   searchState.crit = data.criteria; searchState.total = data.total; searchState.applied = data.applied;
@@ -1046,7 +1079,7 @@ async function runSearch() {
 async function applySearchFilters(f) {
   haptic(); searchState = { text: "", results: [], page: 0, hasMore: false, sel: new Set(), filters: f, applied: null };
   $("#sResults").innerHTML = `<div class="loader"><div class="spin"></div></div>`;
-  let data; try { data = await api("/search", { method: "POST", body: { filters: f, page: 0 } }); }
+  let data; try { data = await api("/search", { method: "POST", body: { filters: f, page: 0, ...searchChipBody() } }); }
   catch (e) { return toast("Ошибка поиска", "err"); }
   searchState.results = data.listings; searchState.hasMore = data.has_more;
   searchState.crit = data.criteria; searchState.total = data.total; searchState.applied = data.applied;
@@ -1095,7 +1128,7 @@ function paintSearch() {
     const more = el(`<button class="btn btn-soft more-btn" style="margin-top:6px">Ещё варианты</button>`);
     more.onclick = async () => {
       haptic(); const p = searchState.page + 1;
-      const body = searchState.filters ? { filters: searchState.filters, page: p } : { text: searchState.text, page: p };
+      const body = searchState.filters ? { filters: searchState.filters, page: p, ...searchChipBody() } : { text: searchState.text, page: p, ...searchChipBody() };
       const d = await api("/search", { method: "POST", body });
       searchState.page = p; searchState.results.push(...d.listings); searchState.hasMore = d.has_more; paintSearch();
     };
