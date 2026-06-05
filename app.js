@@ -14,7 +14,7 @@ const haptic = (t = "light") => { try { tg?.HapticFeedback?.impactOccurred(t); }
 const notify = (t = "success") => { try { tg?.HapticFeedback?.notificationOccurred(t); } catch (e) {} };
 
 // показываемая версия (фиксированная семантическая); кэш-бастер ?v=N — отдельно и невидим
-const APP_VERSION = "v1.0.5";
+const APP_VERSION = "v1.0.6";
 
 /* ── API ──
    Фронт может быть на другом домене (GitHub Pages, чистый HTTPS без заглушки),
@@ -912,6 +912,14 @@ async function apRestoreItem(rec, q) {
     stEl.textContent = "👀 готово";
     return apRenderPreview(state, rec, body, stEl);
   }
+  // processing Stage B (публикация) — запускаем apPollDone вместо apPollItem
+  if (rec.status === "processing" && rec.publishing) {
+    stEl.textContent = "📝 публикую…";
+    state.published = true;
+    body.innerHTML = `<div class="muted" style="margin-top:8px"><span class="sq-spin"></span> Публикую на arendok.ru… ~минуту.</div>`;
+    apPollDone(state, stEl, body);
+    return;
+  }
   stEl.textContent = "⏳ обрабатываю…";
   apPollItem(state, stEl, body);  // ещё в работе → опрашиваем, превью нарисуется само
 }
@@ -923,7 +931,16 @@ async function apPollItem(state, stEl, body) {
     let st;
     try { st = await api(`/autopost/${state.id}`); } catch (e) { continue; }
     if (!state.alive) return;
-    if (st.status === "processing") { stEl.textContent = "⏳ парсинг + фото…"; continue; }
+    if (st.status === "processing") {
+      if (st.publishing) {
+        // перешли в Stage B (публикация) — переключаемся на apPollDone
+        stEl.textContent = "📝 публикую…";
+        state.published = true;
+        body.innerHTML = `<div class="muted" style="margin-top:8px"><span class="sq-spin"></span> Публикую на arendok.ru… ~минуту.</div>`;
+        return apPollDone(state, stEl, body);
+      }
+      stEl.textContent = "⏳ парсинг + фото…"; continue;
+    }
     if (st.status === "preview") { stEl.textContent = "👀 готово"; return apRenderPreview(state, st, body, stEl); }
     if (st.status === "error") {
       stEl.textContent = "❌ ошибка";
@@ -955,7 +972,12 @@ function apRenderPreview(state, st, body, stEl) {
     <div style="font-size:13px;line-height:1.75">${L.join("<br>")}</div>
     <div class="ap-photos" id="apPhotos-${id}"></div>
     <div class="muted" style="margin-top:6px">📷 Чистых фото: ${st.photos || 0}</div>
-    <div style="display:flex;gap:8px;margin-top:12px">
+    <div style="margin-top:12px">
+      <div class="muted" style="margin-bottom:4px;font-size:12px">✏️ Внутреннее описание для агентов <span style="opacity:.5">(опционально)</span></div>
+      <textarea id="apNotes-${id}" rows="3" style="width:100%;box-sizing:border-box;background:var(--card);color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:8px;font-size:13px;resize:vertical" placeholder="Ванна раздельная, бонус агенту 50%, хозяева готовы торговаться…">${esc(st.agent_notes || "")}</textarea>
+      <button class="btn btn-soft sm" id="apSaveNotes-${id}" style="margin-top:4px;width:100%">💾 Сохранить описание</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px">
       <button class="btn btn-primary" id="apPub-${id}" style="flex:1">✅ Опубликовать</button>
       <button class="btn btn-soft" id="apCancel-${id}">Отмена</button>
     </div>`;
@@ -966,8 +988,23 @@ function apRenderPreview(state, st, body, stEl) {
     ph.appendChild(im);
     fetchImg(`/autopost/${id}/photo/${i}`).then(u => { im.style.backgroundImage = `url(${u})`; }).catch(() => {});
   }
+  body.querySelector(`#apSaveNotes-${id}`).onclick = async () => {
+    haptic();
+    const notes = body.querySelector(`#apNotes-${id}`)?.value || "";
+    const btn = body.querySelector(`#apSaveNotes-${id}`);
+    try {
+      await api(`/autopost/${id}/notes`, { method: "POST", body: JSON.stringify({ agent_notes: notes }) });
+      btn.textContent = "✅ Сохранено";
+      setTimeout(() => { if (btn) btn.textContent = "💾 Сохранить описание"; }, 1800);
+    } catch (e) { notify("error"); btn.textContent = "❌ Ошибка"; setTimeout(() => { if (btn) btn.textContent = "💾 Сохранить описание"; }, 1800); }
+  };
   body.querySelector(`#apPub-${id}`).onclick = async () => {
     haptic();
+    // автосохранение заметки агента перед публикацией
+    const notes = body.querySelector(`#apNotes-${id}`)?.value || "";
+    if (notes.trim()) {
+      try { await api(`/autopost/${id}/notes`, { method: "POST", body: JSON.stringify({ agent_notes: notes }) }); } catch (e) {}
+    }
     state.published = true;
     stEl.textContent = "📝 публикую…";
     body.innerHTML = `<div class="muted" style="margin-top:8px"><span class="sq-spin"></span> Публикую на arendok.ru… ~минуту.</div>`;
