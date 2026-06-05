@@ -14,7 +14,7 @@ const haptic = (t = "light") => { try { tg?.HapticFeedback?.impactOccurred(t); }
 const notify = (t = "success") => { try { tg?.HapticFeedback?.notificationOccurred(t); } catch (e) {} };
 
 // показываемая версия (фиксированная семантическая); кэш-бастер ?v=N — отдельно и невидим
-const APP_VERSION = "v1.0.1";
+const APP_VERSION = "v1.0.2";
 
 /* ── API ──
    Фронт может быть на другом домене (GitHub Pages, чистый HTTPS без заглушки),
@@ -1596,6 +1596,7 @@ async function renderProfile() {
   removeFab();
   loading();
   let acc = {}; try { acc = await api("/account"); } catch (e) {}
+  let ark = {}; try { ark = await api("/arendok/status"); } catch (e) {}
   view.innerHTML = "";
   const wrap = el(`<div class="fade-in"></div>`);
   const uname = TG_USER.username ? "@" + TG_USER.username : (TG_USER.id ? "id " + TG_USER.id : "");
@@ -1623,15 +1624,40 @@ async function renderProfile() {
     </div>`;
   }
 
+  let arkHtml;
+  if (ark.owner) {
+    arkHtml = `<div class="card"><div class="row-between">
+      <div><div style="font-weight:640">🏠 Arendok · профиль владельца</div>
+      <div class="muted">ФДГ публикуется через ваш кабинет</div></div></div></div>`;
+  } else if (ark.connected) {
+    arkHtml = `<div class="card"><div class="row-between"><div>
+      <div style="font-weight:640">🏠 Arendok подключён</div>
+      <div class="muted">ФДГ публикуется через ваш профиль arendok.ru</div>
+      </div></div>
+      <button class="btn btn-danger sm" id="arkDisc" style="margin-top:12px">Отключить Arendok</button></div>`;
+  } else {
+    arkHtml = `<div class="card">
+      <div style="font-weight:640;margin-bottom:6px">🏠 Подключите Arendok</div>
+      <div class="muted" style="margin-bottom:12px">Чтобы публиковать ФДГ <b>через свой профиль</b> arendok.ru. Вход: логин, пароль и капча.</div>
+      <button class="btn btn-primary" id="arkConn">Подключить Arendok</button></div>`;
+  }
+
   wrap.innerHTML = `
     <div class="detail-hero">
       <div class="avatar" style="font-size:22px">${esc(initials(fullName))}</div>
       <div><h2>${esc(fullName)}</h2><div class="sub">${esc(uname)}</div></div>
     </div>
     ${connHtml}
+    ${arkHtml}
     <div class="muted" style="margin:18px 4px;font-size:12.5px">🔒 Данные ваших клиентов видите только вы. Подключение хранится в зашифрованном виде.</div>
     <div class="app-ver">Риелти · ${APP_VERSION}</div>`;
   view.appendChild(wrap);
+  const arkC = $("#arkConn"); if (arkC) arkC.onclick = () => { haptic(); sheetConnectArendok(); };
+  const arkD = $("#arkDisc"); if (arkD) arkD.onclick = async () => {
+    if (!confirm("Отключить ваш профиль Arendok?")) return;
+    haptic(); try { await api("/arendok/disconnect", { method: "POST", body: {} }); toast("Arendok отключён", "ok"); renderProfile(); }
+    catch (e) { toast("Ошибка", "err"); }
+  };
   const ab = $("#admBtn"); if (ab) ab.onclick = () => { haptic(); location.href = (API_BASE || "") + "/admin?tgauth=" + AUTHQ; };
   const cc = $("#accConn"); if (cc) cc.onclick = () => { haptic(); sheetConnectAccount(); };
   const cd = $("#accDisc"); if (cd) cd.onclick = async () => {
@@ -1693,6 +1719,63 @@ function sheetConnectAccount() {
   function done(r) {
     closeSheet(); notify("success");
     toast("Telegram подключён ✓ " + (r.name || ""), "ok");
+    renderProfile();
+  }
+}
+
+function sheetConnectArendok() {
+  stepCreds();
+  function stepCreds() {
+    const b = openSheet(`<div class="sheet-title">Подключение Arendok</div>
+      <div class="muted" style="margin-bottom:12px">Логин (телефон или email) и пароль от вашего кабинета arendok.ru.</div>
+      <div class="field"><input class="input" id="aLogin" placeholder="Телефон или Email"></div>
+      <div class="field"><input class="input" id="aPwd" type="password" placeholder="Пароль"></div>
+      <button class="btn btn-primary" id="aNext">Далее</button>
+      <div class="muted" style="margin-top:12px;font-size:12px">🔒 Хранится в зашифрованном виде. Дальше нужно будет ввести капчу с картинки.</div>`);
+    b.querySelector("#aNext").onclick = async () => {
+      const login = b.querySelector("#aLogin").value.trim();
+      const password = b.querySelector("#aPwd").value;
+      if (!login || !password) return toast("Введите логин и пароль");
+      haptic(); const btn = b.querySelector("#aNext"); btn.textContent = "Открываю вход…"; btn.disabled = true;
+      try {
+        const r = await api("/arendok/connect", { method: "POST", body: { login, password } });
+        if (r.step === "captcha") return stepCaptcha(r);
+        toast(r.message || "Не удалось открыть вход", "err"); btn.textContent = "Далее"; btn.disabled = false;
+      } catch (e) { toast("Ошибка: " + e.message, "err"); btn.textContent = "Далее"; btn.disabled = false; }
+    };
+  }
+  function stepCaptcha(r) {
+    const b = openSheet(`<div class="sheet-title">Введите капчу</div>
+      ${r.error ? `<div class="muted" style="color:var(--red);margin-bottom:8px">${esc(r.error)}</div>` : ""}
+      <div style="text-align:center;margin-bottom:10px">
+        ${r.img_b64 ? `<img id="aCapImg" src="data:image/png;base64,${r.img_b64}" alt="капча" style="height:62px;border-radius:8px;border:1px solid var(--line)">` : `<div class="muted">картинка не загрузилась</div>`}
+      </div>
+      <button class="btn btn-ghost sm" id="aRefresh" style="margin-bottom:10px">↻ Обновить картинку</button>
+      <div class="field"><input class="input" id="aCap" inputmode="text" placeholder="символы с картинки"></div>
+      <button class="btn btn-primary" id="aLogin2">Войти</button>`);
+    b.querySelector("#aRefresh").onclick = async () => {
+      haptic();
+      try {
+        const rr = await api("/arendok/refresh", { method: "POST", body: {} });
+        const img = b.querySelector("#aCapImg");
+        if (rr.img_b64 && img) img.src = "data:image/png;base64," + rr.img_b64;
+      } catch (e) { toast("Ошибка обновления", "err"); }
+    };
+    b.querySelector("#aLogin2").onclick = async () => {
+      const solution = b.querySelector("#aCap").value.trim();
+      if (!solution) return toast("Введите капчу");
+      haptic(); const btn = b.querySelector("#aLogin2"); btn.textContent = "Вхожу…"; btn.disabled = true;
+      try {
+        const rr = await api("/arendok/captcha", { method: "POST", body: { solution } });
+        if (rr.step === "connected") return done();
+        if (rr.step === "captcha") return stepCaptcha(rr);  // неверно — новая капча
+        toast(rr.message || "Не удалось войти", "err"); btn.textContent = "Войти"; btn.disabled = false;
+      } catch (e) { toast("Ошибка: " + e.message, "err"); btn.textContent = "Войти"; btn.disabled = false; }
+    };
+  }
+  function done() {
+    closeSheet(); notify("success");
+    toast("Arendok подключён ✓", "ok");
     renderProfile();
   }
 }
