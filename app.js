@@ -101,7 +101,8 @@ const thumbObserver = ("IntersectionObserver" in window) ? new IntersectionObser
   for (const e of entries) {
     if (!e.isIntersecting) continue;
     const node = e.target; thumbObserver.unobserve(node);
-    fetchImg(`/listings/${node.dataset.thumb}/photo`)
+    const cov = node.dataset.cov || 0;  // версия обложки — кэш-бастер (при смене обложки URL меняется)
+    fetchImg(`/listings/${node.dataset.thumb}/photo?c=${cov}`)
       .then(url => { node.style.backgroundImage = `url(${url})`; node.classList.add("loaded"); })
       .catch(() => node.classList.add("nophoto"));
   }
@@ -284,7 +285,7 @@ async function loadHomeCarousel() {
   for (const l of items) {
     const it = el(`
       <div class="ccard">
-        <div class="cc-thumb" data-thumb="${l.id}"><span class="src-badge">${esc(l.source || "")}</span></div>
+        <div class="cc-thumb" data-thumb="${l.id}" data-cov="${l.cover_idx || 0}"><span class="src-badge">${esc(l.source || "")}</span></div>
         <div class="cc-body">
           <div class="cc-price">${fmtMoney(l.price)} ₽</div>
           <div class="cc-title">${esc(listingTitle(l))}</div>
@@ -690,7 +691,7 @@ async function renderMap(source = "all", pick = null, initialPoly = null) {
 function listingCard(l, onSend, openable = true, thumb = true, select = null) {
   const card = el(`
     <div class="card pad0 ${openable ? "tap" : ""} ${select && select.checked ? "lc-sel" : ""}">
-      ${thumb ? `<div class="card-thumb" data-thumb="${l.id}"><span class="src-badge">${esc(l.source || "")}</span></div>` : ""}
+      ${thumb ? `<div class="card-thumb" data-thumb="${l.id}" data-cov="${l.cover_idx || 0}"><span class="src-badge">${esc(l.source || "")}</span></div>` : ""}
       <div class="card-body">
         <div class="row-between" style="align-items:flex-start">
           <div style="min-width:0">
@@ -759,10 +760,11 @@ async function renderListingDetail(id) {
   const ph = wrap.querySelector("[data-photo]");
   const phWrap = wrap.querySelector("[data-photowrap]");
   let hiDone = false;
-  fetchImg(`/listings/${id}/photo?q=hi`).then(url => {
+  const cov = l.cover_idx || 0;  // кэш-бастер обложки
+  fetchImg(`/listings/${id}/photo?q=hi&c=${cov}`).then(url => {
     hiDone = true; ph.src = url; phWrap.style.display = "block"; ph.classList.remove("lq");
   }).catch(() => {});
-  fetchImg(`/listings/${id}/photo`).then(url => {
+  fetchImg(`/listings/${id}/photo?c=${cov}`).then(url => {
     if (hiDone) return; ph.src = url; phWrap.style.display = "block"; ph.classList.add("lq");
   }).catch(() => {});
   // галерея: сколько всего фото; если >1 — показываем кнопку «Все фото» и счётчик на обложке
@@ -843,6 +845,9 @@ function openGallery(id, count, startIdx, coverIdx) {
       await api(`/listings/${id}/cover`, { method: "POST", body: { idx } });
       cover = idx; notify("success"); toast("Обложка обновлена ✓", "ok");
       coverBtn.classList.add("is-cover"); coverBtn.textContent = "✓ Это обложка"; coverBtn.disabled = true;
+      // обновить обложку на карточке детали (она под галереей) — свежий URL с новым c=
+      const dp = document.querySelector(".detail-photo");
+      if (dp) fetchImg(`/listings/${id}/photo?q=hi&c=${idx}`).then(u => dp.src = u).catch(() => {});
     } catch (e) { toast("Не удалось сменить обложку", "err"); }
   };
   // свайпы: влево/вправо — листать, вниз — закрыть
