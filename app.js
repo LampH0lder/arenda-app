@@ -40,7 +40,7 @@ async function api(path, opts = {}) {
 // упрётся в заглушку ngrok). Тянем через fetch с заголовком и отдаём blob-URL.
 // Кэшируем в Cache Storage по URL → при повторном открытии/прокрутке мгновенно,
 // без повторной качки через медленный туннель (главный буст превью).
-const IMG_CACHE = "img-v3";  // bump -> сброс кэша превью (перешли на оригинал-источник)
+const IMG_CACHE = "img-v4";  // bump -> сброс кэша превью (800px от оригинала)
 async function fetchImg(path) {
   const url = API_BASE + "/api" + path;
   let cache = null;
