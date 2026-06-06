@@ -864,6 +864,13 @@ async function renderAutopost() {
   } catch (e) {}
 
   $("#apGo").onclick = async () => {
+    // гейт: без Arendok публикация всё равно упадёт — не запускаем впустую, ведём в Профиль
+    if (!ark.connected && !ark.owner) {
+      notify("error");
+      toast("Сначала подключи Arendok в «Профиле»", "err");
+      haptic(); setTimeout(() => switchTab("profile"), 1000);
+      return;
+    }
     const raw = ($("#apUrls").value || "").trim();
     if (!raw) return toast("Вставь хотя бы одну ссылку", "err");
     let urls = [...new Set(raw.split(/\s+/).map(s => s.trim()).filter(Boolean))];
@@ -1750,9 +1757,11 @@ async function renderProfile() {
     </div>
     ${connHtml}
     ${arkHtml}
+    <button class="btn btn-ghost" id="onbReplay" style="width:100%;margin-top:6px">❓ Пройти обучение заново</button>
     <div class="muted" style="margin:18px 4px;font-size:12.5px">🔒 Данные ваших клиентов видите только вы. Подключение хранится в зашифрованном виде.</div>
     <div class="app-ver">Риелти · ${APP_VERSION}</div>`;
   view.appendChild(wrap);
+  const onbR = $("#onbReplay"); if (onbR) onbR.onclick = () => { haptic(); startOnboarding(true); };
   const arkC = $("#arkConn"); if (arkC) arkC.onclick = () => { haptic(); sheetConnectArendok(); };
   const arkD = $("#arkDisc"); if (arkD) arkD.onclick = async () => {
     if (!confirm("Отключить ваш профиль Arendok?")) return;
@@ -1881,5 +1890,114 @@ function sheetConnectArendok() {
   }
 }
 
+/* ════════════════════════ Онбординг (spotlight-тур) ════════════════════════ */
+const ONB_KEY = "onboarding_done_v1";
+const CONN = { tg: false, arendok: false, loaded: false };
+async function refreshConn() {
+  try { const a = await api("/account"); CONN.tg = !!(a.connected || a.owner); } catch (e) {}
+  try { const k = await api("/arendok/status"); CONN.arendok = !!(k.connected || k.owner); } catch (e) {}
+  CONN.loaded = true;
+  return CONN;
+}
+
+const ONB_STEPS = [
+  { target: null, ic: "👋", title: "Привет! Это твой помощник риелтора",
+    text: "За минуту покажу, что где. Листай «Далее», а если спешишь — жми «Пропустить». Вернуться к обучению всегда можно из вкладки «Профиль»." },
+  { target: '.tab[data-tab="home"]', ic: "◎", title: "Главная",
+    text: "Сводка по работе: последние объекты, активные клиенты, отправки и ФДГ за сегодня. Тут же быстрые действия — поиск вариантов, история и сбор объявлений." },
+  { target: '.tab[data-tab="fdg"]', ic: "⇪", title: "ФДГ — выкладка на Arendok",
+    text: "Вставляешь ссылку с Циан или Авито — бот сам парсит, чистит фото и готовит объявление. Перед публикацией показывает превью, выкладываешь в один клик." },
+  { target: '.tab[data-tab="clients"]', ic: "☺", title: "Клиенты",
+    text: "База твоих клиентов и их критерии: бюджет, районы, метро, комнаты. Бот сам подбирает подходящие объекты, а ты отправляешь варианты в пару касаний." },
+  { target: '.tab[data-tab="listings"]', ic: "⌂", title: "Объекты",
+    text: "Вся собранная база объявлений из чатов и площадок. Здесь смотришь карточки, фото и отправляешь объекты клиентам." },
+  { target: '.tab[data-tab="profile"]', ic: "⚙", title: "Профиль — начни отсюда",
+    text: "Самое важное: подключи свой Telegram и аккаунт Arendok. Без них не получится отправлять клиентам и выкладывать ФДГ. Сейчас откроем профиль." },
+];
+
+let onbIdx = 0;
+function startOnboarding() {
+  onbIdx = 0;
+  document.getElementById("onb").classList.remove("hidden");
+  onbRender();
+}
+function endOnboarding(goConnect) {
+  const root = document.getElementById("onb");
+  root.classList.add("hidden"); root.innerHTML = "";
+  try { localStorage.setItem(ONB_KEY, "1"); } catch (e) {}
+  if (goConnect) onbAfterFinish();
+}
+async function onbAfterFinish() {
+  await refreshConn();
+  if (!CONN.tg || !CONN.arendok) {
+    switchTab("profile");
+    toast("Подключи Telegram и Arendok, чтобы начать", "");
+  }
+}
+function onbRender() {
+  const step = ONB_STEPS[onbIdx];
+  const root = document.getElementById("onb");
+  const isLast = onbIdx === ONB_STEPS.length - 1;
+  const dots = ONB_STEPS.map((_, i) => `<i class="${i === onbIdx ? "on" : ""}"></i>`).join("");
+  root.innerHTML = "";
+  root.appendChild(el(`<div id="onbCatch"></div>`));
+  const hole = el(`<div id="onbHole"></div>`);
+  root.appendChild(hole);
+  const card = el(`<div class="onb-card">
+    <div class="onb-ic">${step.ic}</div>
+    <h3>${esc(step.title)}</h3>
+    <p>${esc(step.text)}</p>
+    <div class="onb-foot">
+      <div class="onb-dots">${dots}</div>
+      <div class="onb-btns">
+        ${onbIdx > 0 ? `<button class="btn btn-ghost sm" id="onbPrev">Назад</button>` : ``}
+        <button class="btn btn-primary sm" id="onbNext">${isLast ? "Понятно" : "Далее"}</button>
+      </div>
+    </div>
+    ${!isLast ? `<div style="text-align:center;margin-top:10px"><button class="onb-skip" id="onbSkip">Пропустить обучение</button></div>` : ``}
+  </div>`);
+  root.appendChild(card);
+  onbPosition(step, hole, card);
+  document.getElementById("onbNext").onclick = () => {
+    haptic();
+    if (isLast) endOnboarding(true);
+    else { onbIdx++; onbRender(); }
+  };
+  const pv = document.getElementById("onbPrev"); if (pv) pv.onclick = () => { haptic(); onbIdx--; onbRender(); };
+  const sk = document.getElementById("onbSkip"); if (sk) sk.onclick = () => { haptic(); endOnboarding(true); };
+}
+function onbPosition(step, hole, card) {
+  const vh = window.innerHeight, vw = window.innerWidth;
+  const t = step.target ? document.querySelector(step.target) : null;
+  card.style.transform = "none";
+  if (!t) {
+    // приветствие/нет цели — затемняем всё, карточку по центру
+    hole.classList.add("center");
+    hole.style.cssText += ";width:0;height:0;left:" + (vw / 2) + "px;top:" + (vh / 2) + "px";
+    card.style.top = "50%"; card.style.bottom = "auto";
+    card.style.transform = "translateY(-50%)";
+    return;
+  }
+  const r = t.getBoundingClientRect(), pad = 6;
+  hole.classList.remove("center");
+  hole.style.left = (r.left - pad) + "px";
+  hole.style.top = (r.top - pad) + "px";
+  hole.style.width = (r.width + pad * 2) + "px";
+  hole.style.height = (r.height + pad * 2) + "px";
+  // цель в нижней половине (таббар) → карточка над ней; иначе под ней
+  if (r.top > vh * 0.5) { card.style.bottom = (vh - r.top + 14) + "px"; card.style.top = "auto"; }
+  else { card.style.top = (r.bottom + 14) + "px"; card.style.bottom = "auto"; }
+}
+
 /* ── start ── */
 switchTab("home");
+(async () => {
+  let done = false;
+  try { done = localStorage.getItem(ONB_KEY) === "1"; } catch (e) {}
+  await refreshConn();
+  if (!done) setTimeout(() => startOnboarding(), 600);
+  else if (!CONN.tg || !CONN.arendok) {
+    // обучение уже пройдено, но профиль не подключён — мягко напомним
+    setTimeout(() => { switchTab("profile"); toast("Подключи Telegram и Arendok, чтобы начать", ""); }, 400);
+  }
+})();
