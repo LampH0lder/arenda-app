@@ -829,6 +829,23 @@ async function renderAutopost() {
   apStates.clear();
   view.innerHTML = "";
   const wrap = el(`<div class="fade-in"></div>`);
+
+  // ── Предупреждение: Arendok не подключён ──────────────────────────────────
+  let ark = {}; try { ark = await api("/arendok/status"); } catch (e) {}
+  if (!ark.connected && !ark.owner) {
+    const warn = el(`<div style="background:rgba(255,107,107,.12);border:2px solid var(--red);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px">
+      <div style="font-weight:700;color:var(--red);font-size:15px;margin-bottom:4px">🚫 Arendok не подключён</div>
+      <div style="font-size:13px;color:var(--txt-2);margin-bottom:12px">Без аккаунта Arendok объявление <b>не выложится</b> — парсинг запустится, но публикация упадёт с ошибкой. Сначала подключи профиль.</div>
+      <button class="btn btn-danger" id="apGoProfile" style="width:100%">⚙️ Подключить Arendok → Профиль</button>
+    </div>`);
+    wrap.appendChild(warn);
+    // обработчик вешаем после appendChild
+    setTimeout(() => {
+      const b = document.getElementById("apGoProfile");
+      if (b) b.onclick = () => { haptic(); switchTab("profile"); };
+    }, 0);
+  }
+
   wrap.appendChild(el(`<div class="card">
     <div class="ed-label">Ссылки (Циан/Авито) — до ${AP_MAX}, каждая с новой строки</div>
     <textarea class="input" id="apUrls" rows="4" placeholder="https://www.cian.ru/rent/flat/...&#10;https://www.avito.ru/..." autocomplete="off" inputmode="url" style="resize:vertical;min-height:88px;font-family:inherit"></textarea>
@@ -1696,10 +1713,10 @@ async function renderProfile() {
       <button class="btn btn-danger sm" id="accDisc" style="margin-top:12px">Отключить аккаунт</button>
     </div>`;
   } else {
-    connHtml = `<div class="card">
-      <div style="font-weight:640;margin-bottom:6px">📲 Подключите свой Telegram</div>
-      <div class="muted" style="margin-bottom:12px">Чтобы отправлять варианты клиентам <b>от вашего имени</b>. Без этого подбор и клиенты работают, но кнопка «Отправить» будет недоступна.</div>
-      <button class="btn btn-primary" id="accConn">Подключить Telegram</button>
+    connHtml = `<div class="card" style="border-color:var(--amber);border-width:2px">
+      <div style="font-weight:700;color:var(--amber);font-size:15px;margin-bottom:5px">⚠️ Telegram не подключён</div>
+      <div class="muted" style="margin-bottom:12px">Чтобы отправлять варианты клиентам <b>от вашего имени</b>. Без этого кнопка «Отправить» будет недоступна.</div>
+      <button class="btn btn-primary" style="width:100%" id="accConn">📲 Подключить Telegram</button>
     </div>`;
   }
 
@@ -1719,10 +1736,11 @@ async function renderProfile() {
       </div></div>
       <button class="btn btn-danger sm" id="arkDisc" style="margin-top:12px">Отключить Arendok</button></div>`;
   } else {
-    arkHtml = `<div class="card">
-      <div style="font-weight:640;margin-bottom:6px">🏠 Подключите Arendok</div>
-      <div class="muted" style="margin-bottom:12px">Чтобы публиковать ФДГ <b>через свой профиль</b> arendok.ru. Вход: логин, пароль и капча.</div>
-      <button class="btn btn-primary" id="arkConn">Подключить Arendok</button></div>`;
+    arkHtml = `<div class="card" style="border-color:var(--red);border-width:2px">
+      <div style="font-weight:700;color:var(--red);font-size:15px;margin-bottom:5px">🚫 Arendok не подключён</div>
+      <div style="margin-bottom:4px;font-size:13.5px">Без этого <b>ФДГ не выложится</b> — публикация упадёт с ошибкой.</div>
+      <div class="muted" style="margin-bottom:12px;font-size:13px">Вход через логин, пароль и капчу arendok.ru.</div>
+      <button class="btn btn-primary" style="width:100%" id="arkConn">🏠 Подключить Arendok</button></div>`;
   }
 
   wrap.innerHTML = `
