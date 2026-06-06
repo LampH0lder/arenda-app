@@ -1010,7 +1010,7 @@ function apRenderPreview(state, st, body, stEl) {
     const notes = body.querySelector(`#apNotes-${id}`)?.value || "";
     const btn = body.querySelector(`#apSaveNotes-${id}`);
     try {
-      await api(`/autopost/${id}/notes`, { method: "POST", body: JSON.stringify({ agent_notes: notes }) });
+      await api(`/autopost/${id}/notes`, { method: "POST", body: { agent_notes: notes } });
       btn.textContent = "✅ Сохранено";
       setTimeout(() => { if (btn) btn.textContent = "💾 Сохранить описание"; }, 1800);
     } catch (e) { notify("error"); btn.textContent = "❌ Ошибка"; setTimeout(() => { if (btn) btn.textContent = "💾 Сохранить описание"; }, 1800); }
@@ -1020,7 +1020,7 @@ function apRenderPreview(state, st, body, stEl) {
     // автосохранение заметки агента перед публикацией
     const notes = body.querySelector(`#apNotes-${id}`)?.value || "";
     if (notes.trim()) {
-      try { await api(`/autopost/${id}/notes`, { method: "POST", body: JSON.stringify({ agent_notes: notes }) }); } catch (e) {}
+      try { await api(`/autopost/${id}/notes`, { method: "POST", body: { agent_notes: notes } }); } catch (e) {}
     }
     state.published = true;
     stEl.textContent = "📝 публикую…";
