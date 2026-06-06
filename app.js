@@ -192,7 +192,7 @@ document.addEventListener("touchstart", (e) => {
   const t = e.touches[0];
   // от левого края (~48px), не на скроллящихся/интерактивных элементах
   if (t.clientX > 48) { _swipe = null; return; }
-  if (e.target.closest(".carousel,.map-box,.leaflet-container,textarea,input,.sheet,.seg")) { _swipe = null; return; }
+  if (e.target.closest(".carousel,.map-box,.leaflet-container,textarea,input,.sheet,.seg,.gallery-ov")) { _swipe = null; return; }
   _swipe = { x: t.clientX, y: t.clientY };
 }, { passive: true });
 document.addEventListener("touchend", (e) => {
@@ -730,7 +730,11 @@ async function renderListingDetail(id) {
   view.innerHTML = "";
   const wrap = el(`<div class="fade-in"></div>`);
   wrap.innerHTML = `
-    <img class="detail-photo" data-photo style="display:none">
+    <div class="detail-photo-wrap" data-photowrap style="display:none">
+      <img class="detail-photo" data-photo>
+      <span class="gal-count" id="galCount" style="display:none"></span>
+    </div>
+    <button class="btn btn-soft sm" id="bGallery" style="display:none;width:100%;margin:0 0 6px">📷 Все фото</button>
     <div class="listing-price" style="font-size:26px">${fmtMoney(l.price)} ₽ <span class="muted" style="font-size:14px;font-weight:500">/мес</span></div>
     <div class="listing-title" style="font-size:18px;margin:4px 0 14px">${esc(listingTitle(l))}</div>
     <div class="card">
@@ -751,20 +755,106 @@ async function renderListingDetail(id) {
       <button class="btn btn-soft" id="bBroad">📣 Рассылка</button>
     </div>`;
   view.appendChild(wrap);
-  // фото (через fetch+blob, чтобы обойти заглушку ngrok) — сначала мелкое, потом резкое
+  // обложка (через fetch+blob, чтобы обойти заглушку ngrok) — сначала мелкое, потом резкое
   const ph = wrap.querySelector("[data-photo]");
+  const phWrap = wrap.querySelector("[data-photowrap]");
   let hiDone = false;
   fetchImg(`/listings/${id}/photo?q=hi`).then(url => {
-    hiDone = true; ph.src = url; ph.style.display = "block"; ph.classList.remove("lq");
+    hiDone = true; ph.src = url; phWrap.style.display = "block"; ph.classList.remove("lq");
   }).catch(() => {});
   fetchImg(`/listings/${id}/photo`).then(url => {
-    if (hiDone) return; ph.src = url; ph.style.display = "block"; ph.classList.add("lq");
+    if (hiDone) return; ph.src = url; phWrap.style.display = "block"; ph.classList.add("lq");
+  }).catch(() => {});
+  // галерея: сколько всего фото; если >1 — показываем кнопку «Все фото» и счётчик на обложке
+  const galBtn = $("#bGallery");
+  api(`/listings/${id}/gallery`).then(g => {
+    const n = g.count || 0;
+    if (n > 1) {
+      galBtn.textContent = `📷 Все фото (${n})`;
+      galBtn.style.display = "block";
+      galBtn.onclick = () => { haptic(); openGallery(id, n, 0, g.cover_idx || 0); };
+      const gc = $("#galCount");
+      if (gc) { gc.textContent = `📷 ${n}`; gc.style.display = "block"; }
+      phWrap.style.cursor = "pointer";
+      phWrap.onclick = () => { haptic(); openGallery(id, n, 0, g.cover_idx || 0); };
+    }
   }).catch(() => {});
   $("#bSend").onclick = () => { haptic(); sheetClientPicker((cid, cname) => sendListing(l, cid, cname)); };
   $("#bBroad").onclick = () => { haptic(); sheetBroadcast(l); };
   const ob = $("#bOpen"); if (ob) ob.onclick = () => { haptic(); tg?.openTelegramLink ? tg.openTelegramLink(l.url) : window.open(l.url); };
 }
 const kv = (k, v) => `<div class="kv"><span class="k">${esc(k)}</span><span class="v">${esc(String(v))}</span></div>`;
+
+/* ── Полноэкранная галерея фото объекта (свайп + смена обложки) ── */
+function openGallery(id, count, startIdx, coverIdx) {
+  let idx = startIdx || 0;
+  let cover = coverIdx || 0;
+  const ov = el(`<div class="gallery-ov">
+    <div class="gal-top">
+      <span class="gal-pos"></span>
+      <button class="gal-close" aria-label="Закрыть">✕</button>
+    </div>
+    <div class="gal-stage">
+      <button class="gal-nav prev" aria-label="Назад">‹</button>
+      <img class="gal-img" alt="">
+      <div class="gal-spin"><div class="spin"></div></div>
+      <button class="gal-nav next" aria-label="Вперёд">›</button>
+    </div>
+    <div class="gal-bottom">
+      <button class="btn btn-primary sm gal-cover">⭐ Сделать обложкой</button>
+    </div>
+  </div>`);
+  document.body.appendChild(ov);
+  const img = ov.querySelector(".gal-img");
+  const spin = ov.querySelector(".gal-spin");
+  const pos = ov.querySelector(".gal-pos");
+  const coverBtn = ov.querySelector(".gal-cover");
+  const cache = {};  // idx -> blob url
+
+  async function show(i) {
+    idx = (i + count) % count;
+    pos.textContent = `${idx + 1} / ${count}`;
+    coverBtn.classList.toggle("is-cover", idx === cover);
+    coverBtn.textContent = idx === cover ? "✓ Это обложка" : "⭐ Сделать обложкой";
+    coverBtn.disabled = idx === cover;
+    if (cache[idx]) { img.src = cache[idx]; spin.style.display = "none"; img.style.opacity = "1"; preload(idx); return; }
+    img.style.opacity = "0"; spin.style.display = "flex";
+    try {
+      const url = await fetchImg(`/listings/${id}/photo/${idx}?q=hi`);
+      cache[idx] = url;
+      if (idx === ((i + count) % count)) { img.src = url; img.style.opacity = "1"; }
+    } catch (e) { img.removeAttribute("src"); }
+    spin.style.display = "none";
+    preload(idx);
+  }
+  function preload(i) {
+    for (const j of [i + 1, i - 1]) {
+      const k = (j + count) % count;
+      if (!cache[k]) fetchImg(`/listings/${id}/photo/${k}?q=hi`).then(u => cache[k] = u).catch(() => {});
+    }
+  }
+  const close = () => { ov.remove(); };
+  ov.querySelector(".gal-close").onclick = () => { haptic(); close(); };
+  ov.querySelector(".prev").onclick = () => { haptic(); show(idx - 1); };
+  ov.querySelector(".next").onclick = () => { haptic(); show(idx + 1); };
+  coverBtn.onclick = async () => {
+    haptic();
+    try {
+      await api(`/listings/${id}/cover`, { method: "POST", body: { idx } });
+      cover = idx; notify("success"); toast("Обложка обновлена ✓", "ok");
+      coverBtn.classList.add("is-cover"); coverBtn.textContent = "✓ Это обложка"; coverBtn.disabled = true;
+    } catch (e) { toast("Не удалось сменить обложку", "err"); }
+  };
+  // свайпы: влево/вправо — листать, вниз — закрыть
+  let sx = 0, sy = 0;
+  ov.addEventListener("touchstart", (e) => { const t = e.touches[0]; sx = t.clientX; sy = t.clientY; }, { passive: true });
+  ov.addEventListener("touchend", (e) => {
+    const t = e.changedTouches[0]; const dx = t.clientX - sx, dy = t.clientY - sy;
+    if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) { haptic(); show(idx + (dx < 0 ? 1 : -1)); }
+    else if (dy > 70 && dy > Math.abs(dx)) { haptic(); close(); }
+  }, { passive: true });
+  show(idx);
+}
 
 /* ════════════════════════ ИСТОРИЯ ОТПРАВОК ════════════════════════ */
 function fmtSent(s) {
