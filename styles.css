@@ -86,14 +86,14 @@ body{
 .section-title:first-child{margin-top:8px;}
 
 /* ── Stats grid ── */
-.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
 .stat{
   background:var(--card);border:1px solid var(--line);
-  border-radius:var(--radius);padding:16px 16px 14px;
+  border-radius:var(--radius);padding:14px 10px 12px;
   position:relative;overflow:hidden;
 }
-.stat .num{font-size:30px;font-weight:760;letter-spacing:-.03em;line-height:1;}
-.stat .lbl{font-size:12.5px;color:var(--txt-2);margin-top:7px;}
+.stat .num{font-size:26px;font-weight:760;letter-spacing:-.03em;line-height:1;}
+.stat .lbl{font-size:11.5px;color:var(--txt-2);margin-top:6px;}
 .stat .glow{position:absolute;top:-30px;right:-30px;width:90px;height:90px;border-radius:50%;filter:blur(28px);opacity:.5;}
 .stat.a .glow{background:var(--accent);}
 .stat.g .glow{background:var(--green);}
