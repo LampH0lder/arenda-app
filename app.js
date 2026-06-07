@@ -2020,8 +2020,30 @@ function sheetConnectArendok() {
         const rr = await api("/arendok/captcha", { method: "POST", body: { solution } });
         if (rr.step === "connected") return done();
         if (rr.step === "captcha") return stepCaptcha(rr);  // неверно — новая капча
+        if (rr.step === "confirm") return stepConfirm(rr);  // промежуточная верификация
         toast(rr.message || "Не удалось войти", "err"); btn.textContent = "Войти"; btn.disabled = false;
       } catch (e) { toast("Ошибка: " + e.message, "err"); btn.textContent = "Войти"; btn.disabled = false; }
+    };
+  }
+  function stepConfirm(r) {
+    const b = openSheet(`<div class="sheet-title">Подтверждение входа</div>
+      <div class="muted" style="margin-bottom:12px">${esc(r.message || "Введи код из SMS или письма")}</div>
+      ${r.img_b64 ? `<div style="text-align:center;margin-bottom:12px">
+        <img src="data:image/png;base64,${r.img_b64}" alt="экран" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--line)">
+      </div>` : ""}
+      ${r.error ? `<div class="muted" style="color:var(--red);margin-bottom:8px">${esc(r.error)}</div>` : ""}
+      <div class="field"><input class="input" id="aCode" inputmode="numeric" placeholder="Код из SMS или письма" autocomplete="one-time-code"></div>
+      <button class="btn btn-primary" id="aConfirmBtn">Подтвердить</button>`);
+    b.querySelector("#aConfirmBtn").onclick = async () => {
+      const code = b.querySelector("#aCode").value.trim();
+      if (!code) return toast("Введи код");
+      haptic(); const btn = b.querySelector("#aConfirmBtn"); btn.textContent = "Проверяю…"; btn.disabled = true;
+      try {
+        const rr = await api("/arendok/confirm", { method: "POST", body: { code } });
+        if (rr.step === "connected") return done();
+        if (rr.step === "confirm") return stepConfirm(rr);
+        toast(rr.message || "Не удалось подтвердить", "err"); btn.textContent = "Подтвердить"; btn.disabled = false;
+      } catch (e) { toast("Ошибка: " + e.message, "err"); btn.textContent = "Подтвердить"; btn.disabled = false; }
     };
   }
   function done() {
