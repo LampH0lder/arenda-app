@@ -288,7 +288,7 @@ async function loadHomeCarousel() {
         <div class="cc-thumb" data-thumb="${l.id}" data-cov="${l.cover_idx || 0}"><span class="src-badge">${esc(l.source || "")}</span></div>
         <div class="cc-body">
           <div class="cc-price">${fmtMoney(l.price)} ₽</div>
-          <div class="cc-title">${esc(listingTitle(l))}</div>
+          <div class="cc-title">${esc(listingTitle(l))}<span class="lid-badge">#${l.id}</span></div>
           <div class="cc-meta">${esc(listingMeta(l))}</div>
         </div>
       </div>`);
@@ -409,7 +409,36 @@ async function renderMatch(client, page = 0, acc = null, filter = null) {
     if (!data.total) acc.querySelector("#matchList").appendChild(el(`<div class="empty"><span class="em-ic">⌂</span>Подходящих вариантов нет</div>`));
   }
   const list = acc.querySelector("#matchList");
-  for (const l of data.listings) list.appendChild(listingCard(l, () => sendListing(l, client.id, client.name)));
+  // мультивыбор — инициализируем один раз, не сбрасываем при подгрузке следующей страницы
+  if (!acc._sel) {
+    acc._sel = new Set();
+    const selBar = el(`<div class="sel-bar hidden"></div>`);
+    acc.insertBefore(selBar, acc.querySelector("#matchList"));
+    acc._refreshBar = () => {
+      if (!acc._sel.size) { selBar.classList.add("hidden"); return; }
+      selBar.classList.remove("hidden");
+      selBar.innerHTML = `<button class="btn btn-green sm" style="flex:1" data-ms>📨 Отправить выбранные (${acc._sel.size}) → ${esc(client.name)}</button>
+        <button class="btn btn-soft sm" data-mc>Сброс</button>`;
+      selBar.querySelector("[data-ms]").onclick = () => {
+        const chosen = acc._allListings.filter(l => acc._sel.has(l.id));
+        haptic(); acc._sel.clear(); acc._refreshBar();
+        sendSelected(chosen, client.id, client.name);
+      };
+      selBar.querySelector("[data-mc]").onclick = () => { haptic(); acc._sel.clear(); acc._refreshBar(); acc._rerender(); };
+    };
+    acc._allListings = [];
+    acc._rerender = () => {
+      list.innerHTML = "";
+      for (const l of acc._allListings) {
+        list.appendChild(listingCard(l,
+          () => sendListing(l, client.id, client.name), true, true,
+          { checked: acc._sel.has(l.id), onToggle: () => { acc._sel.has(l.id) ? acc._sel.delete(l.id) : acc._sel.add(l.id); acc._refreshBar(); acc._rerender(); } }
+        ));
+      }
+    };
+  }
+  acc._allListings.push(...data.listings);
+  acc._rerender();
   const oldMore = acc.querySelector(".more-btn"); if (oldMore) oldMore.remove();
   if (data.has_more) {
     const more = el(`<button class="btn btn-soft more-btn" style="margin-top:6px">Ещё ${Math.min(12, data.total - (page + 1) * 12)} вариантов</button>`);
@@ -696,7 +725,7 @@ function listingCard(l, onSend, openable = true, thumb = true, select = null) {
         <div class="row-between" style="align-items:flex-start">
           <div style="min-width:0">
             <div class="listing-price">${fmtMoney(l.price)} ₽<span class="muted" style="font-size:13px;font-weight:500">/мес</span></div>
-            <div class="listing-title">${esc(listingTitle(l))}</div>
+            <div class="listing-title">${esc(listingTitle(l))}<span class="lid-badge">#${l.id}</span></div>
             <div class="listing-meta">${esc(listingMeta(l))}</div>
             ${l.exclusive ? `<div class="excl-line">🔑 Эксклюзив${l.exclusive_owner ? ": " + esc(l.exclusive_owner) : ""}</div>` : ""}
           </div>
@@ -737,7 +766,7 @@ async function renderListingDetail(id) {
     </div>
     <button class="btn btn-soft sm" id="bGallery" style="display:none;width:100%;margin:0 0 6px">📷 Все фото</button>
     <div class="listing-price" style="font-size:26px">${fmtMoney(l.price)} ₽ <span class="muted" style="font-size:14px;font-weight:500">/мес</span></div>
-    <div class="listing-title" style="font-size:18px;margin:4px 0 14px">${esc(listingTitle(l))}</div>
+    <div class="listing-title" style="font-size:18px;margin:4px 0 14px">${esc(listingTitle(l))}<span class="lid-badge">#${l.id}</span></div>
     <div class="card">
       ${l.rooms ? kv("Комнат", roomsLabel(l.rooms)) : ""}
       ${l.area ? kv("Площадь", l.area + " м²") : ""}
@@ -1504,7 +1533,7 @@ function critToFilters(c) {
 }
 function hasArea(f) { return !!(f && Array.isArray(f.polygon) && f.polygon.length >= 3); }
 function filtersActive(f) {
-  return !!(f && (f.rooms || f.budget_min || f.budget_max || f.area_min || f.area_max || f.district || f.metro || f.jk || hasArea(f)));
+  return !!(f && (f.rooms || f.budget_min || f.budget_max || f.area_min || f.area_max || f.district || f.metro || f.jk || hasArea(f) || f.commission_max != null));
 }
 function filtersSummary(f) {
   if (!f) return "";
@@ -1516,6 +1545,8 @@ function filtersSummary(f) {
   if (f.district) p.push("📍 " + f.district);
   if (f.metro) p.push("🚇 " + f.metro);
   if (hasArea(f)) p.push("🗺 область");
+  if (f.commission_max === 0) p.push("💸 без комиссии");
+  else if (f.commission_max != null) p.push("💸 до " + f.commission_max + "%");
   return p.join(" · ");
 }
 function sheetFilters(init, onApply) {
@@ -1554,6 +1585,12 @@ function sheetFilters(init, onApply) {
     <div class="ed-label">Метро <span class="muted" style="font-weight:400">(отдельно; Enter добавляет)</span></div>
     <div class="tags" id="fMetroTags"></div>
     <input class="input" id="fMetro" placeholder="станция + Enter (Фили, Университет…)">
+    <div class="ed-label">Комиссия</div>
+    <div class="chipsel" id="fComm">
+      <button class="chsel ${init.commission_max == null ? "on" : ""}" data-cm="">Любая</button>
+      <button class="chsel ${init.commission_max === 0 ? "on" : ""}" data-cm="0">Без комиссии</button>
+      <button class="chsel ${init.commission_max === 50 ? "on" : ""}" data-cm="50">До 50%</button>
+    </div>
     <div class="btn-row" style="margin-top:20px">
       <button class="btn btn-soft" id="fReset" style="flex:1">Сбросить</button>
       <button class="btn btn-primary" id="fApply" style="flex:2">Применить</button>
@@ -1591,9 +1628,17 @@ function sheetFilters(init, onApply) {
 
   b.querySelectorAll("#fRooms .chsel").forEach(x => x.onclick = () => { haptic(); x.classList.toggle("on"); });
   b.querySelectorAll("#fZones .chsel").forEach(x => x.onclick = () => { haptic(); distTags.add(x.dataset.z); });
+  b.querySelectorAll("#fComm .chsel").forEach(x => x.onclick = () => {
+    haptic();
+    b.querySelectorAll("#fComm .chsel").forEach(c => c.classList.remove("on"));
+    x.classList.add("on");
+  });
   const num = (id) => { const v = parseInt((b.querySelector(id).value || "").replace(/\D/g, "")); return isNaN(v) ? "" : v; };
   const readForm = () => {
     const rooms = [...b.querySelectorAll("#fRooms .chsel.on")].map(x => x.dataset.v);
+    const commEl = b.querySelector("#fComm .chsel.on");
+    const commRaw = commEl ? commEl.dataset.cm : "";
+    const commMax = commRaw === "" ? null : parseInt(commRaw);
     return {
       rooms: rooms.length ? rooms.join(",") : "",
       budget_min: num("#fBmin"), budget_max: num("#fBmax"),
@@ -1602,6 +1647,7 @@ function sheetFilters(init, onApply) {
       district: distTags.get(),
       metro: metroTags.get(),
       polygon: poly, source: init.source || "",
+      commission_max: isNaN(commMax) ? null : commMax,
     };
   };
   // обвести область на карте — сохраняем текущие поля, уходим на карту, возвращаемся
