@@ -191,6 +191,17 @@ function openSheet(html) {
   return b;
 }
 function closeSheet() { $("#sheet").classList.add("hidden"); }
+// Универсальная шторка одиночного выбора: opts = [[value,label],...]
+function sheetPick(title, opts, current, onPick) {
+  const rows = opts.map(([v, label]) =>
+    `<button class="pick-row ${String(v) === String(current) ? "on" : ""}" data-v="${esc(String(v))}">
+       <span>${esc(label)}</span>${String(v) === String(current) ? '<span class="pick-ok">✓</span>' : ""}
+     </button>`).join("");
+  const b = openSheet(`<div class="sheet-title">${esc(title)}</div><div class="pick-list">${rows}</div>`);
+  b.querySelectorAll(".pick-row").forEach(r => r.onclick = () => {
+    haptic(); closeSheet(); onPick(r.dataset.v);
+  });
+}
 $("#sheet").addEventListener("click", (e) => { if (e.target.classList.contains("sheet-backdrop")) closeSheet(); });
 
 /* ── Router ── */
@@ -1345,10 +1356,24 @@ async function apPollDone(state, stEl, body) {
 let searchState = { text: "", results: [], page: 0, hasMore: false, sel: new Set(), filters: null, applied: null };
 let searchSource = "all";       // all | exclusives | arendok
 let searchCommMax = null;       // null=любая | 0=без комиссии | 50=до 50%
+let searchSort = "";            // ""=по релевантности | price_asc/desc | area_asc/desc | new | jk
+const SRC_LABEL = { all: "Все папки", exclusives: "Эксклюзивы", arendok: "Arendok" };
+const COMM_LABEL = (v) => v === null ? "Комиссия: любая" : v === 0 ? "Без комиссии" : "Комиссия до " + v + "%";
+const SORT_OPTS = [
+  ["", "По релевантности"],
+  ["price_asc", "Сначала дешёвые"],
+  ["price_desc", "Сначала дорогие"],
+  ["area_asc", "Площадь: меньше"],
+  ["area_desc", "Площадь: больше"],
+  ["new", "Сначала новые"],
+  ["jk", "По ЖК (А-Я)"],
+];
+const SORT_LABEL = (v) => "Сорт: " + ((SORT_OPTS.find(o => o[0] === v) || SORT_OPTS[0])[1]);
 function searchChipBody() {
   const b = {};
   if (searchSource && searchSource !== "all") b.source = searchSource;
   if (searchCommMax !== null) b.commission_max = searchCommMax;
+  if (searchSort) b.sort = searchSort;
   return b;
 }
 async function renderSearch() {
@@ -1362,18 +1387,14 @@ async function renderSearch() {
     </div>
     <div class="btn-row">
       <span id="sVoice" style="flex:1;display:flex"></span>
-      <button class="btn btn-primary" id="sGo" style="flex:1">⌕ Найти</button>
+      <button class="btn btn-primary" id="sGo" style="flex:1.4">⌕ Найти</button>
+      <button class="btn btn-soft" id="sReset" title="Очистить и начать новый запрос" style="flex:0 0 auto">✕</button>
     </div>
     <button class="btn btn-soft sm" id="sFilters" style="margin-top:10px;width:100%">⚙️ Фильтры — комнаты, бюджет, ЖК, район/метро, область на карте</button>
-    <div class="seg sm" id="srcSeg" style="margin-top:10px">
-      <button data-src="all" class="${searchSource === "all" ? "on" : ""}">Все</button>
-      <button data-src="exclusives" class="${searchSource === "exclusives" ? "on" : ""}">Эксклюзивы</button>
-      <button data-src="arendok" class="${searchSource === "arendok" ? "on" : ""}">Arendok</button>
-    </div>
-    <div class="seg sm" id="commSeg" style="margin-top:8px">
-      <button data-cm="" class="${searchCommMax === null ? "on" : ""}">Любая комиссия</button>
-      <button data-cm="0" class="${searchCommMax === 0 ? "on" : ""}">Без комиссии</button>
-      <button data-cm="50" class="${searchCommMax === 50 ? "on" : ""}">До 50%</button>
+    <div class="mini-row" id="miniFilters" style="margin-top:10px">
+      <button class="mini-chip ${searchSource !== "all" ? "act" : ""}" id="mSrc">📁 ${esc(SRC_LABEL[searchSource])} ▾</button>
+      <button class="mini-chip ${searchCommMax !== null ? "act" : ""}" id="mComm">💸 ${esc(COMM_LABEL(searchCommMax))} ▾</button>
+      <button class="mini-chip ${searchSort ? "act" : ""}" id="mSort">⇅ ${esc(SORT_LABEL(searchSort))} ▾</button>
     </div>
     <div class="idsearch" style="margin-top:10px">
       <input class="input" id="lidInput" inputmode="numeric" placeholder="Открыть объект по номеру: #776">
@@ -1389,16 +1410,27 @@ async function renderSearch() {
     if (searchState.text) runSearch();
     else if (searchState.filters) applySearchFilters(searchState.filters);
   }
-  $("#srcSeg").querySelectorAll("button").forEach(b => b.onclick = () => {
-    haptic(); searchSource = b.dataset.src;
-    $("#srcSeg").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
-    reSearch();
-  });
-  $("#commSeg").querySelectorAll("button").forEach(b => b.onclick = () => {
-    haptic(); searchCommMax = b.dataset.cm === "" ? null : parseInt(b.dataset.cm);
-    $("#commSeg").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
-    reSearch();
-  });
+  const setChip = (id, on, label) => { const b = $(id); if (!b) return;
+    b.textContent = label; b.classList.toggle("act", on); };
+  $("#mSrc").onclick = () => { haptic(); sheetPick("Источник объявлений",
+    [["all", "Все папки"], ["exclusives", "Эксклюзивы"], ["arendok", "Arendok"]],
+    searchSource, (v) => { searchSource = v;
+      setChip("#mSrc", v !== "all", "📁 " + SRC_LABEL[v] + " ▾"); reSearch(); }); };
+  $("#mComm").onclick = () => { haptic(); sheetPick("Комиссия",
+    [["", "Любая"], ["0", "Без комиссии"], ["50", "До 50%"]],
+    searchCommMax === null ? "" : String(searchCommMax),
+    (v) => { searchCommMax = v === "" ? null : parseInt(v);
+      setChip("#mComm", searchCommMax !== null, "💸 " + COMM_LABEL(searchCommMax) + " ▾"); reSearch(); }); };
+  $("#mSort").onclick = () => { haptic(); sheetPick("Сортировка", SORT_OPTS,
+    searchSort, (v) => { searchSort = v;
+      setChip("#mSort", !!v, "⇅ " + SORT_LABEL(v) + " ▾"); reSearch(); }); };
+  $("#sReset").onclick = () => {
+    haptic();
+    searchState = { text: "", results: [], page: 0, hasMore: false, sel: new Set(), filters: null, applied: null };
+    searchSource = "all"; searchCommMax = null; searchSort = "";
+    renderSearch();
+    const ta = $("#sInput"); if (ta) ta.focus();
+  };
   $("#sFilters").onclick = () => { haptic(); sheetFilters(searchState.filters || critToFilters(searchState.applied), applySearchFilters); };
   const openById = () => {
     const raw = ($("#lidInput").value || "").replace(/\D/g, "");
