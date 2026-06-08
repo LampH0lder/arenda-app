@@ -764,6 +764,7 @@ async function renderListingDetail(id) {
       <img class="detail-photo" data-photo>
       <span class="gal-count" id="galCount" style="display:none"></span>
     </div>
+    <div class="detail-thumbs" id="detThumbs" style="display:none"></div>
     <button class="btn btn-soft sm" id="bGallery" style="display:none;width:100%;margin:0 0 6px">📷 Все фото</button>
     <div class="listing-price" style="font-size:26px">${fmtMoney(l.price)} ₽ <span class="muted" style="font-size:14px;font-weight:500">/мес</span></div>
     <div class="listing-title" style="font-size:18px;margin:4px 0 14px">${esc(listingTitle(l))}<span class="lid-badge">#${l.id}</span></div>
@@ -808,6 +809,17 @@ async function renderListingDetail(id) {
       if (gc) { gc.textContent = `📷 ${n}`; gc.style.display = "block"; }
       phWrap.style.cursor = "pointer";
       phWrap.onclick = () => { haptic(); openGallery(id, n, 0, g.cover_idx || 0); };
+      // полоска миниатюр под обложкой — сразу видно все кадры, тап открывает галерею
+      const strip = $("#detThumbs");
+      if (strip) {
+        strip.style.display = "flex";
+        for (let i = 0; i < n; i++) {
+          const t = el(`<div class="dthumb"></div>`);
+          strip.appendChild(t);
+          fetchImg(`/listings/${id}/photo/${i}`).then(u => { t.style.backgroundImage = `url(${u})`; t.classList.add("loaded"); }).catch(() => {});
+          t.onclick = () => { haptic(); openGallery(id, n, i, g.cover_idx || 0); };
+        }
+      }
     }
   }).catch(() => {});
   $("#bSend").onclick = () => { haptic(); sheetClientPicker((cid, cname) => sendListing(l, cid, cname)); };
@@ -840,28 +852,42 @@ function openGallery(id, count, startIdx, coverIdx) {
   const spin = ov.querySelector(".gal-spin");
   const pos = ov.querySelector(".gal-pos");
   const coverBtn = ov.querySelector(".gal-cover");
-  const cache = {};  // idx -> blob url
+  const cacheHi = {};  // idx -> blob url (крупное 1000px)
+  const cacheSm = {};  // idx -> blob url (мелкое 480px, для мгновенного показа)
 
   async function show(i) {
     idx = (i + count) % count;
+    const cur = idx;
     pos.textContent = `${idx + 1} / ${count}`;
     coverBtn.classList.toggle("is-cover", idx === cover);
     coverBtn.textContent = idx === cover ? "✓ Это обложка" : "⭐ Сделать обложкой";
     coverBtn.disabled = idx === cover;
-    if (cache[idx]) { img.src = cache[idx]; spin.style.display = "none"; img.style.opacity = "1"; preload(idx); return; }
-    img.style.opacity = "0"; spin.style.display = "flex";
+    // крупное уже в кэше — показываем сразу
+    if (cacheHi[cur]) { img.src = cacheHi[cur]; img.classList.remove("lq"); spin.style.display = "none"; img.style.opacity = "1"; preload(cur); return; }
+    // мгновенно показываем мелкое (из кэша или докачиваем), пока тянется крупное
+    if (cacheSm[cur]) {
+      img.src = cacheSm[cur]; img.classList.add("lq"); img.style.opacity = "1"; spin.style.display = "none";
+    } else {
+      img.style.opacity = "0"; spin.style.display = "flex";
+      fetchImg(`/listings/${id}/photo/${cur}`).then(u => {
+        cacheSm[cur] = u;
+        if (idx === cur && !cacheHi[cur]) { img.src = u; img.classList.add("lq"); img.style.opacity = "1"; spin.style.display = "none"; }
+      }).catch(() => {});
+    }
+    // докачиваем крупное и плавно заменяем мелкое
     try {
-      const url = await fetchImg(`/listings/${id}/photo/${idx}?q=hi`);
-      cache[idx] = url;
-      if (idx === ((i + count) % count)) { img.src = url; img.style.opacity = "1"; }
-    } catch (e) { img.removeAttribute("src"); }
+      const url = await fetchImg(`/listings/${id}/photo/${cur}?q=hi`);
+      cacheHi[cur] = url;
+      if (idx === cur) { img.src = url; img.classList.remove("lq"); img.style.opacity = "1"; }
+    } catch (e) { if (idx === cur && !cacheSm[cur]) img.removeAttribute("src"); }
     spin.style.display = "none";
-    preload(idx);
+    preload(cur);
   }
   function preload(i) {
     for (const j of [i + 1, i - 1]) {
       const k = (j + count) % count;
-      if (!cache[k]) fetchImg(`/listings/${id}/photo/${k}?q=hi`).then(u => cache[k] = u).catch(() => {});
+      if (!cacheSm[k]) fetchImg(`/listings/${id}/photo/${k}`).then(u => cacheSm[k] = u).catch(() => {});
+      if (!cacheHi[k]) fetchImg(`/listings/${id}/photo/${k}?q=hi`).then(u => cacheHi[k] = u).catch(() => {});
     }
   }
   const close = () => { ov.remove(); };
