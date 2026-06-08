@@ -1093,9 +1093,8 @@ async function renderAutopost() {
     <button class="btn btn-primary" id="apGo" style="margin-top:10px;width:100%">Обработать</button>
     <div class="muted" style="margin-top:8px">Обработаю все по очереди (парсинг + чистка фото). Перед публикацией каждого покажу превью — подтверждаешь сам.</div>
   </div>`));
-  const bar = el(`<div class="row-between" style="gap:8px;margin-top:10px">
-    <button class="btn btn-soft sm" id="apPubAll" style="flex:1">✅ Опубликовать все готовые</button>
-    <button class="btn btn-soft sm" id="apResetStale" style="flex:1">🧹 Сбросить висящие</button>
+  const bar = el(`<div style="margin-top:10px">
+    <button class="btn btn-soft sm" id="apPubAll" style="width:100%">✅ Опубликовать все готовые</button>
   </div>`);
   wrap.appendChild(bar);
   const q = el(`<div id="apQueue" style="margin-top:12px"></div>`);
@@ -1137,18 +1136,6 @@ async function renderAutopost() {
     btn.disabled = false; btn.textContent = "✅ Опубликовать все готовые";
     toast(`Готово: опубликовано ${ok}${fail ? ", ошибок " + fail : ""}`, fail ? "err" : "ok");
     renderAutopost();
-  };
-
-  // B3: сбросить зависшие постинги (preview/processing старше 2ч) в cancelled
-  $("#apResetStale").onclick = async () => {
-    if (!confirm("Сбросить зависшие объявления (в превью/обработке старше 2 часов)?")) return;
-    haptic();
-    const btn = $("#apResetStale"); btn.disabled = true;
-    try {
-      const r = await api("/autopost/reset_stale", { method: "POST" });
-      toast(r.reset ? `Сброшено: ${r.reset}` : "Зависших не найдено", "ok");
-      renderAutopost();
-    } catch (e) { btn.disabled = false; toast("Не удалось сбросить", "err"); }
   };
 
   $("#apGo").onclick = async () => {
