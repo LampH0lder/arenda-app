@@ -526,15 +526,22 @@ async function renderMatch(client, page = 0, acc = null, filter = null) {
 
 /* ════════════════════════ LISTINGS ════════════════════════ */
 let listingsFilter = null;
+let listSource = "all";   // all | exclusives | arendok  (синхронно с поиском)
+let listCommMax = null;   // null | 0 | 50
+let listSort = "";        // см. SORT_OPTS
 const LIST_PAGE = 50;
-async function renderListings(source = "all") {
+function listQueryBody(offset) {
+  return { source: listSource, limit: LIST_PAGE, offset,
+           commission_max: listCommMax, sort: listSort, filters: listingsFilter || {} };
+}
+async function renderListings() {
   setTitle("Объекты", "последние объявления");
   removeFab();
   loading();
   let listings = [];
   let listHasMore = false;
   try {
-    const r = await api("/listings/query", { method: "POST", body: { source, limit: LIST_PAGE, offset: 0, filters: listingsFilter || {} } });
+    const r = await api("/listings/query", { method: "POST", body: listQueryBody(0) });
     listings = r.listings || [];
     listHasMore = !!r.has_more;
   } catch (e) {}
@@ -543,19 +550,10 @@ async function renderListings(source = "all") {
   // строка поиска — по тапу открывает полноценное меню поиска и фильтров
   const searchBar = el(`<button class="search-bar" id="oSearch"><span class="sb-ic">⌕</span><span>Поиск вариантов и фильтры…</span></button>`);
   wrap.appendChild(searchBar);
-  wrap.appendChild(el(`
-    <div class="seg">
-      <button data-s="all" class="${source === "all" ? "on" : ""}">Все</button>
-      <button data-s="exclusives" class="${source === "exclusives" ? "on" : ""}">Эксклюзивы</button>
-      <button data-s="arendok" class="${source === "arendok" ? "on" : ""}">Arendok</button>
-    </div>`));
-  // фильтры по параметрам (комнаты/бюджет/площадь/район/метро отдельно)
+  // единая панель фильтров (та же, что в «Поиске»)
+  const filterBar = el(`<div style="margin:0 0 12px"></div>`);
+  wrap.appendChild(filterBar);
   const on = filtersActive(listingsFilter);
-  const fbar = el(`<div class="btn-row" style="margin-bottom:12px">
-    <button class="btn ${on ? "btn-primary" : "btn-soft"} sm" id="lFilters" style="flex:1">⚙️ Фильтры${on ? " · " + esc(filtersSummary(listingsFilter)) : ""}</button>
-    ${on ? `<button class="btn btn-soft sm" id="lFiltClear">Сброс</button>` : ""}
-  </div>`);
-  wrap.appendChild(fbar);
   if (!listings.length) {
     wrap.appendChild(el(`<div class="empty"><span class="em-ic">⌂</span>${on ? "Под фильтры ничего не нашлось" : "Здесь пока пусто"}</div>`));
   }
@@ -606,7 +604,7 @@ async function renderListings(source = "all") {
       haptic();
       btn.disabled = true; btn.textContent = "Загрузка…";
       try {
-        const r = await api("/listings/query", { method: "POST", body: { source, limit: LIST_PAGE, offset: listings.length, filters: listingsFilter || {} } });
+        const r = await api("/listings/query", { method: "POST", body: listQueryBody(listings.length) });
         listings.push(...(r.listings || []));
         listHasMore = !!r.has_more;
         renderRows();
@@ -617,16 +615,16 @@ async function renderListings(source = "all") {
   renderMore();
   view.appendChild(wrap);
   searchBar.onclick = () => { haptic(); go(renderSearch); };
-  fbar.querySelector("#lFilters").onclick = () => {
-    haptic(); sheetFilters(listingsFilter || {}, (f) => {
-      listingsFilter = filtersActive(f) ? f : null; renderListings(source);
-    });
-  };
-  const fc = fbar.querySelector("#lFiltClear");
-  if (fc) fc.onclick = () => { haptic(); listingsFilter = null; renderListings(source); };
-  wrap.querySelectorAll(".seg button").forEach(b => b.onclick = () => {
-    haptic(); stack[stack.length - 1] = () => renderListings(b.dataset.s); renderListings(b.dataset.s);
-  });
+  filterBar.appendChild(filterControlsEl({
+    getSource: () => listSource, setSource: (v) => { listSource = v; },
+    getComm: () => listCommMax, setComm: (v) => { listCommMax = v === "" ? null : parseInt(v); },
+    getSort: () => listSort, setSort: (v) => { listSort = v; },
+    advActive: () => filtersActive(listingsFilter),
+    advSummary: () => filtersActive(listingsFilter) ? filtersSummary(listingsFilter) : "",
+    onAdv: () => sheetFilters(listingsFilter || {}, (f) => { listingsFilter = filtersActive(f) ? f : null; renderListings(); }),
+    onAdvClear: () => { listingsFilter = null; renderListings(); },
+    onChange: () => renderListings(),
+  }));
 }
 
 /* ════════════════════════ КАРТА (обвести область) ════════════════════════ */
@@ -1376,6 +1374,41 @@ function searchChipBody() {
   if (searchSort) b.sort = searchSort;
   return b;
 }
+/* ── Единая панель фильтров: ОДИНАКОВАЯ в «Объектах» и «Поиске» ──
+   ctx: getSource/setSource, getComm/setComm, getSort/setSort,
+        advActive(), advSummary(), onAdv(), onAdvClear(), onChange() */
+function filterControlsEl(ctx) {
+  const box = el(`<div></div>`);
+  function paint() {
+    box.innerHTML = "";
+    const advOn = ctx.advActive();
+    const sum = advOn ? (ctx.advSummary() || "") : "";
+    const advRow = el(`<div class="btn-row" style="margin-bottom:8px">
+      <button class="btn ${advOn ? "btn-primary" : "btn-soft"} sm" data-adv style="flex:1">⚙️ Фильтры${sum ? " · " + esc(sum) : ""}</button>
+      ${advOn ? `<button class="btn btn-soft sm" data-advc>Сброс</button>` : ""}
+    </div>`);
+    box.appendChild(advRow);
+    const src = ctx.getSource(), comm = ctx.getComm(), sort = ctx.getSort();
+    const mini = el(`<div class="mini-row">
+      <button class="mini-chip ${src !== "all" ? "act" : ""}" data-msrc>📁 ${esc(SRC_LABEL[src])} ▾</button>
+      <button class="mini-chip ${comm !== null ? "act" : ""}" data-mcomm>💸 ${esc(COMM_LABEL(comm))} ▾</button>
+      <button class="mini-chip ${sort ? "act" : ""}" data-msort>⇅ ${esc(SORT_LABEL(sort))} ▾</button>
+    </div>`);
+    box.appendChild(mini);
+    advRow.querySelector("[data-adv]").onclick = () => { haptic(); ctx.onAdv(); };
+    const ac = advRow.querySelector("[data-advc]"); if (ac) ac.onclick = () => { haptic(); ctx.onAdvClear(); };
+    mini.querySelector("[data-msrc]").onclick = () => { haptic(); sheetPick("Источник объявлений",
+      [["all", "Все папки"], ["exclusives", "Эксклюзивы"], ["arendok", "Arendok"]],
+      src, (v) => { ctx.setSource(v); paint(); ctx.onChange(); }); };
+    mini.querySelector("[data-mcomm]").onclick = () => { haptic(); sheetPick("Комиссия",
+      [["", "Любая"], ["0", "Без комиссии"], ["50", "До 50%"]],
+      comm === null ? "" : String(comm), (v) => { ctx.setComm(v); paint(); ctx.onChange(); }); };
+    mini.querySelector("[data-msort]").onclick = () => { haptic(); sheetPick("Сортировка", SORT_OPTS,
+      sort, (v) => { ctx.setSort(v); paint(); ctx.onChange(); }); };
+  }
+  paint();
+  return box;
+}
 async function renderSearch() {
   setTitle("Поиск вариантов", "по всей базе объявлений");
   removeFab();
@@ -1388,14 +1421,9 @@ async function renderSearch() {
     <div class="btn-row">
       <span id="sVoice" style="flex:1;display:flex"></span>
       <button class="btn btn-primary" id="sGo" style="flex:1.4">⌕ Найти</button>
-      <button class="btn btn-soft" id="sReset" title="Очистить и начать новый запрос" style="flex:0 0 auto">✕</button>
+      <button class="btn btn-soft" id="sReset" title="Очистить и начать новый запрос" style="flex:0 0 52px;width:52px;padding:14px 0">✕</button>
     </div>
-    <button class="btn btn-soft sm" id="sFilters" style="margin-top:10px;width:100%">⚙️ Фильтры — комнаты, бюджет, ЖК, район/метро, область на карте</button>
-    <div class="mini-row" id="miniFilters" style="margin-top:10px">
-      <button class="mini-chip ${searchSource !== "all" ? "act" : ""}" id="mSrc">📁 ${esc(SRC_LABEL[searchSource])} ▾</button>
-      <button class="mini-chip ${searchCommMax !== null ? "act" : ""}" id="mComm">💸 ${esc(COMM_LABEL(searchCommMax))} ▾</button>
-      <button class="mini-chip ${searchSort ? "act" : ""}" id="mSort">⇅ ${esc(SORT_LABEL(searchSort))} ▾</button>
-    </div>
+    <div id="sFilterBar" style="margin-top:10px"></div>
     <div class="idsearch" style="margin-top:10px">
       <input class="input" id="lidInput" inputmode="numeric" placeholder="Открыть объект по номеру: #776">
       <button class="btn btn-soft sm" id="lidGo">Открыть</button>
@@ -1410,20 +1438,16 @@ async function renderSearch() {
     if (searchState.text) runSearch();
     else if (searchState.filters) applySearchFilters(searchState.filters);
   }
-  const setChip = (id, on, label) => { const b = $(id); if (!b) return;
-    b.textContent = label; b.classList.toggle("act", on); };
-  $("#mSrc").onclick = () => { haptic(); sheetPick("Источник объявлений",
-    [["all", "Все папки"], ["exclusives", "Эксклюзивы"], ["arendok", "Arendok"]],
-    searchSource, (v) => { searchSource = v;
-      setChip("#mSrc", v !== "all", "📁 " + SRC_LABEL[v] + " ▾"); reSearch(); }); };
-  $("#mComm").onclick = () => { haptic(); sheetPick("Комиссия",
-    [["", "Любая"], ["0", "Без комиссии"], ["50", "До 50%"]],
-    searchCommMax === null ? "" : String(searchCommMax),
-    (v) => { searchCommMax = v === "" ? null : parseInt(v);
-      setChip("#mComm", searchCommMax !== null, "💸 " + COMM_LABEL(searchCommMax) + " ▾"); reSearch(); }); };
-  $("#mSort").onclick = () => { haptic(); sheetPick("Сортировка", SORT_OPTS,
-    searchSort, (v) => { searchSort = v;
-      setChip("#mSort", !!v, "⇅ " + SORT_LABEL(v) + " ▾"); reSearch(); }); };
+  $("#sFilterBar").appendChild(filterControlsEl({
+    getSource: () => searchSource, setSource: (v) => { searchSource = v; },
+    getComm: () => searchCommMax, setComm: (v) => { searchCommMax = v === "" ? null : parseInt(v); },
+    getSort: () => searchSort, setSort: (v) => { searchSort = v; },
+    advActive: () => filtersActive(searchState.filters || critToFilters(searchState.applied)),
+    advSummary: () => { const f = searchState.filters || critToFilters(searchState.applied); return filtersActive(f) ? filtersSummary(f) : ""; },
+    onAdv: () => sheetFilters(searchState.filters || critToFilters(searchState.applied), applySearchFilters),
+    onAdvClear: () => { searchState.filters = null; searchState.applied = null; renderSearch(); },
+    onChange: () => reSearch(),
+  }));
   $("#sReset").onclick = () => {
     haptic();
     searchState = { text: "", results: [], page: 0, hasMore: false, sel: new Set(), filters: null, applied: null };
@@ -1431,7 +1455,6 @@ async function renderSearch() {
     renderSearch();
     const ta = $("#sInput"); if (ta) ta.focus();
   };
-  $("#sFilters").onclick = () => { haptic(); sheetFilters(searchState.filters || critToFilters(searchState.applied), applySearchFilters); };
   const openById = () => {
     const raw = ($("#lidInput").value || "").replace(/\D/g, "");
     if (!raw) return toast("Введите номер объявления");
