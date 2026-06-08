@@ -27,13 +27,33 @@ const BASE_HEADERS = { "X-Init-Data": INIT, "ngrok-skip-browser-warning": "true"
 async function api(path, opts = {}) {
   const headers = { ...BASE_HEADERS };
   if (opts.body) headers["Content-Type"] = "application/json";
-  const r = await fetch(API_BASE + "/api" + path, {
-    method: opts.method || "GET",
-    headers,
-    body: opts.body ? JSON.stringify(opts.body) : undefined,
-  });
-  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.status);
-  return r.json();
+  const method = opts.method || "GET";
+  // GET (загрузки) безопасно повторять при обрыве туннеля; мутирующие POST — нет
+  // (повтор мог бы продублировать публикацию/обработку), им только понятная ошибка.
+  const isGet = method === "GET";
+  const maxTries = isGet ? 3 : 1;
+  let lastErr;
+  for (let attempt = 1; attempt <= maxTries; attempt++) {
+    try {
+      const r = await fetch(API_BASE + "/api" + path, {
+        method, headers,
+        body: opts.body ? JSON.stringify(opts.body) : undefined,
+      });
+      // 502/503/504 — типичные ошибки лежащего туннеля; для GET повторяем с backoff
+      if (isGet && attempt < maxTries && [502, 503, 504].includes(r.status)) {
+        await sleep(700 * attempt); continue;
+      }
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.status);
+      return r.json();
+    } catch (e) {
+      lastErr = e;
+      const isNet = (e instanceof TypeError);  // «Failed to fetch» = сетевой обрыв
+      if (isGet && isNet && attempt < maxTries) { await sleep(700 * attempt); continue; }
+      if (isNet) throw new Error("сеть/туннель недоступны — попробуй ещё раз");
+      throw e;
+    }
+  }
+  throw lastErr;
 }
 
 // Картинку нельзя грузить простым <img src> (cross-origin не добавит заголовок и
@@ -359,10 +379,12 @@ async function renderClientDetail(id) {
       ${c.has_pets ? `<span class="chip pet">🐾 с животными</span>` : ""}
     </div>
     ${c.notes ? `<div class="card"><div class="muted" style="margin-bottom:4px">Заметки</div>${esc(c.notes)}</div>` : ""}
-    ${geo.length ? `<div class="section-title">Гео-точки</div>` + geo.map(g => `
-      <div class="card"><div class="row-between"><div><b>${esc(g.label || "точка")}</b>
-      <div class="muted">${esc(g.address || "")}</div></div>
-      <div class="muted">${g.max_minutes ? "до " + g.max_minutes + " мин" : ""}${g.is_strict ? " · строго" : ""}</div></div></div>`).join("") : ""}
+    <div class="section-title">🧭 Гео-точки</div>
+    ${geo.map(g => `
+      <div class="card"><div class="row-between" style="align-items:center"><div><b>${esc(g.label || "точка")}</b>
+      <div class="muted">${g.max_minutes ? "≤" + g.max_minutes + " мин " + (TRANSPORT_RU[g.transport] || "") : esc(g.address || "")}${g.is_strict ? " · строго" : ""}</div></div>
+      <button class="tag-x geo-del" data-gid="${g.id}" style="font-size:20px;color:var(--muted);background:none;border:none;cursor:pointer;padding:0 4px">×</button></div></div>`).join("")}
+    <button class="btn btn-soft sm" id="bAddGeo" style="width:100%;margin-top:2px">➕ Гео-точка</button>
     <div class="btn-primary btn" id="bMatch" style="margin-top:18px">🔎 Подобрать варианты</div>
     <div class="btn-row" style="margin-top:10px">
       <button class="btn btn-soft" id="bEdit">✏️ Критерии</button>
@@ -373,6 +395,64 @@ async function renderClientDetail(id) {
   $("#bMatch").onclick = () => { haptic(); go(() => renderMatch(c)); };
   $("#bEdit").onclick = () => sheetEditCriteria(c);
   $("#bStatus").onclick = () => sheetStatus(c);
+  const addGeoBtn = wrap.querySelector("#bAddGeo");
+  if (addGeoBtn) addGeoBtn.onclick = () => { haptic(); sheetAddGeo(c.id, () => renderClientDetail(c.id)); };
+  wrap.querySelectorAll(".geo-del").forEach(x => x.onclick = async () => {
+    haptic();
+    try { await api(`/clients/${c.id}/geo/delete`, { method: "POST", body: { id: parseInt(x.dataset.gid) } }); renderClientDetail(c.id); }
+    catch (e) { toast("Не удалить точку", "err"); }
+  });
+}
+
+const TRANSPORT_RU = { foot: "пешком", car: "на машине", transit: "на транспорте" };
+
+// Лист добавления гео-точки клиенту: адрес/метро + лимит минут + транспорт + строго.
+function sheetAddGeo(clientId, onDone) {
+  const b = openSheet(`
+    <div class="sheet-title">🧭 Гео-точка</div>
+    <div class="ed-label">Адрес или станция метро</div>
+    <input class="input" id="gAddr" placeholder="метро Савёловская / ул. Тверская 7">
+    <div class="ed-label">Не дольше, минут</div>
+    <input class="input" id="gMin" inputmode="numeric" placeholder="напр. 20">
+    <div class="ed-label">Транспорт</div>
+    <div class="chipsel" id="gTr">
+      <button class="chsel sm2 on" data-tr="transit">🚇 транспорт</button>
+      <button class="chsel sm2" data-tr="foot">🚶 пешком</button>
+      <button class="chsel sm2" data-tr="car">🚗 машина</button>
+    </div>
+    <label class="row-between" style="margin-top:14px;cursor:pointer">
+      <span>Строго отсеивать в подборе</span>
+      <input type="checkbox" id="gStrict" checked style="width:20px;height:20px">
+    </label>
+    <div class="btn-row" style="margin-top:20px">
+      <button class="btn btn-soft" id="gCancel" style="flex:1">Отмена</button>
+      <button class="btn btn-primary" id="gSave" style="flex:2">Добавить</button>
+    </div>`);
+  b.querySelectorAll("#gTr .chsel").forEach(x => x.onclick = () => {
+    haptic(); b.querySelectorAll("#gTr .chsel").forEach(c => c.classList.remove("on")); x.classList.add("on");
+  });
+  b.querySelector("#gCancel").onclick = () => { haptic(); closeSheet(); };
+  b.querySelector("#gSave").onclick = async () => {
+    const addr = (b.querySelector("#gAddr").value || "").trim();
+    const min = parseInt((b.querySelector("#gMin").value || "").replace(/\D/g, ""));
+    if (!addr) return toast("Укажи адрес или метро", "err");
+    haptic();
+    const trEl = b.querySelector("#gTr .chsel.on");
+    const body = {
+      address: addr,
+      max_minutes: isNaN(min) ? null : min,
+      transport: trEl ? trEl.dataset.tr : "transit",
+      is_strict: b.querySelector("#gStrict").checked,
+    };
+    const btn = b.querySelector("#gSave"); btn.disabled = true;
+    try {
+      const r = await api(`/clients/${clientId}/geo`, { method: "POST", body });
+      closeSheet();
+      if (!r.resolved) toast("Точка добавлена, но адрес не распознан — уточни", "err");
+      else toast("Гео-точка добавлена", "ok");
+      if (onDone) onDone();
+    } catch (e) { btn.disabled = false; toast("Не сохранить точку", "err"); }
+  };
 }
 
 async function renderMatch(client, page = 0, acc = null, filter = null) {
@@ -1013,6 +1093,11 @@ async function renderAutopost() {
     <button class="btn btn-primary" id="apGo" style="margin-top:10px;width:100%">Обработать</button>
     <div class="muted" style="margin-top:8px">Обработаю все по очереди (парсинг + чистка фото). Перед публикацией каждого покажу превью — подтверждаешь сам.</div>
   </div>`));
+  const bar = el(`<div class="row-between" style="gap:8px;margin-top:10px">
+    <button class="btn btn-soft sm" id="apPubAll" style="flex:1">✅ Опубликовать все готовые</button>
+    <button class="btn btn-soft sm" id="apResetStale" style="flex:1">🧹 Сбросить висящие</button>
+  </div>`);
+  wrap.appendChild(bar);
   const q = el(`<div id="apQueue" style="margin-top:12px"></div>`);
   wrap.appendChild(q);
   view.appendChild(wrap);
@@ -1023,6 +1108,48 @@ async function renderAutopost() {
     const r = await api("/autopost/list");
     for (const rec of (r.items || [])) apRestoreItem(rec, q);
   } catch (e) {}
+
+  // B2: опубликовать все готовые превью — последовательно (бэкенд сериализует по owner-локу),
+  // ждём завершения каждого для честного прогресса.
+  $("#apPubAll").onclick = async () => {
+    if (!ark.connected && !ark.owner) { notify("error"); return toast("Сначала подключи Arendok в «Профиле»", "err"); }
+    let list; try { list = await api("/autopost/list"); } catch (e) { return toast("Не загрузить очередь", "err"); }
+    const ready = (list.items || []).filter(r => r.status === "preview");
+    if (!ready.length) return toast("Нет готовых превью", "err");
+    if (!confirm(`Опубликовать все готовые превью (${ready.length})?`)) return;
+    haptic();
+    const btn = $("#apPubAll"); btn.disabled = true;
+    let ok = 0, fail = 0, i = 0;
+    for (const rec of ready) {
+      i++; btn.textContent = `📝 Публикую ${i}/${ready.length}…`;
+      try {
+        await api(`/autopost/${rec.id}/publish`, { method: "POST" });
+        let done = false;
+        for (let k = 0; k < 40 && !done; k++) {
+          await sleep(3000);
+          let st; try { st = await api(`/autopost/${rec.id}`); } catch (e) { continue; }
+          if (st.status === "done") { ok++; done = true; }
+          else if (st.status === "error") { fail++; done = true; }
+        }
+        if (!done) fail++;
+      } catch (e) { fail++; }
+    }
+    btn.disabled = false; btn.textContent = "✅ Опубликовать все готовые";
+    toast(`Готово: опубликовано ${ok}${fail ? ", ошибок " + fail : ""}`, fail ? "err" : "ok");
+    renderAutopost();
+  };
+
+  // B3: сбросить зависшие постинги (preview/processing старше 2ч) в cancelled
+  $("#apResetStale").onclick = async () => {
+    if (!confirm("Сбросить зависшие объявления (в превью/обработке старше 2 часов)?")) return;
+    haptic();
+    const btn = $("#apResetStale"); btn.disabled = true;
+    try {
+      const r = await api("/autopost/reset_stale", { method: "POST" });
+      toast(r.reset ? `Сброшено: ${r.reset}` : "Зависших не найдено", "ok");
+      renderAutopost();
+    } catch (e) { btn.disabled = false; toast("Не удалось сбросить", "err"); }
+  };
 
   $("#apGo").onclick = async () => {
     // гейт: без Arendok публикация всё равно упадёт — не запускаем впустую, ведём в Профиль
@@ -1569,11 +1696,13 @@ function critToFilters(c) {
     budget_min: c.budget_min || "", budget_max: c.budget_max || "",
     area_min: c.area_min || "", area_max: c.area_max || "",
     district: c.districts || "", metro: c.metro_stations || "", jk: c.jk_name || "",
+    geo: (c.geo_points && c.geo_points.length) ? c.geo_points : null,
   };
 }
 function hasArea(f) { return !!(f && Array.isArray(f.polygon) && f.polygon.length >= 3); }
+function hasGeo(f) { return !!(f && Array.isArray(f.geo) && f.geo.length); }
 function filtersActive(f) {
-  return !!(f && (f.rooms || f.budget_min || f.budget_max || f.area_min || f.area_max || f.district || f.metro || f.jk || hasArea(f) || f.commission_max != null));
+  return !!(f && (f.rooms || f.budget_min || f.budget_max || f.area_min || f.area_max || f.district || f.metro || f.jk || hasArea(f) || hasGeo(f) || f.commission_max != null));
 }
 function filtersSummary(f) {
   if (!f) return "";
@@ -1584,6 +1713,7 @@ function filtersSummary(f) {
   if (f.jk) p.push("🏙 " + f.jk);
   if (f.district) p.push("📍 " + f.district);
   if (f.metro) p.push("🚇 " + f.metro);
+  if (hasGeo(f)) { const g = f.geo[0]; p.push("🧭 " + (g.address || g.label || "точка") + (g.max_minutes ? " ≤" + g.max_minutes + "м" : "")); }
   if (hasArea(f)) p.push("🗺 область");
   if (f.commission_max === 0) p.push("💸 без комиссии");
   else if (f.commission_max != null) p.push("💸 до " + f.commission_max + "%");
@@ -1625,6 +1755,14 @@ function sheetFilters(init, onApply) {
     <div class="ed-label">Метро <span class="muted" style="font-weight:400">(отдельно; Enter добавляет)</span></div>
     <div class="tags" id="fMetroTags"></div>
     <input class="input" id="fMetro" placeholder="станция + Enter (Фили, Университет…)">
+    <div class="ed-label">🧭 Гео-точка <span class="muted" style="font-weight:400">— по времени в пути</span></div>
+    <input class="input" id="fGeoAddr" placeholder="метро Савёловская / улица, дом" value="${esc((init.geo && init.geo[0] && (init.geo[0].address || init.geo[0].label)) || "")}">
+    <div class="two" style="margin-top:6px">
+      <input class="input" id="fGeoMin" inputmode="numeric" placeholder="макс. минут" value="${(init.geo && init.geo[0] && init.geo[0].max_minutes) || ""}">
+      <div class="chipsel" id="fGeoTr">
+        ${[["transit","🚇 транспорт"],["foot","🚶 пешком"],["car","🚗 машина"]].map(([v,t])=>`<button class="chsel sm2 ${((init.geo&&init.geo[0]&&init.geo[0].transport)||"transit")===v?"on":""}" data-tr="${v}">${t}</button>`).join("")}
+      </div>
+    </div>
     <div class="ed-label">Комиссия</div>
     <div class="chipsel" id="fComm">
       <button class="chsel ${init.commission_max == null ? "on" : ""}" data-cm="">Любая</button>
@@ -1673,6 +1811,11 @@ function sheetFilters(init, onApply) {
     b.querySelectorAll("#fComm .chsel").forEach(c => c.classList.remove("on"));
     x.classList.add("on");
   });
+  b.querySelectorAll("#fGeoTr .chsel").forEach(x => x.onclick = () => {
+    haptic();
+    b.querySelectorAll("#fGeoTr .chsel").forEach(c => c.classList.remove("on"));
+    x.classList.add("on");
+  });
   const num = (id) => { const v = parseInt((b.querySelector(id).value || "").replace(/\D/g, "")); return isNaN(v) ? "" : v; };
   const readForm = () => {
     const rooms = [...b.querySelectorAll("#fRooms .chsel.on")].map(x => x.dataset.v);
@@ -1688,8 +1831,18 @@ function sheetFilters(init, onApply) {
       metro: metroTags.get(),
       polygon: poly, source: init.source || "",
       commission_max: isNaN(commMax) ? null : commMax,
+      geo: geoFilter(),
     };
   };
+  // одна гео-точка: адрес/метро + лимит минут + транспорт. Активна, только если задан и адрес, и минуты.
+  function geoFilter() {
+    const addr = (b.querySelector("#fGeoAddr").value || "").trim();
+    const min = num("#fGeoMin");
+    if (!addr || !min) return null;
+    const trEl = b.querySelector("#fGeoTr .chsel.on");
+    const tr = trEl ? trEl.dataset.tr : "transit";
+    return [{ address: addr, label: addr, max_minutes: min, transport: tr, is_strict: true }];
+  }
   // обвести область на карте — сохраняем текущие поля, уходим на карту, возвращаемся
   b.querySelector("#fArea").onclick = () => {
     haptic(); const cur = readForm(); closeSheet();
