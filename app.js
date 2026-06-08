@@ -449,13 +449,17 @@ async function renderMatch(client, page = 0, acc = null, filter = null) {
 
 /* ════════════════════════ LISTINGS ════════════════════════ */
 let listingsFilter = null;
+const LIST_PAGE = 50;
 async function renderListings(source = "all") {
   setTitle("Объекты", "последние объявления");
   removeFab();
   loading();
   let listings = [];
+  let listHasMore = false;
   try {
-    listings = await api("/listings/query", { method: "POST", body: { source, limit: 50, filters: listingsFilter || {} } });
+    const r = await api("/listings/query", { method: "POST", body: { source, limit: LIST_PAGE, offset: 0, filters: listingsFilter || {} } });
+    listings = r.listings || [];
+    listHasMore = !!r.has_more;
   } catch (e) {}
   view.innerHTML = "";
   const wrap = el(`<div class="fade-in"></div>`);
@@ -513,6 +517,27 @@ async function renderListings(source = "all") {
     refreshBar();
   }
   renderRows();
+  // «Загрузить ещё» — подгружает следующую страницу и дорисовывает строки
+  const moreBox = el(`<div style="margin-top:14px"></div>`);
+  wrap.appendChild(moreBox);
+  function renderMore() {
+    moreBox.innerHTML = "";
+    if (!listHasMore) return;
+    const btn = el(`<button class="btn btn-soft" style="width:100%">Загрузить ещё</button>`);
+    moreBox.appendChild(btn);
+    btn.onclick = async () => {
+      haptic();
+      btn.disabled = true; btn.textContent = "Загрузка…";
+      try {
+        const r = await api("/listings/query", { method: "POST", body: { source, limit: LIST_PAGE, offset: listings.length, filters: listingsFilter || {} } });
+        listings.push(...(r.listings || []));
+        listHasMore = !!r.has_more;
+        renderRows();
+        renderMore();
+      } catch (e) { btn.disabled = false; btn.textContent = "Загрузить ещё"; toast("Не загрузить", "err"); }
+    };
+  }
+  renderMore();
   view.appendChild(wrap);
   searchBar.onclick = () => { haptic(); go(renderSearch); };
   fbar.querySelector("#lFilters").onclick = () => {
