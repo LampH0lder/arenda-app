@@ -224,8 +224,6 @@ async function renderHome() {
   setTitle("Главная", "помощник риелтора");
   loading();
   let s = {}; try { s = await api("/stats"); } catch (e) {}
-  let mo = {}; try { mo = await api("/morning"); } catch (e) {}
-  const morning = !!mo.enabled, ownerOnly = !!mo.owner_only;
   let acc = {}; try { acc = await api("/account"); } catch (e) {}
   view.innerHTML = "";
   const wrap = el(`<div class="fade-in"></div>`);
@@ -253,14 +251,7 @@ async function renderHome() {
       <div style="font-weight:640;margin-bottom:4px">📲 Подключите свой Telegram</div>
       <div class="muted" style="margin-bottom:10px">Чтобы отправлять варианты клиентам от вашего имени.</div>
       <button class="btn btn-primary sm" id="connBtn">Подключить</button>
-    </div>` : ""}
-    ${ownerOnly ? "" : `
-    <div class="section-title">Утренняя рассылка</div>
-    <div class="card row-between">
-      <div><div style="font-weight:640">${morning ? "Включена" : "Выключена"}</div>
-      <div class="muted">тёплое «доброе утро» клиентам</div></div>
-      <button class="btn sm ${morning ? "btn-danger" : "btn-green"}" id="mToggle">${morning ? "Выключить" : "Включить"}</button>
-    </div>`}`;
+    </div>` : ""}`;
   wrap.appendChild(el(`<div class="app-ver">Риелти · ${APP_VERSION}</div>`));
   view.appendChild(wrap);
   $("#homeAll").onclick = () => switchTab("listings");
@@ -270,11 +261,6 @@ async function renderHome() {
   $("#qScan").onclick = () => sheetScan();
   $("#qCov").onclick = () => sheetCoverage();
   const connBtn = $("#connBtn"); if (connBtn) connBtn.onclick = () => { haptic(); switchTab("profile"); };
-  const mt = $("#mToggle"); if (mt) mt.onclick = async () => {
-    haptic();
-    const r = await api("/morning", { method: "POST", body: { enabled: !morning } });
-    toast(r.enabled ? "Утренняя рассылка включена" : "Выключена", "ok"); renderHome();
-  };
 }
 
 async function loadHomeCarousel() {
@@ -1546,10 +1532,13 @@ function sheetAddClient() {
   b.querySelector("#nVoice").replaceWith(voiceButton((text) => {
     const ta = b.querySelector("#nCrit"); ta.value = ta.value ? (ta.value + " " + text) : text;
   }, "🎤 Надиктовать критерии"));
-  b.querySelector("#nSave").onclick = async () => {
+  const saveBtn = b.querySelector("#nSave");
+  saveBtn.onclick = async () => {
+    if (saveBtn.disabled) return;            // защита от двойного тапа → дублей клиентов
     const name = b.querySelector("#nName").value.trim();
     if (!name) return toast("Введите имя");
     haptic();
+    saveBtn.disabled = true; saveBtn.textContent = "Создаю…";
     const body = { name };
     const u = b.querySelector("#nUser").value.trim();
     if (u) { if (/^-?\d+$/.test(u.replace("@", ""))) body.telegram_id = parseInt(u.replace("@", "")); else body.telegram_username = u; }
@@ -1559,7 +1548,7 @@ function sheetAddClient() {
       if (crit) await api(`/clients/${r.id}/criteria`, { method: "POST", body: { text: crit } });
       closeSheet(); notify("success"); toast("Клиент создан ✓", "ok");
       switchTab("clients");
-    } catch (e) { toast("Ошибка: " + e.message, "err"); }
+    } catch (e) { saveBtn.disabled = false; saveBtn.textContent = "Создать клиента"; toast("Ошибка: " + e.message, "err"); }
   };
 }
 
