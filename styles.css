@@ -558,3 +558,19 @@ html,body,#app,#view{max-width:100%;overflow-x:hidden;}
 .gal-nav:active{background:rgba(255,255,255,.25);}
 .gal-bottom{padding:14px 16px calc(var(--safe-bot) + 16px);display:flex;justify-content:center;}
 .gal-cover.is-cover{background:var(--green);color:#06281d;}
+
+/* Поиск: компактные мини-фильтры (источник/комиссия/сортировка) */
+.mini-row{display:flex;gap:7px;flex-wrap:wrap;}
+.mini-chip{flex:1 1 auto;min-width:0;background:var(--card-2);border:1px solid var(--line);
+  color:var(--txt);border-radius:10px;padding:9px 10px;font-size:12.5px;font-weight:600;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;}
+.mini-chip.act{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-2);}
+.mini-chip:active{opacity:.8;}
+/* Шторка одиночного выбора */
+.pick-list{display:flex;flex-direction:column;gap:6px;}
+.pick-row{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;
+  background:var(--card-2);border:1px solid var(--line);color:var(--txt);border-radius:12px;
+  padding:14px 16px;font-size:15px;font-weight:600;cursor:pointer;text-align:left;}
+.pick-row.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-2);}
+.pick-row:active{opacity:.8;}
+.pick-ok{color:var(--accent-2);font-size:17px;}
