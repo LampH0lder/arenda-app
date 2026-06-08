@@ -440,6 +440,21 @@ html,body,#app,#view{max-width:100%;overflow-x:hidden;}
   height:248px;object-fit:cover;background:var(--card-2);transition:filter .35s ease;
 }
 .detail-photo.lq{filter:blur(8px) saturate(1.05);}
+.gal-img.lq{filter:blur(10px) saturate(1.05);}
+
+/* ── Полоска миниатюр под обложкой объекта ── */
+.detail-thumbs{
+  display:flex;gap:6px;overflow-x:auto;margin:0 0 10px;padding-bottom:4px;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none;
+}
+.detail-thumbs::-webkit-scrollbar{display:none;}
+.dthumb{
+  flex:0 0 auto;width:60px;height:60px;border-radius:9px;cursor:pointer;
+  background:var(--card-2) center/cover no-repeat;border:1px solid var(--line);
+  opacity:.55;transition:opacity .25s ease,transform .1s;
+}
+.dthumb.loaded{opacity:1;}
+.dthumb:active{transform:scale(.94);}
 
 /* ── Шапка с кнопкой «назад» ── */
 #topbar{display:flex;align-items:center;gap:4px;}
