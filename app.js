@@ -1070,7 +1070,7 @@ async function renderHistory() {
 }
 
 /* ── ФДГ: публикация объявления на Arendok из ссылки Циан/Авито ── */
-const AP_MAX = 10;
+const AP_MAX = 3;
 // активные poll-циклы по posting_id. При повторном заходе во вкладку ФДГ глушим
 // старые (alive=false), иначе их опросы висят фоном и могут рисовать дубли.
 const apStates = new Map();
