@@ -1167,7 +1167,13 @@ async function renderAutopost() {
     if (!raw) return toast("Вставь хотя бы одну ссылку", "err");
     let urls = [...new Set(raw.split(/\s+/).map(s => s.trim()).filter(Boolean))];
     if (!urls.length) return toast("Не нашёл ссылок", "err");
-    if (urls.length > AP_MAX) { toast(`Максимум ${AP_MAX} за раз — беру первые ${AP_MAX}`, "err"); urls = urls.slice(0, AP_MAX); }
+    // Лимит 3 одновременно: спросим сервер сколько уже в работе и возьмём только свободные слоты
+    // (так не плодим кривые карточки-ошибки, когда сервер отбивает лишнее).
+    let activeNow = 0;
+    try { activeNow = ((await api("/autopost/list")).items || []).length; } catch (e) {}
+    const free = Math.max(0, AP_MAX - activeNow);
+    if (free <= 0) { notify("error"); return toast(`Сейчас ${AP_MAX} ФДГ уже в работе — дождись, потом кидай новые`, "err"); }
+    if (urls.length > free) { toast(`Можно ещё ${free} — беру первые ${free}`, "err"); urls = urls.slice(0, free); }
     haptic();
     const btn = $("#apGo"); btn.disabled = true;
     $("#apUrls").value = "";
