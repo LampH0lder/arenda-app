@@ -142,6 +142,14 @@ function toast(msg, kind = "") {
   t.textContent = msg; t.className = "toast " + kind;
   clearTimeout(t._t); t._t = setTimeout(() => t.classList.add("hidden"), 2600);
 }
+// Нативное подтверждение Telegram (аккуратный диалог) вместо браузерного confirm(),
+// который в WebView выглядит криво (с заголовком домена). Фолбэк — обычный confirm().
+function confirmA(msg) {
+  return new Promise(res => {
+    if (tg && tg.showConfirm) { try { tg.showConfirm(msg, ok => res(!!ok)); return; } catch (e) {} }
+    res(confirm(msg));
+  });
+}
 function loading() { view.innerHTML = `<div class="loader"><div class="spin"></div></div>`; }
 function setTitle(t, sub = "") { $("#tbTitle").textContent = t; $("#tbSub").textContent = sub; }
 
@@ -1124,7 +1132,7 @@ async function renderAutopost() {
     let list; try { list = await api("/autopost/list"); } catch (e) { return toast("Не загрузить очередь", "err"); }
     const ready = (list.items || []).filter(r => r.status === "preview");
     if (!ready.length) return toast("Нет готовых превью", "err");
-    if (!confirm(`Опубликовать все готовые превью (${ready.length})?`)) return;
+    if (!await confirmA(`Опубликовать все готовые превью (${ready.length})?`)) return;
     haptic();
     const btn = $("#apPubAll"); btn.disabled = true;
     let ok = 0, fail = 0, i = 0;
@@ -2003,10 +2011,10 @@ function sheetBroadcast(l) {
       <button class="btn btn-soft" data-g="paused">💤 На паузе</button>
       <button class="btn btn-danger" data-g="all">👥 Всем</button>
     </div>`);
-  b.querySelectorAll("[data-g]").forEach(x => x.onclick = () => {
+  b.querySelectorAll("[data-g]").forEach(x => x.onclick = async () => {
     haptic();
     const g = x.dataset.g, names = { active: "активным", paused: "на паузе", all: "ВСЕМ" };
-    if (!confirm(`Точно отправить ${names[g]} клиентам?`)) return;
+    if (!await confirmA(`Точно отправить ${names[g]} клиентам?`)) return;
     api("/broadcast", { method: "POST", body: { listing_id: l.id, group: g } })
       .then(r => { closeSheet(); notify("success"); toast(`Рассылка запущена (${r.queued} клиентов)`, "ok"); })
       .catch(e => toast("Ошибка: " + e.message, "err"));
@@ -2140,14 +2148,14 @@ async function renderProfile() {
   const onbR = $("#onbReplay"); if (onbR) onbR.onclick = () => { haptic(); startOnboarding(true); };
   const arkC = $("#arkConn"); if (arkC) arkC.onclick = () => { haptic(); sheetConnectArendok(); };
   const arkD = $("#arkDisc"); if (arkD) arkD.onclick = async () => {
-    if (!confirm("Отключить ваш профиль Arendok?")) return;
+    if (!await confirmA("Отключить ваш профиль Arendok?")) return;
     haptic(); try { await api("/arendok/disconnect", { method: "POST", body: {} }); toast("Arendok отключён", "ok"); renderProfile(); }
     catch (e) { toast("Ошибка", "err"); }
   };
   const ab = $("#admBtn"); if (ab) ab.onclick = () => { haptic(); location.href = (API_BASE || "") + "/admin?tgauth=" + AUTHQ; };
   const cc = $("#accConn"); if (cc) cc.onclick = () => { haptic(); sheetConnectAccount(); };
   const cd = $("#accDisc"); if (cd) cd.onclick = async () => {
-    if (!confirm("Отключить ваш Telegram-аккаунт от бота?")) return;
+    if (!await confirmA("Отключить ваш Telegram-аккаунт от бота?")) return;
     haptic(); try { await api("/account/disconnect", { method: "POST", body: {} }); toast("Аккаунт отключён", "ok"); renderProfile(); }
     catch (e) { toast("Ошибка", "err"); }
   };
