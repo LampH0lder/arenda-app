@@ -2395,6 +2395,29 @@ function onbPosition(step, hole, card) {
   else { card.style.top = (r.bottom + 14) + "px"; card.style.bottom = "auto"; }
 }
 
+/* ── баннер техработ (управляется сервером: GET /api/notice) ── */
+async function refreshNotice() {
+  try {
+    const n = await api("/notice");
+    let el = document.getElementById("maintBanner");
+    if (n && n.active && n.text) {
+      if (!el) {
+        el = document.createElement("div");
+        el.id = "maintBanner";
+        el.style.cssText = "position:fixed;left:0;right:0;top:0;z-index:99999;background:#7c5e10;" +
+          "color:#ffe9a8;font-size:12px;line-height:1.35;padding:7px 12px;text-align:center;" +
+          "box-shadow:0 1px 8px rgba(0,0,0,.45)";
+        document.body.appendChild(el);
+      }
+      el.textContent = "🛠 " + n.text;
+    } else if (el) {
+      el.remove();
+    }
+  } catch (e) {}
+}
+refreshNotice();
+setInterval(refreshNotice, 60000);
+
 /* ── start ── */
 switchTab("home");
 (async () => {
