@@ -14,7 +14,7 @@ const haptic = (t = "light") => { try { tg?.HapticFeedback?.impactOccurred(t); }
 const notify = (t = "success") => { try { tg?.HapticFeedback?.notificationOccurred(t); } catch (e) {} };
 
 // показываемая версия (фиксированная семантическая); кэш-бастер ?v=N — отдельно и невидим
-const APP_VERSION = "v1.0.6";
+const APP_VERSION = "v1.4.8.8";
 
 /* ── API ──
    Фронт может быть на другом домене (GitHub Pages, чистый HTTPS без заглушки),
