@@ -227,8 +227,11 @@ $("#sheet").addEventListener("click", (e) => { if (e.target.classList.contains("
 
 /* ── Router ── */
 let stack = [];
-function go(fn, push = true) { if (push) stack.push(fn); fn(); updateBack(); }
-function back() { if (stack.length > 1) { stack.pop(); stack[stack.length - 1](); updateBack(); } }
+// при переходе на НОВЫЙ экран всегда мотаем наверх (иначе деталь объекта открывается
+// на середине/внизу — на позиции скролла списка). fn() сперва рисует skeleton (короткий),
+// поэтому scrollTop=0 после fn() надёжно ставит верх.
+function go(fn, push = true) { if (push) stack.push(fn); fn(); if (push) view.scrollTop = 0; updateBack(); }
+function back() { if (stack.length > 1) { stack.pop(); stack[stack.length - 1](); view.scrollTop = 0; updateBack(); } }
 function updateBack() {
   const show = stack.length > 1;
   const bb = $("#backBtn"); if (bb) bb.classList.toggle("hidden", !show);
