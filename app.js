@@ -602,11 +602,9 @@ let listingsFilter = null;
 let listSource = "all";   // all | exclusives | arendok  (синхронно с поиском)
 let listCommMax = null;   // null | 0 | 50
 let listSort = "";        // см. SORT_OPTS
-let listAgent = "";       // фильтр по имени эксклюзив-агента
 const LIST_PAGE = 50;
 function listQueryBody(offset) {
-  const filters = { ...(listingsFilter || {}), ...(listAgent ? { agent: listAgent } : {}) };
-  return { source: listSource, limit: LIST_PAGE, offset, commission_max: listCommMax, sort: listSort, filters };
+  return { source: listSource, limit: LIST_PAGE, offset, commission_max: listCommMax, sort: listSort, filters: listingsFilter || {} };
 }
 async function renderListings() {
   setTitle("Объекты", "последние объявления");
@@ -621,8 +619,8 @@ async function renderListings() {
   } catch (e) {}
   view.innerHTML = "";
   const wrap = el(`<div class="fade-in"></div>`);
-  // строка поиска по агенту
-  const searchBar = el(`<div class="list-search"><span class="ls-ic">${icon('search')}</span><input class="input" id="listSearchInp" placeholder="Поиск по агенту…" value="${esc(listAgent)}"><button class="ls-clr" id="lsClr" style="${listAgent ? "" : "display:none"}">✕</button></div>`);
+  // строка поиска — по тапу открывает полноценное меню поиска и фильтров
+  const searchBar = el(`<button class="search-bar" id="oSearch"><span class="sb-ic">${icon('search')}</span><span>Поиск вариантов и фильтры…</span></button>`);
   wrap.appendChild(searchBar);
   // единая панель фильтров (та же, что в «Поиске»)
   const filterBar = el(`<div style="margin:0 0 12px"></div>`);
@@ -688,24 +686,7 @@ async function renderListings() {
   }
   renderMore();
   view.appendChild(wrap);
-  // вайринг строки поиска по агенту
-  const lsInp = searchBar.querySelector("#listSearchInp");
-  const lsClr = searchBar.querySelector("#lsClr");
-  let lsTimer;
-  lsInp.addEventListener("input", e => {
-    const val = e.target.value.trim();
-    lsClr.style.display = val ? "" : "none";
-    clearTimeout(lsTimer);
-    lsTimer = setTimeout(async () => {
-      listAgent = val;
-      try { const r = await api("/listings/query", { method: "POST", body: listQueryBody(0) }); listings = r.listings || []; listHasMore = !!r.has_more; } catch(e) {}
-      renderRows(); renderMore();
-    }, 400);
-  });
-  lsClr.onclick = () => {
-    listAgent = ""; lsInp.value = ""; lsClr.style.display = "none";
-    api("/listings/query", { method: "POST", body: listQueryBody(0) }).then(r => { listings = r.listings || []; listHasMore = !!r.has_more; renderRows(); renderMore(); }).catch(() => {});
-  };
+  searchBar.onclick = () => { haptic(); go(renderSearch); };
   filterBar.appendChild(filterControlsEl({
     getSource: () => listSource, setSource: (v) => { listSource = v; },
     getComm: () => listCommMax, setComm: (v) => { listCommMax = v === "" ? null : parseInt(v); },
@@ -713,7 +694,7 @@ async function renderListings() {
     advActive: () => filtersActive(listingsFilter),
     advSummary: () => filtersActive(listingsFilter) ? filtersSummary(listingsFilter) : "",
     onAdv: () => sheetFilters(listingsFilter || {}, (f) => { listingsFilter = filtersActive(f) ? f : null; renderListings(); }),
-    onAdvClear: () => { listingsFilter = null; listAgent = ""; renderListings(); },
+    onAdvClear: () => { listingsFilter = null; renderListings(); },
     onChange: () => renderListings(),
   }));
 }
