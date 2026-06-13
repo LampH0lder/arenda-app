@@ -1011,6 +1011,7 @@ function openGallery(id, count, startIdx, coverIdx) {
       <button class="gal-close" aria-label="Закрыть">✕</button>
     </div>
     <div class="gal-stage">
+      <div class="gal-blur-bg"></div>
       <button class="gal-nav prev" aria-label="Назад">‹</button>
       <img class="gal-img" alt="">
       <div class="gal-spin"><div class="spin"></div></div>
@@ -1022,11 +1023,13 @@ function openGallery(id, count, startIdx, coverIdx) {
   </div>`);
   document.body.appendChild(ov);
   const img = ov.querySelector(".gal-img");
+  const blurBg = ov.querySelector(".gal-blur-bg");
   const spin = ov.querySelector(".gal-spin");
   const pos = ov.querySelector(".gal-pos");
   const coverBtn = ov.querySelector(".gal-cover");
   const cacheHi = {};  // idx -> blob url (крупное 1000px)
   const cacheSm = {};  // idx -> blob url (мелкое 480px, для мгновенного показа)
+  const setGalImg = (url) => { img.src = url; blurBg.style.backgroundImage = `url(${url})`; };
 
   async function show(i) {
     idx = (i + count) % count;
@@ -1036,22 +1039,22 @@ function openGallery(id, count, startIdx, coverIdx) {
     coverBtn.innerHTML = idx === cover ? icon('check')+" Это обложка" : icon('star')+" Сделать обложкой";
     coverBtn.disabled = idx === cover;
     // крупное уже в кэше — показываем сразу
-    if (cacheHi[cur]) { img.src = cacheHi[cur]; img.classList.remove("lq"); spin.style.display = "none"; img.style.opacity = "1"; preload(cur); return; }
+    if (cacheHi[cur]) { setGalImg(cacheHi[cur]); img.classList.remove("lq"); spin.style.display = "none"; img.style.opacity = "1"; preload(cur); return; }
     // мгновенно показываем мелкое (из кэша или докачиваем), пока тянется крупное
     if (cacheSm[cur]) {
-      img.src = cacheSm[cur]; img.classList.add("lq"); img.style.opacity = "1"; spin.style.display = "none";
+      setGalImg(cacheSm[cur]); img.classList.add("lq"); img.style.opacity = "1"; spin.style.display = "none";
     } else {
       img.style.opacity = "0"; spin.style.display = "flex";
       fetchImg(`/listings/${id}/photo/${cur}`).then(u => {
         cacheSm[cur] = u;
-        if (idx === cur && !cacheHi[cur]) { img.src = u; img.classList.add("lq"); img.style.opacity = "1"; spin.style.display = "none"; }
+        if (idx === cur && !cacheHi[cur]) { setGalImg(u); img.classList.add("lq"); img.style.opacity = "1"; spin.style.display = "none"; }
       }).catch(() => {});
     }
     // докачиваем крупное и плавно заменяем мелкое
     try {
       const url = await fetchImg(`/listings/${id}/photo/${cur}?q=hi`);
       cacheHi[cur] = url;
-      if (idx === cur) { img.src = url; img.classList.remove("lq"); img.style.opacity = "1"; }
+      if (idx === cur) { setGalImg(url); img.classList.remove("lq"); img.style.opacity = "1"; }
     } catch (e) { if (idx === cur && !cacheSm[cur]) img.removeAttribute("src"); }
     spin.style.display = "none";
     preload(cur);
