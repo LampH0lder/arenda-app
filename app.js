@@ -930,7 +930,7 @@ async function renderListingDetail(id) {
   removeFab(); setTitle("Объект");
   loading();
   let l; try { l = await api("/listings/" + id); } catch (e) { return toast("Не загрузить", "err"); }
-  view.innerHTML = "";
+  view.innerHTML = ""; view.scrollTop = 0;
   const wrap = el(`<div class="fade-in"></div>`);
   wrap.innerHTML = `
     <div class="detail-photo-wrap" data-photowrap style="display:none">
