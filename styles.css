@@ -591,7 +591,8 @@ html,body,#app,#view{max-width:100%;overflow-x:hidden;}
 }
 .gal-close:active{background:rgba(255,255,255,.25);}
 .gal-stage{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;}
-.gal-img{max-width:100%;max-height:100%;object-fit:contain;transition:opacity .18s;}
+.gal-blur-bg{position:absolute;inset:-30px;background-size:cover;background-position:center;filter:blur(28px);opacity:.55;pointer-events:none;transition:background-image .15s;}
+.gal-img{position:relative;z-index:1;max-width:100%;max-height:100%;object-fit:contain;transition:opacity .18s;}
 .gal-spin{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
 .gal-nav{
   position:absolute;top:50%;transform:translateY(-50%);
