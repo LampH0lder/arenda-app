@@ -1175,7 +1175,7 @@ function apTrack(state) {
   apStates.set(state.id, state);
 }
 async function renderAutopost() {
-  setTitle("ФДГ — выложить на Arendok", "ссылки Циан → объявления");
+  setTitle("ФДГ");
   removeFab();
   // глушим poll-циклы прошлого рендера (карточки пересоздаются с нуля ниже)
   apStates.forEach(s => { s.alive = false; });
