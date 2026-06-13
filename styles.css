@@ -653,3 +653,8 @@ body:has(.sel-bar:not(.hidden)) #view{padding-bottom:calc(var(--safe-bot) + 150p
 .brand-logo{flex:0 0 auto;height:18px;width:auto;margin-left:10px;align-self:center;color:var(--txt);}
 .tb-head{overflow:hidden;}
 .tb-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* лого на одной линии с заголовком (а подзаголовок — под ними) */
+.tb-row{display:flex;align-items:center;gap:10px;min-width:0;}
+.tb-row .tb-title{flex:1;}
+.brand-logo{margin-left:0;align-self:auto;}
