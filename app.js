@@ -46,6 +46,12 @@ const NGROK_BASE = "https://postage-bucket-anything.ngrok-free.dev";
 const API_BASE = location.hostname.endsWith("github.io") ? NGROK_BASE : "";
 const BASE_HEADERS = { "X-Init-Data": INIT, "ngrok-skip-browser-warning": "true" };
 
+// ── Lucide-иконки (контурные, красятся в currentColor; size = 1em по контексту) ──
+const _ICONS = {"mic": "<path d=\"M12 19v3\"/><path d=\"M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z\"/><path d=\"M19 10v2a7 7 0 0 1-14 0v-2\"/>", "loader": "<path d=\"M21 12a9 9 0 1 1-6.219-8.56\"/>", "square": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\"/>", "percent": "<path d=\"M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z\"/><path d=\"m15 9-6 6\"/><path d=\"M9 9h.01\"/><path d=\"M15 15h.01\"/>", "megaphone": "<path d=\"m3 11 18-5v12L3 14v-3z\"/><path d=\"M11.6 16.8a3 3 0 1 1-5.8-1.6\"/>", "bed": "<path d=\"M2 4v16\"/><path d=\"M2 8h18a2 2 0 0 1 2 2v10\"/><path d=\"M2 17h20\"/><path d=\"M6 8v9\"/>", "wallet": "<path d=\"M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1\"/><path d=\"M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4\"/>", "map-pin": "<path d=\"M20 10c0 4.4-8 12-8 12s-8-7.6-8-12a8 8 0 0 1 16 0Z\"/><circle cx=\"12\" cy=\"10\" r=\"3\"/>", "train": "<rect x=\"4\" y=\"3\" width=\"16\" height=\"16\" rx=\"2\"/><path d=\"M4 11h16\"/><path d=\"M12 3v8\"/><path d=\"m8 19-2 3\"/><path d=\"m18 22-2-3\"/><circle cx=\"8\" cy=\"15\" r=\"1\"/><circle cx=\"16\" cy=\"15\" r=\"1\"/>", "ruler": "<path d=\"M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.4 2.4 0 0 1 0-3.4l2.6-2.6a2.4 2.4 0 0 1 3.4 0Z\"/><path d=\"m14.5 12.5 2-2\"/><path d=\"m11.5 9.5 2-2\"/><path d=\"m8.5 6.5 2-2\"/><path d=\"m17.5 15.5 2-2\"/>", "paw": "<circle cx=\"11\" cy=\"4\" r=\"2\"/><circle cx=\"18\" cy=\"8\" r=\"2\"/><circle cx=\"20\" cy=\"16\" r=\"2\"/><path d=\"M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z\"/>", "compass": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><polygon points=\"16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76\"/>", "plus": "<path d=\"M5 12h14\"/><path d=\"M12 5v14\"/>", "search": "<circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/>", "pencil": "<path d=\"M12 20h9\"/><path d=\"M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z\"/>", "sliders": "<line x1=\"21\" y1=\"4\" x2=\"14\" y2=\"4\"/><line x1=\"10\" y1=\"4\" x2=\"3\" y2=\"4\"/><line x1=\"21\" y1=\"12\" x2=\"12\" y2=\"12\"/><line x1=\"8\" y1=\"12\" x2=\"3\" y2=\"12\"/><line x1=\"21\" y1=\"20\" x2=\"16\" y2=\"20\"/><line x1=\"12\" y1=\"20\" x2=\"3\" y2=\"20\"/><line x1=\"14\" y1=\"2\" x2=\"14\" y2=\"6\"/><line x1=\"8\" y1=\"10\" x2=\"8\" y2=\"14\"/><line x1=\"16\" y1=\"18\" x2=\"16\" y2=\"22\"/>", "settings": "<path d=\"M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>", "footprints": "<path d=\"M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z\"/><path d=\"M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z\"/><path d=\"M16 17h4\"/><path d=\"M4 13h4\"/>", "car": "<path d=\"M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2\"/><circle cx=\"7\" cy=\"17\" r=\"2\"/><path d=\"M9 17h6\"/><circle cx=\"17\" cy=\"17\" r=\"2\"/>", "send": "<path d=\"m22 2-7 20-4-9-9-4Z\"/><path d=\"M22 2 11 13\"/>", "send-h": "<path d=\"M3.7 3a.5.5 0 0 0-.68.62l2.84 7.62a2 2 0 0 1 0 1.4L3.02 20.3a.5.5 0 0 0 .68.62l18-8.5a.5.5 0 0 0 0-.9z\"/><path d=\"M6 12h16\"/>", "ext-link": "<path d=\"M15 3h6v6\"/><path d=\"M10 14 21 3\"/><path d=\"M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6\"/>", "crown": "<path d=\"M11.6 3.3a.5.5 0 0 1 .9 0l2.9 5.6a1 1 0 0 0 1.5.3l4.3-3.7a.5.5 0 0 1 .8.5l-2.8 10.3a1 1 0 0 1-1 .7H5.8a1 1 0 0 1-1-.7L2 6a.5.5 0 0 1 .8-.5l4.3 3.7a1 1 0 0 0 1.5-.3z\"/><path d=\"M5 21h14\"/>", "login": "<path d=\"M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4\"/><polyline points=\"10 17 15 12 10 7\"/><line x1=\"15\" y1=\"12\" x2=\"3\" y2=\"12\"/>", "star": "<polygon points=\"12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2\"/>", "check": "<path d=\"M20 6 9 17l-5-5\"/>", "inbox": "<polyline points=\"22 12 16 12 14 15 10 15 8 12 2 12\"/><path d=\"M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z\"/>", "map": "<path d=\"M14.1 5.5a2 2 0 0 0 1.8 0l3.6-1.8A1 1 0 0 1 21 4.6v12.8a1 1 0 0 1-.55.9l-4.55 2.3a2 2 0 0 1-1.8 0l-4.2-2.1a2 2 0 0 0-1.8 0l-3.6 1.8A1 1 0 0 1 3 19.4V6.6a1 1 0 0 1 .55-.9l4.55-2.3a2 2 0 0 1 1.8 0z\"/><path d=\"M15 5.8v15\"/><path d=\"M9 3.2v15\"/>", "refresh": "<path d=\"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8\"/><path d=\"M21 3v5h-5\"/><path d=\"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16\"/><path d=\"M3 21v-5h5\"/>", "smartphone": "<rect width=\"14\" height=\"20\" x=\"5\" y=\"2\" rx=\"2\"/><path d=\"M12 18h.01\"/>", "building2": "<path d=\"M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z\"/><path d=\"M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2\"/><path d=\"M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2\"/><path d=\"M10 6h4\"/><path d=\"M10 10h4\"/><path d=\"M10 14h4\"/>", "building": "<rect width=\"16\" height=\"20\" x=\"4\" y=\"2\" rx=\"2\"/><path d=\"M9 22v-4h6v4\"/><path d=\"M8 6h.01\"/><path d=\"M16 6h.01\"/><path d=\"M12 6h.01\"/><path d=\"M12 10h.01\"/><path d=\"M8 10h.01\"/><path d=\"M16 10h.01\"/>", "clock": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><polyline points=\"12 6 12 12 16 14\"/>", "pin": "<path d=\"M12 17v5\"/><path d=\"M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1Z\"/>", "moon": "<path d=\"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z\"/>", "party": "<path d=\"M5.8 11.3 2 22l10.7-3.79\"/><path d=\"M4 3h.01\"/><path d=\"M22 8h.01\"/><path d=\"M15 2h.01\"/><path d=\"m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10\"/><path d=\"m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11-.11.7-.72 1.22-1.43 1.22H17\"/><path d=\"M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z\"/>", "alert": "<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/>", "ban": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m4.9 4.9 14.2 14.2\"/>", "lock": "<rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\"/><path d=\"M7 11V7a5 5 0 0 1 10 0v4\"/>", "image": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\"/><circle cx=\"9\" cy=\"9\" r=\"2\"/><path d=\"m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21\"/>", "layers": "<path d=\"M12.8 2.2a2 2 0 0 0-1.6 0L2.6 6.1a1 1 0 0 0 0 1.8l8.6 3.9a2 2 0 0 0 1.6 0l8.6-3.9a1 1 0 0 0 0-1.8Z\"/><path d=\"M2 12a1 1 0 0 0 .6.9l8.6 3.9a2 2 0 0 0 1.6 0l8.6-3.9A1 1 0 0 0 22 12\"/><path d=\"M2 17a1 1 0 0 0 .6.9l8.6 3.9a2 2 0 0 0 1.6 0l8.6-3.9A1 1 0 0 0 22 17\"/>", "shower": "<path d=\"m4 4 2.5 2.5\"/><path d=\"M13.5 6.5a4.95 4.95 0 0 0-7 7\"/><path d=\"M15 5 5 15\"/><path d=\"M14 17v.01\"/><path d=\"M10 16v.01\"/><path d=\"M13 13v.01\"/><path d=\"M16 10v.01\"/><path d=\"M11 20v.01\"/><path d=\"M17 14v.01\"/>", "briefcase": "<path d=\"M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16\"/><rect width=\"20\" height=\"14\" x=\"2\" y=\"6\" rx=\"2\"/>", "phone": "<path d=\"M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7 12.8 12.8 0 0 0 .7 2.8 2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4 12.8 12.8 0 0 0 2.8.7A2 2 0 0 1 22 16.9z\"/>", "folder": "<path d=\"M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z\"/>", "type": "<polyline points=\"4 7 4 4 20 4 20 7\"/><line x1=\"9\" y1=\"20\" x2=\"15\" y2=\"20\"/><line x1=\"12\" y1=\"4\" x2=\"12\" y2=\"20\"/>", "help": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3\"/><path d=\"M12 17h.01\"/>", "users": "<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/>", "chart": "<path d=\"M3 3v18h18\"/><path d=\"M18 17V9\"/><path d=\"M13 17V5\"/><path d=\"M8 17v-3\"/>", "sun": "<circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 2v2\"/><path d=\"M12 20v2\"/><path d=\"m4.93 4.93 1.41 1.41\"/><path d=\"m17.66 17.66 1.41 1.41\"/><path d=\"M2 12h2\"/><path d=\"M20 12h2\"/><path d=\"m6.34 17.66-1.41 1.41\"/><path d=\"m19.07 4.93-1.41 1.41\"/>", "contrast": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 18a6 6 0 0 0 0-12v12z\"/>"};
+_ICONS['eraser']='<path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/>';_ICONS['download']='<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>';
+_ICONS['x']='<path d="M18 6 6 18"/><path d="m6 6 12 12"/>';function icon(n){return '<svg class="lic" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.16em;flex:none" aria-hidden="true">'+(_ICONS[n]||'')+'</svg>';}
+
+
 async function api(path, opts = {}) {
   const headers = { ...BASE_HEADERS };
   if (opts.body) headers["Content-Type"] = "application/json";
@@ -103,7 +109,7 @@ async function fetchImg(path) {
 }
 
 /* ── Голосовой ввод: запись через микрофон -> Whisper на бэке -> текст ── */
-function voiceButton(onText, label = "🎤 Голосом") {
+function voiceButton(onText, label = icon('mic')+" Голосом") {
   const btn = el(`<button class="btn btn-soft sm voicebtn">${label}</button>`);
   let rec = null, chunks = [], stream = null;
   btn.onclick = async () => {
@@ -118,7 +124,7 @@ function voiceButton(onText, label = "🎤 Голосом") {
     rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
     rec.onstop = async () => {
       stream.getTracks().forEach(t => t.stop());
-      btn.textContent = "⏳ Распознаю…"; btn.disabled = true; btn.classList.remove("rec");
+      btn.innerHTML = icon('loader')+" Распознаю…"; btn.disabled = true; btn.classList.remove("rec");
       const blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
       try {
         const r = await fetch(API_BASE + "/api/transcribe", {
@@ -128,10 +134,10 @@ function voiceButton(onText, label = "🎤 Голосом") {
         if (j.text && j.text.trim()) { onText(j.text.trim()); notify("success"); toast("Распознал ✓", "ok"); }
         else toast("Не расслышал, попробуй ещё", "err");
       } catch (e) { toast("Ошибка распознавания", "err"); }
-      btn.textContent = label; btn.disabled = false;
+      btn.innerHTML = label; btn.disabled = false;
     };
     rec.start(); haptic("medium");
-    btn.textContent = "⏹ Стоп — записываю…"; btn.classList.add("rec");
+    btn.innerHTML = icon('square')+" Стоп — записываю…"; btn.classList.add("rec");
   };
   return btn;
 }
@@ -199,10 +205,10 @@ function critSummary(c) {
 }
 function commissionLabel(l) {
   if (l.commission == null) return null;
-  return l.commission === 0 ? "💸 без комиссии" : "💸 комиссия " + l.commission + "%";
+  return l.commission === 0 ? icon('percent')+" без комиссии" : icon('percent')+" комиссия " + l.commission + "%";
 }
 function listingTitle(l) {
-  const anons = l.is_announcement ? "📢 Анонс · " : "";
+  const anons = l.is_announcement ? icon('megaphone')+" Анонс · " : "";
   if (l.jk_name) return anons + "ЖК " + l.jk_name;
   if (l.address) return anons + l.address;
   if (l.district) return anons + l.district;
@@ -311,14 +317,14 @@ async function renderHome() {
     </div>
     <div class="section-title">Быстрые действия</div>
     <div class="quick">
-      <button class="quick-btn" id="qSearch"><span class="qi">⌕</span><span class="qt">Поиск вариантов</span><span class="qs">по всей базе</span></button>
-      <button class="quick-btn" id="qHist"><span class="qi">↻</span><span class="qt">История отправок</span><span class="qs">что уже ушло</span></button>
-      <button class="quick-btn" id="qScan"><span class="qi">⇣</span><span class="qt">Собрать объявления</span><span class="qs">за период</span></button>
-      <button class="quick-btn" id="qCov"><span class="qi">▤</span><span class="qt">Охват по чатам</span><span class="qs">что собрано</span></button>
+      <button class="quick-btn" id="qSearch"><span class="qi">${icon('search')}</span><span class="qt">Поиск вариантов</span><span class="qs">по всей базе</span></button>
+      <button class="quick-btn" id="qHist"><span class="qi">${icon('refresh')}</span><span class="qt">История отправок</span><span class="qs">что уже ушло</span></button>
+      <button class="quick-btn" id="qScan"><span class="qi">${icon('download')}</span><span class="qt">Собрать объявления</span><span class="qs">за период</span></button>
+      <button class="quick-btn" id="qCov"><span class="qi">${icon('chart')}</span><span class="qt">Охват по чатам</span><span class="qs">что собрано</span></button>
     </div>
     ${(!acc.connected) ? `
     <div class="card" id="connCard" style="border-color:var(--accent);margin-top:6px">
-      <div style="font-weight:640;margin-bottom:4px">📲 Подключите свой Telegram</div>
+      <div style="font-weight:640;margin-bottom:4px">${icon('smartphone')} Подключите свой Telegram</div>
       <div class="muted" style="margin-bottom:10px">Чтобы отправлять варианты клиентам от вашего имени.</div>
       <button class="btn btn-primary sm" id="connBtn">Подключить</button>
     </div>` : ""}`;
@@ -390,7 +396,7 @@ async function renderClients(status = "active") {
   wrap.querySelectorAll(".seg button").forEach(b => b.onclick = () => { haptic(); stack[stack.length - 1] = () => renderClients(b.dataset.s); renderClients(b.dataset.s); });
   // FAB
   let fab = $("#fab"); if (fab) fab.remove();
-  fab = el(`<button class="fab" id="fab">＋</button>`);
+  fab = el(`<button class="fab" id="fab">${icon('plus')}</button>`);
   fab.onclick = () => { haptic(); sheetAddClient(); };
   $("#app").appendChild(fab);
 }
@@ -421,24 +427,24 @@ async function renderClientDetail(id) {
       <div><h2>${esc(c.name)}</h2><div class="sub">${esc(contact)} · ${STATUS_RU[c.status] || ""}</div></div>
     </div>
     <div class="chips" style="margin-bottom:18px">
-      ${c.rooms ? `<span class="chip accent">🛏 ${esc(roomsLabel(c.rooms))}</span>` : ""}
-      ${(c.budget_min || c.budget_max) ? `<span class="chip accent">💰 ${c.budget_min ? fmtMoney(c.budget_min) : "0"}–${c.budget_max ? fmtMoney(c.budget_max) : "∞"} ₽</span>` : ""}
-      ${c.districts ? `<span class="chip">📍 ${esc(c.districts)}</span>` : ""}
-      ${c.metro_stations ? `<span class="chip">🚇 ${esc(c.metro_stations)}</span>` : ""}
-      ${(c.area_min || c.area_max) ? `<span class="chip">📐 ${c.area_min || 0}–${c.area_max || "∞"} м²</span>` : ""}
-      ${c.has_pets ? `<span class="chip pet">🐾 с животными</span>` : ""}
+      ${c.rooms ? `<span class="chip accent">${icon('bed')} ${esc(roomsLabel(c.rooms))}</span>` : ""}
+      ${(c.budget_min || c.budget_max) ? `<span class="chip accent">${icon('wallet')} ${c.budget_min ? fmtMoney(c.budget_min) : "0"}–${c.budget_max ? fmtMoney(c.budget_max) : "∞"} ₽</span>` : ""}
+      ${c.districts ? `<span class="chip">${icon('map-pin')} ${esc(c.districts)}</span>` : ""}
+      ${c.metro_stations ? `<span class="chip">${icon('train')} ${esc(c.metro_stations)}</span>` : ""}
+      ${(c.area_min || c.area_max) ? `<span class="chip">${icon('ruler')} ${c.area_min || 0}–${c.area_max || "∞"} м²</span>` : ""}
+      ${c.has_pets ? `<span class="chip pet">${icon('paw')} с животными</span>` : ""}
     </div>
     ${c.notes ? `<div class="card"><div class="muted" style="margin-bottom:4px">Заметки</div>${esc(c.notes)}</div>` : ""}
-    <div class="section-title">🧭 Гео-точки</div>
+    <div class="section-title">${icon('compass')} Гео-точки</div>
     ${geo.map(g => `
       <div class="card"><div class="row-between" style="align-items:center"><div><b>${esc(g.label || "точка")}</b>
       <div class="muted">${g.max_minutes ? "≤" + g.max_minutes + " мин " + (TRANSPORT_RU[g.transport] || "") : esc(g.address || "")}${g.is_strict ? " · строго" : ""}</div></div>
       <button class="tag-x geo-del" data-gid="${g.id}" style="font-size:20px;color:var(--muted);background:none;border:none;cursor:pointer;padding:0 4px">×</button></div></div>`).join("")}
-    <button class="btn btn-soft sm" id="bAddGeo" style="width:100%;margin-top:2px">➕ Гео-точка</button>
-    <div class="btn-primary btn" id="bMatch" style="margin-top:18px">🔎 Подобрать варианты</div>
+    <button class="btn btn-soft sm" id="bAddGeo" style="width:100%;margin-top:2px">${icon('plus')} Гео-точка</button>
+    <div class="btn-primary btn" id="bMatch" style="margin-top:18px">${icon('search')} Подобрать варианты</div>
     <div class="btn-row" style="margin-top:10px">
-      <button class="btn btn-soft" id="bEdit">✏️ Критерии</button>
-      <button class="btn btn-soft" id="bStatus">⚙️ Статус</button>
+      <button class="btn btn-soft" id="bEdit">${icon('pencil')} Критерии</button>
+      <button class="btn btn-soft" id="bStatus">${icon('sliders')} Статус</button>
     </div>`;
   view.appendChild(wrap);
   lazyAvatar(wrap.querySelector("[data-av]"), c);
@@ -459,16 +465,16 @@ const TRANSPORT_RU = { foot: "пешком", car: "на машине", transit: 
 // Лист добавления гео-точки клиенту: адрес/метро + лимит минут + транспорт + строго.
 function sheetAddGeo(clientId, onDone) {
   const b = openSheet(`
-    <div class="sheet-title">🧭 Гео-точка</div>
+    <div class="sheet-title">${icon('compass')} Гео-точка</div>
     <div class="ed-label">Адрес или станция метро</div>
     <input class="input" id="gAddr" placeholder="метро Савёловская / ул. Тверская 7">
     <div class="ed-label">Не дольше, минут</div>
     <input class="input" id="gMin" inputmode="numeric" placeholder="напр. 20">
     <div class="ed-label">Транспорт</div>
     <div class="chipsel" id="gTr">
-      <button class="chsel sm2 on" data-tr="transit">🚇 транспорт</button>
-      <button class="chsel sm2" data-tr="foot">🚶 пешком</button>
-      <button class="chsel sm2" data-tr="car">🚗 машина</button>
+      <button class="chsel sm2 on" data-tr="transit">${icon('train')} транспорт</button>
+      <button class="chsel sm2" data-tr="foot">${icon('footprints')} пешком</button>
+      <button class="chsel sm2" data-tr="car">${icon('car')} машина</button>
     </div>
     <label class="row-between" style="margin-top:14px;cursor:pointer">
       <span>Строго отсеивать в подборе</span>
@@ -540,7 +546,7 @@ async function renderMatch(client, page = 0, acc = null, filter = null) {
     const listWrap = el(`<div id="matchList"></div>`);
     acc.appendChild(listWrap);
     view.appendChild(acc);
-    if (!data.total) acc.querySelector("#matchList").appendChild(el(`<div class="empty"><span class="em-ic">⌂</span>Подходящих вариантов нет</div>`));
+    if (!data.total) acc.querySelector("#matchList").appendChild(el(`<div class="empty"><span class="em-ic">${icon('inbox')}</span>Подходящих вариантов нет</div>`));
   }
   const list = acc.querySelector("#matchList");
   // мультивыбор — инициализируем один раз, не сбрасываем при подгрузке следующей страницы
@@ -551,7 +557,7 @@ async function renderMatch(client, page = 0, acc = null, filter = null) {
     acc._refreshBar = () => {
       if (!acc._sel.size) { selBar.classList.add("hidden"); return; }
       selBar.classList.remove("hidden");
-      selBar.innerHTML = `<button class="btn btn-green sm" style="flex:1" data-ms>📨 Отправить выбранные (${acc._sel.size}) → ${esc(client.name)}</button>
+      selBar.innerHTML = `<button class="btn btn-green sm" style="flex:1" data-ms>${icon('send-h')} Отправить выбранные (${acc._sel.size}) → ${esc(client.name)}</button>
         <button class="btn btn-soft sm" data-mc>Сброс</button>`;
       selBar.querySelector("[data-ms]").onclick = () => {
         const chosen = acc._allListings.filter(l => acc._sel.has(l.id));
@@ -605,14 +611,14 @@ async function renderListings() {
   view.innerHTML = "";
   const wrap = el(`<div class="fade-in"></div>`);
   // строка поиска — по тапу открывает полноценное меню поиска и фильтров
-  const searchBar = el(`<button class="search-bar" id="oSearch"><span class="sb-ic">⌕</span><span>Поиск вариантов и фильтры…</span></button>`);
+  const searchBar = el(`<button class="search-bar" id="oSearch"><span class="sb-ic">${icon('search')}</span><span>Поиск вариантов и фильтры…</span></button>`);
   wrap.appendChild(searchBar);
   // единая панель фильтров (та же, что в «Поиске»)
   const filterBar = el(`<div style="margin:0 0 12px"></div>`);
   wrap.appendChild(filterBar);
   const on = filtersActive(listingsFilter);
   if (!listings.length) {
-    wrap.appendChild(el(`<div class="empty"><span class="em-ic">⌂</span>${on ? "Под фильтры ничего не нашлось" : "Здесь пока пусто"}</div>`));
+    wrap.appendChild(el(`<div class="empty"><span class="em-ic">${icon('inbox')}</span>${on ? "Под фильтры ничего не нашлось" : "Здесь пока пусто"}</div>`));
   }
   // мультивыбор по объектам (как в поиске): галочки + sticky-бар «отправить выбранные»
   const sel = new Set();
@@ -625,7 +631,7 @@ async function renderListings() {
     if (!sel.size) { selBar.classList.add("hidden"); return; }
     selBar.classList.remove("hidden");
     selBar.innerHTML = `
-      <button class="btn btn-green sm" style="flex:1" data-multisend>📨 Отправить выбранные (${sel.size}) одному</button>
+      <button class="btn btn-green sm" style="flex:1" data-multisend>${icon('send-h')} Отправить выбранные (${sel.size}) одному</button>
       <button class="btn btn-soft sm" data-multiclear>Сброс</button>`;
     selBar.querySelector("[data-multisend]").onclick = () => {
       const chosen = listings.filter(l => sel.has(l.id));
@@ -731,7 +737,7 @@ async function renderMap(source = "all", pick = null, initialPoly = null) {
   const wrap = el(`<div class="fade-in"></div>`);
   wrap.innerHTML = `
     <div class="map-tools">
-      <button class="btn btn-primary sm" id="mDraw">✏️ Обвести область</button>
+      <button class="btn btn-primary sm" id="mDraw">${icon('pencil')} Обвести область</button>
       <button class="btn btn-soft sm" id="mClear" style="display:none">Сбросить</button>
       <span class="muted" id="mInfo" style="margin-left:auto;font-size:12px"></span>
     </div>
@@ -742,7 +748,7 @@ async function renderMap(source = "all", pick = null, initialPoly = null) {
 
   if (!data.points.length) {
     $("#mInfo").textContent = "";
-    $("#mResults").innerHTML = `<div class="empty"><span class="em-ic">🗺</span>Пока нечего показать на карте.<br>Координаты подгружаются в фоне — попробуй позже.</div>`;
+    $("#mResults").innerHTML = `<div class="empty"><span class="em-ic">${icon('map')}</span>Пока нечего показать на карте.<br>Координаты подгружаются в фоне — попробуй позже.</div>`;
     return;
   }
 
@@ -810,7 +816,7 @@ async function renderMap(source = "all", pick = null, initialPoly = null) {
   function finishDraw() {
     setDrawMode(false);
     mapEl.removeEventListener("pointerdown", onDown);
-    mDraw.style.display = ""; mDraw.textContent = "✏️ Обвести заново";
+    mDraw.style.display = ""; mDraw.innerHTML = icon('pencil')+" Обвести заново";
     if (preview) { map.removeLayer(preview); preview = null; }
     if (pathLL.length < 3) { mInfo.textContent = "Мало точек, попробуй ещё"; return; }
     const cnt = drawPoly(pathLL);
@@ -821,7 +827,7 @@ async function renderMap(source = "all", pick = null, initialPoly = null) {
   mDraw.onclick = () => { haptic(); enterDraw(); };
   mClear.onclick = () => {
     haptic(); if (poly) { map.removeLayer(poly); poly = null; }
-    mClear.style.display = "none"; mDraw.textContent = "✏️ Обвести область";
+    mClear.style.display = "none"; mDraw.innerHTML = icon('pencil')+" Обвести область";
     mInfo.textContent = `${data.points.length} объектов`; $("#mResults").innerHTML = "";
   };
 
@@ -829,7 +835,7 @@ async function renderMap(source = "all", pick = null, initialPoly = null) {
   function showApplyBar(p, n) {
     const box = $("#mResults"); box.innerHTML = "";
     box.appendChild(el(`<div style="display:flex;flex-direction:column;gap:10px">
-      <button class="btn btn-primary" id="mApplyArea">✅ Применить область (${n})</button>
+      <button class="btn btn-primary" id="mApplyArea">${icon('check')} Применить область (${n})</button>
       <button class="btn btn-soft" id="mNoArea">Без области</button>
     </div>`));
     box.querySelector("#mApplyArea").onclick = () => { haptic(); pick(p); back(); };
@@ -837,7 +843,7 @@ async function renderMap(source = "all", pick = null, initialPoly = null) {
   }
   if (pick && initialPoly && initialPoly.length >= 3) {
     const cnt = drawPoly(initialPoly);
-    mClear.style.display = ""; mDraw.textContent = "✏️ Обвести заново";
+    mClear.style.display = ""; mDraw.innerHTML = icon('pencil')+" Обвести заново";
     mInfo.textContent = `${cnt} в области`;
     showApplyBar(initialPoly, cnt);
     try { map.fitBounds(poly.getBounds().pad(0.2)); } catch (e) {}
@@ -847,7 +853,7 @@ async function renderMap(source = "all", pick = null, initialPoly = null) {
   const sel = new Set();
   function showMapResults(items) {
     const box = $("#mResults"); box.innerHTML = "";
-    if (!items.length) { box.innerHTML = `<div class="empty"><span class="em-ic">🗺</span>В этой области ничего нет</div>`; return; }
+    if (!items.length) { box.innerHTML = `<div class="empty"><span class="em-ic">${icon('map')}</span>В этой области ничего нет</div>`; return; }
     sel.clear();
     const selBar = el(`<div class="sel-bar hidden"></div>`);
     box.appendChild(selBar);
@@ -855,7 +861,7 @@ async function renderMap(source = "all", pick = null, initialPoly = null) {
     function refreshBar() {
       if (!sel.size) { selBar.classList.add("hidden"); return; }
       selBar.classList.remove("hidden");
-      selBar.innerHTML = `<button class="btn btn-green sm" style="flex:1" data-ms>📨 Отправить выбранные (${sel.size}) одному</button>
+      selBar.innerHTML = `<button class="btn btn-green sm" style="flex:1" data-ms>${icon('send-h')} Отправить выбранные (${sel.size}) одному</button>
         <button class="btn btn-soft sm" data-mc>Сброс</button>`;
       selBar.querySelector("[data-ms]").onclick = () => {
         const chosen = items.filter(l => sel.has(l.id));
@@ -884,14 +890,14 @@ function listingCard(l, onSend, openable = true, thumb = true, select = null) {
             <div class="listing-price">${fmtMoney(l.price)} ₽<span class="muted" style="font-size:13px;font-weight:500">/мес</span></div>
             <div class="listing-title">${esc(listingTitle(l))}<span class="lid-badge">#${l.id}</span></div>
             <div class="listing-meta">${esc(listingMeta(l))}</div>
-            ${l.exclusive ? `<div class="excl-line">🔑 Эксклюзив${l.exclusive_owner ? ": " + esc(l.exclusive_owner) : ""}</div>` : ""}
+            ${l.exclusive ? `<div class="excl-line">${icon('crown')} Эксклюзив${l.exclusive_owner ? ": " + esc(l.exclusive_owner) : ""}</div>` : ""}
           </div>
           ${select ? `<div class="lc-check ${select.checked ? "on" : ""}" data-check>${select.checked ? "✓" : ""}</div>` : ""}
         </div>
         ${(l.geo && l.geo.length) ? `<div style="margin-top:8px">${l.geo.map(g => `<div class="geo-line">${esc(g)}</div>`).join("")}</div>` : ""}
         <div class="btn-row" style="margin-top:12px">
-          ${onSend ? `<button class="btn btn-green sm" style="flex:1" data-send>📤 Отправить</button>` : ""}
-          ${l.url ? `<button class="btn btn-soft sm" style="flex:1" data-open>👁 Пост</button>` : ""}
+          ${onSend ? `<button class="btn btn-green sm" style="flex:1" data-send>${icon('send')} Отправить</button>` : ""}
+          ${l.url ? `<button class="btn btn-soft sm" style="flex:1" data-open>${icon('ext-link')} Пост</button>` : ""}
           <button class="btn btn-soft sm" style="flex:1" data-detail>Подробнее ›</button>
         </div>
       </div>
@@ -922,7 +928,7 @@ async function renderListingDetail(id) {
       <span class="gal-count" id="galCount" style="display:none"></span>
     </div>
     <div class="detail-thumbs" id="detThumbs" style="display:none"></div>
-    <button class="btn btn-soft sm" id="bGallery" style="display:none;width:100%;margin:0 0 6px">📷 Все фото</button>
+    <button class="btn btn-soft sm" id="bGallery" style="display:none;width:100%;margin:0 0 6px">${icon('image')} Все фото</button>
     <div class="listing-price" style="font-size:26px">${fmtMoney(l.price)} ₽ <span class="muted" style="font-size:14px;font-weight:500">/мес</span></div>
     <div class="listing-title" style="font-size:18px;margin:4px 0 14px">${esc(listingTitle(l))}<span class="lid-badge">#${l.id}</span></div>
     <div class="card">
@@ -932,15 +938,15 @@ async function renderListingDetail(id) {
       ${l.metro ? kv("Метро", l.metro) : ""}
       ${l.district ? kv("Район", l.district) : ""}
       ${l.commission != null ? kv("Комиссия", l.commission === 0 ? "без комиссии" : l.commission + "%") : ""}
-      ${l.is_announcement ? kv("Статус", "📢 Анонс — фото пока нет, объект не актуален") : ""}
+      ${l.is_announcement ? kv("Статус", icon('megaphone')+" Анонс — фото пока нет, объект не актуален") : ""}
       ${kv("Источник", l.source || "—")}
       ${l.exclusive ? kv("Эксклюзив", l.exclusive_owner || "да") : ""}
     </div>
     ${l.raw_text ? `<div class="section-title">Текст объявления</div><div class="card muted" style="white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;color:var(--txt)">${esc(l.raw_text)}</div>` : ""}
-    <div class="btn btn-green" id="bSend" style="margin-top:18px">📤 Отправить клиенту</div>
+    <div class="btn btn-green" id="bSend" style="margin-top:18px">${icon('send')} Отправить клиенту</div>
     <div class="btn-row" style="margin-top:10px">
-      ${l.url ? `<button class="btn btn-soft" id="bOpen">👁 Открыть пост</button>` : ""}
-      <button class="btn btn-soft" id="bBroad">📣 Рассылка</button>
+      ${l.url ? `<button class="btn btn-soft" id="bOpen">${icon('ext-link')} Открыть пост</button>` : ""}
+      <button class="btn btn-soft" id="bBroad">${icon('megaphone')} Рассылка</button>
     </div>`;
   view.appendChild(wrap);
   // обложка (через fetch+blob, чтобы обойти заглушку ngrok) — сначала мелкое, потом резкое
@@ -959,11 +965,11 @@ async function renderListingDetail(id) {
   api(`/listings/${id}/gallery`).then(g => {
     const n = g.count || 0;
     if (n > 1) {
-      galBtn.textContent = `📷 Все фото (${n})`;
+      galBtn.innerHTML = `${icon('image')} Все фото (${n})`;
       galBtn.style.display = "block";
       galBtn.onclick = () => { haptic(); openGallery(id, n, 0, g.cover_idx || 0); };
       const gc = $("#galCount");
-      if (gc) { gc.textContent = `📷 ${n}`; gc.style.display = "block"; }
+      if (gc) { gc.innerHTML = `${icon('image')} ${n}`; gc.style.display = "block"; }
       phWrap.style.cursor = "pointer";
       phWrap.onclick = () => { haptic(); openGallery(id, n, 0, g.cover_idx || 0); };
       // полоска миниатюр под обложкой — сразу видно все кадры, тап открывает галерею
@@ -1001,7 +1007,7 @@ function openGallery(id, count, startIdx, coverIdx) {
       <button class="gal-nav next" aria-label="Вперёд">›</button>
     </div>
     <div class="gal-bottom">
-      <button class="btn btn-primary sm gal-cover">⭐ Сделать обложкой</button>
+      <button class="btn btn-primary sm gal-cover">${icon('star')} Сделать обложкой</button>
     </div>
   </div>`);
   document.body.appendChild(ov);
@@ -1017,7 +1023,7 @@ function openGallery(id, count, startIdx, coverIdx) {
     const cur = idx;
     pos.textContent = `${idx + 1} / ${count}`;
     coverBtn.classList.toggle("is-cover", idx === cover);
-    coverBtn.textContent = idx === cover ? "✓ Это обложка" : "⭐ Сделать обложкой";
+    coverBtn.innerHTML = idx === cover ? icon('check')+" Это обложка" : icon('star')+" Сделать обложкой";
     coverBtn.disabled = idx === cover;
     // крупное уже в кэше — показываем сразу
     if (cacheHi[cur]) { img.src = cacheHi[cur]; img.classList.remove("lq"); spin.style.display = "none"; img.style.opacity = "1"; preload(cur); return; }
@@ -1059,7 +1065,7 @@ function openGallery(id, count, startIdx, coverIdx) {
     try {
       await api(`/listings/${id}/cover`, { method: "POST", body: { idx } });
       cover = idx; notify("success"); toast("Обложка обновлена ✓", "ok");
-      coverBtn.classList.add("is-cover"); coverBtn.textContent = "✓ Это обложка"; coverBtn.disabled = true;
+      coverBtn.classList.add("is-cover"); coverBtn.innerHTML = icon('check')+" Это обложка"; coverBtn.disabled = true;
       // обновить обложку на карточке детали (она под галереей) — свежий URL с новым c=
       const dp = document.querySelector(".detail-photo");
       if (dp) fetchImg(`/listings/${id}/photo?q=hi&c=${idx}`).then(u => dp.src = u).catch(() => {});
@@ -1123,7 +1129,7 @@ async function renderHistory() {
   view.innerHTML = "";
   const wrap = el(`<div class="fade-in"></div>`);
   if (!items.length) {
-    wrap.appendChild(el(`<div class="empty"><span class="em-ic">↻</span>Пока ничего не отправляли</div>`));
+    wrap.appendChild(el(`<div class="empty"><span class="em-ic">${icon('refresh')}</span>Пока ничего не отправляли</div>`));
     view.appendChild(wrap); return;
   }
   wrap.appendChild(el(`<div class="muted" style="margin:2px 4px 12px">Последние ${items.length} отправок</div>`));
@@ -1131,7 +1137,7 @@ async function renderHistory() {
     const row = el(`
       <div class="card tap hist-row">
         <div class="client-row">
-          <div class="hist-ic">📤</div>
+          <div class="hist-ic">${icon('send')}</div>
           <div class="client-main">
             <div class="client-name" style="font-size:15px">${fmtMoney(it.price)} ₽ · ${esc(roomsLabel(it.rooms) || "")}</div>
             <div class="client-crit">${esc(listingTitle(it))}</div>
@@ -1169,9 +1175,9 @@ async function renderAutopost() {
   let ark = {}; try { ark = await api("/arendok/status"); } catch (e) {}
   if (!ark.connected && !ark.owner) {
     const warn = el(`<div style="background:rgba(255,107,107,.12);border:2px solid var(--red);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px">
-      <div style="font-weight:700;color:var(--red);font-size:15px;margin-bottom:4px">🚫 Arendok не подключён</div>
+      <div style="font-weight:700;color:var(--red);font-size:15px;margin-bottom:4px">${icon('ban')} Arendok не подключён</div>
       <div style="font-size:13px;color:var(--txt-2);margin-bottom:12px">Без аккаунта Arendok объявление <b>не выложится</b> — парсинг запустится, но публикация упадёт с ошибкой. Сначала подключи профиль.</div>
-      <button class="btn btn-danger" id="apGoProfile" style="width:100%">⚙️ Подключить Arendok → Профиль</button>
+      <button class="btn btn-danger" id="apGoProfile" style="width:100%">${icon('settings')} Подключить Arendok → Профиль</button>
     </div>`);
     wrap.appendChild(warn);
     // обработчик вешаем после appendChild
@@ -1357,27 +1363,27 @@ function apRenderPreview(state, st, body, stEl) {
   const rooms = d.rooms === 0 ? "Студия" : (d.rooms ? d.rooms + "к" : "?к");
   const L = [];
   const addr = [d.street, d.house_number].filter(Boolean).join(" ");
-  if (addr) L.push(`📍 ${esc(addr)}`);
-  if (d.metro) L.push(`🚇 ${esc(d.metro)}`);
-  if (d.district) L.push(`🏙 ${esc(d.district)}`);
-  if (d.jk_name) L.push(`🏠 ЖК ${esc(d.jk_name)}`);
-  if (d.floor) L.push(`🪜 Этаж ${d.floor}/${d.total_floors || "?"}`);
-  if (d.bath_count) L.push(`🚿 Санузлов: ${d.bath_count}`);
-  if (d.deposit) L.push(`💼 Залог: ${esc(d.deposit)}`);
-  if (d.owner_phone) L.push(`📞 ${esc(d.owner_phone)}${d.owner_name ? " (" + esc(d.owner_name) + ")" : ""}`);
+  if (addr) L.push(`${icon('map-pin')} ${esc(addr)}`);
+  if (d.metro) L.push(`${icon('train')} ${esc(d.metro)}`);
+  if (d.district) L.push(`${icon('building')} ${esc(d.district)}`);
+  if (d.jk_name) L.push(`${icon('building2')} ЖК ${esc(d.jk_name)}`);
+  if (d.floor) L.push(`${icon('layers')} Этаж ${d.floor}/${d.total_floors || "?"}`);
+  if (d.bath_count) L.push(`${icon('shower')} Санузлов: ${d.bath_count}`);
+  if (d.deposit) L.push(`${icon('briefcase')} Залог: ${esc(d.deposit)}`);
+  if (d.owner_phone) L.push(`${icon('phone')} ${esc(d.owner_phone)}${d.owner_name ? " (" + esc(d.owner_name) + ")" : ""}`);
   body.innerHTML = `
     <div style="font-weight:680;font-size:15px;margin-top:8px">${esc(d.title || "Объявление")}</div>
     <div class="muted" style="margin:3px 0 8px">${rooms} • ${d.area || "?"} м² • ${fmtMoney(d.price)} ₽/мес</div>
     <div style="font-size:13px;line-height:1.75">${L.join("<br>")}</div>
     <div class="ap-photos" id="apPhotos-${id}"></div>
-    <div class="muted" style="margin-top:6px">📷 Чистых фото: ${st.photos || 0}</div>
+    <div class="muted" style="margin-top:6px">${icon('image')} Чистых фото: ${st.photos || 0}</div>
     <div style="margin-top:12px">
-      <div class="muted" style="margin-bottom:4px;font-size:12px">✏️ Внутреннее описание для агентов <span style="opacity:.5">(опционально)</span></div>
+      <div class="muted" style="margin-bottom:4px;font-size:12px">${icon('pencil')} Внутреннее описание для агентов <span style="opacity:.5">(опционально)</span></div>
       <textarea id="apNotes-${id}" rows="3" style="width:100%;box-sizing:border-box;background:var(--card);color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:8px;font-size:13px;resize:vertical" placeholder="Ванна раздельная, бонус агенту 50%, хозяева готовы торговаться…">${esc(st.agent_notes || "")}</textarea>
       <button class="btn btn-soft sm" id="apSaveNotes-${id}" style="margin-top:4px;width:100%">💾 Сохранить описание</button>
     </div>
     <div style="display:flex;gap:8px;margin-top:10px">
-      <button class="btn btn-primary" id="apPub-${id}" style="flex:1">✅ Опубликовать</button>
+      <button class="btn btn-primary" id="apPub-${id}" style="flex:1">${icon('check')} Опубликовать</button>
       <button class="btn btn-soft" id="apCancel-${id}">Отмена</button>
     </div>`;
   const ph = body.querySelector(`#apPhotos-${id}`);
@@ -1475,14 +1481,14 @@ function filterControlsEl(ctx) {
     const advOn = ctx.advActive();
     const sum = advOn ? (ctx.advSummary() || "") : "";
     const advRow = el(`<div class="btn-row" style="margin-bottom:8px">
-      <button class="btn ${advOn ? "btn-primary" : "btn-soft"} sm" data-adv style="flex:1">⚙️ Фильтры${sum ? " · " + esc(sum) : ""}</button>
+      <button class="btn ${advOn ? "btn-primary" : "btn-soft"} sm" data-adv style="flex:1">${icon('sliders')} Фильтры${sum ? " · " + esc(sum) : ""}</button>
       ${advOn ? `<button class="btn btn-soft sm" data-advc>Сброс</button>` : ""}
     </div>`);
     box.appendChild(advRow);
     const src = ctx.getSource(), comm = ctx.getComm(), sort = ctx.getSort();
     const mini = el(`<div class="mini-row">
-      <button class="mini-chip ${src !== "all" ? "act" : ""}" data-msrc>📁 ${esc(SRC_LABEL[src])} ▾</button>
-      <button class="mini-chip ${comm !== null ? "act" : ""}" data-mcomm>💸 ${esc(COMM_LABEL(comm))} ▾</button>
+      <button class="mini-chip ${src !== "all" ? "act" : ""}" data-msrc>${icon('folder')} ${esc(SRC_LABEL[src])} ▾</button>
+      <button class="mini-chip ${comm !== null ? "act" : ""}" data-mcomm>${icon('percent')} ${esc(COMM_LABEL(comm))} ▾</button>
       <button class="mini-chip ${sort ? "act" : ""}" data-msort>⇅ ${esc(SORT_LABEL(sort))} ▾</button>
     </div>`);
     box.appendChild(mini);
@@ -1511,7 +1517,7 @@ async function renderSearch() {
     </div>
     <div class="btn-row">
       <span id="sVoice" style="flex:1;display:flex"></span>
-      <button class="btn btn-primary" id="sGo" style="flex:1.4">⌕ Найти</button>
+      <button class="btn btn-primary" id="sGo" style="flex:1.4">${icon('search')} Найти</button>
       <button class="btn btn-soft" id="sReset" title="Очистить и начать новый запрос" style="flex:0 0 52px;width:52px;padding:14px 0">✕</button>
     </div>
     <div id="sFilterBar" style="margin-top:10px"></div>
@@ -1523,7 +1529,7 @@ async function renderSearch() {
   view.appendChild(wrap);
   $("#sVoice").replaceWith(voiceButton((text) => {
     const ta = $("#sInput"); ta.value = ta.value ? (ta.value + " " + text) : text; runSearch();
-  }, "🎤 Голосом"));
+  }, icon('mic')+" Голосом"));
   $("#sGo").onclick = runSearch;
   function reSearch() {
     if (searchState.text) runSearch();
@@ -1579,7 +1585,7 @@ async function applySearchFilters(f) {
 function paintSearch() {
   const box = $("#sResults"); box.innerHTML = "";
   box.appendChild(el(`<div class="muted" style="margin:0 4px 10px">${esc(searchState.crit || "")} — найдено ${searchState.total}</div>`));
-  if (!searchState.results.length) { box.appendChild(el(`<div class="empty"><span class="em-ic">⌕</span>Ничего не нашлось</div>`)); return; }
+  if (!searchState.results.length) { box.appendChild(el(`<div class="empty"><span class="em-ic">${icon('search')}</span>Ничего не нашлось</div>`)); return; }
 
   // sticky-бар: появляется, как только отметил галочкой ≥1 объявление
   const selBar = el(`<div class="sel-bar hidden"></div>`);
@@ -1590,7 +1596,7 @@ function paintSearch() {
     if (!searchState.sel.size) { selBar.classList.add("hidden"); return; }
     selBar.classList.remove("hidden");
     selBar.innerHTML = `
-      <button class="btn btn-green sm" style="flex:1" data-multisend>📨 Отправить выбранные (${searchState.sel.size}) одному</button>
+      <button class="btn btn-green sm" style="flex:1" data-multisend>${icon('send-h')} Отправить выбранные (${searchState.sel.size}) одному</button>
       <button class="btn btn-soft sm" data-multiclear>Сброс</button>`;
     selBar.querySelector("[data-multisend]").onclick = () => {
       const chosen = searchState.results.filter(l => searchState.sel.has(l.id));
@@ -1713,7 +1719,7 @@ function renderSendQ() {
   const sending = sendQ.filter(x => x.status === "send").length;
   const ok = sendQ.filter(x => x.status === "ok").length;
   const err = sendQ.filter(x => x.status === "err").length;
-  const ic = { pending: "🕒", send: "📤", ok: "✓", err: "✕" };
+  const ic = { pending: icon('clock'), send: icon('send'), ok: icon('check'), err: icon('x') };
   let head, headBtn = "";
   if (pending.length) {
     const secs = Math.max(0, Math.ceil((Math.min(...pending.map(p => p.sendAt)) - Date.now()) / 1000));
@@ -1725,7 +1731,7 @@ function renderSendQ() {
     head = `Готово · отправлено ${ok}${err ? ", ошибок " + err : ""}`;
     headBtn = `<button class="sq-x" id="sqClose">Скрыть</button>`;
   }
-  const spin = (pending.length || sending) ? '<span class="sq-spin"></span>' : "📨";
+  const spin = (pending.length || sending) ? '<span class="sq-spin"></span>' : icon('send-h');
   panel.innerHTML = `
     <div class="sq-head">
       <span class="sq-title">${spin} ${esc(head)}</span>
@@ -1791,7 +1797,7 @@ function sheetAddClient() {
     <button class="btn btn-primary" id="nSave">Создать клиента</button>`);
   b.querySelector("#nVoice").replaceWith(voiceButton((text) => {
     const ta = b.querySelector("#nCrit"); ta.value = ta.value ? (ta.value + " " + text) : text;
-  }, "🎤 Надиктовать критерии"));
+  }, icon('mic')+" Надиктовать критерии"));
   const saveBtn = b.querySelector("#nSave");
   saveBtn.onclick = async () => {
     if (saveBtn.disabled) return;            // защита от двойного тапа → дублей клиентов
@@ -1843,13 +1849,13 @@ function filtersSummary(f) {
   if (f.rooms) p.push(roomsLabel(f.rooms));
   if (f.budget_min || f.budget_max) p.push((f.budget_min ? Math.round(f.budget_min / 1000) + "" : "до ") + (f.budget_max ? "–" + Math.round(f.budget_max / 1000) + "к" : "к+"));
   if (f.area_min || f.area_max) p.push((f.area_min || 0) + "–" + (f.area_max || "∞") + " м²");
-  if (f.jk) p.push("🏙 " + f.jk);
-  if (f.district) p.push("📍 " + f.district);
-  if (f.metro) p.push("🚇 " + f.metro);
-  if (hasGeo(f)) { const g = f.geo[0]; p.push("🧭 " + (g.address || g.label || "точка") + (g.max_minutes ? " ≤" + g.max_minutes + "м" : "")); }
-  if (hasArea(f)) p.push("🗺 область");
-  if (f.commission_max === 0) p.push("💸 без комиссии");
-  else if (f.commission_max != null) p.push("💸 до " + f.commission_max + "%");
+  if (f.jk) p.push(icon('building')+" " + f.jk);
+  if (f.district) p.push(icon('map-pin')+" " + f.district);
+  if (f.metro) p.push(icon('train')+" " + f.metro);
+  if (hasGeo(f)) { const g = f.geo[0]; p.push(icon('compass')+" " + (g.address || g.label || "точка") + (g.max_minutes ? " ≤" + g.max_minutes + "м" : "")); }
+  if (hasArea(f)) p.push(icon('map')+" область");
+  if (f.commission_max === 0) p.push(icon('percent')+" без комиссии");
+  else if (f.commission_max != null) p.push(icon('percent')+" до " + f.commission_max + "%");
   return p.join(" · ");
 }
 function sheetFilters(init, onApply) {
@@ -1877,7 +1883,7 @@ function sheetFilters(init, onApply) {
     <input class="input" id="fJk" placeholder="введите ЖК и нажмите Enter">
     <div class="ed-label">Местоположение</div>
     <button class="btn ${poly ? "btn-primary" : "btn-soft"} sm" id="fArea" style="width:100%;margin-bottom:8px">
-      ${poly ? "🗺 Область задана ✓ — изменить" : "🗺 Обвести область на карте"}
+      ${poly ? "${icon('map')} Область задана ✓ — изменить" : "${icon('map')} Обвести область на карте"}
     </button>
     ${poly ? `<button class="btn btn-soft sm" id="fAreaClear" style="width:100%;margin-bottom:8px">Убрать область</button>` : ""}
     <div class="tags" id="fDistTags"></div>
@@ -1888,12 +1894,12 @@ function sheetFilters(init, onApply) {
     <div class="ed-label">Метро <span class="muted" style="font-weight:400">(отдельно; Enter добавляет)</span></div>
     <div class="tags" id="fMetroTags"></div>
     <input class="input" id="fMetro" placeholder="станция + Enter (Фили, Университет…)">
-    <div class="ed-label">🧭 Гео-точка <span class="muted" style="font-weight:400">— по времени в пути</span></div>
+    <div class="ed-label">${icon('compass')} Гео-точка <span class="muted" style="font-weight:400">— по времени в пути</span></div>
     <input class="input" id="fGeoAddr" placeholder="метро Савёловская / улица, дом" value="${esc((init.geo && init.geo[0] && (init.geo[0].address || init.geo[0].label)) || "")}">
     <div class="two" style="margin-top:6px">
       <input class="input" id="fGeoMin" inputmode="numeric" placeholder="макс. минут" value="${(init.geo && init.geo[0] && init.geo[0].max_minutes) || ""}">
       <div class="chipsel" id="fGeoTr">
-        ${[["transit","🚇 транспорт"],["foot","🚶 пешком"],["car","🚗 машина"]].map(([v,t])=>`<button class="chsel sm2 ${((init.geo&&init.geo[0]&&init.geo[0].transport)||"transit")===v?"on":""}" data-tr="${v}">${t}</button>`).join("")}
+        ${[["transit",icon('train')+" транспорт"],["foot",icon('footprints')+" пешком"],["car",icon('car')+" машина"]].map(([v,t])=>`<button class="chsel sm2 ${((init.geo&&init.geo[0]&&init.geo[0].transport)||"transit")===v?"on":""}" data-tr="${v}">${t}</button>`).join("")}
       </div>
     </div>
     <div class="ed-label">Комиссия</div>
@@ -1996,8 +2002,8 @@ function sheetEditCriteria(c) {
     <div class="sheet-title">Критерии · ${esc(c.name)}</div>
     <div class="btn-row" style="margin-bottom:6px">
       <span id="vSlot" style="flex:1;display:flex"></span>
-      <button class="btn btn-soft sm" id="eTextToggle" style="flex:1">✍️ Текстом</button>
-      <button class="btn btn-soft sm" id="eReset" title="Очистить все параметры">🧹 Сброс</button>
+      <button class="btn btn-soft sm" id="eTextToggle" style="flex:1">${icon('type')} Текстом</button>
+      <button class="btn btn-soft sm" id="eReset" title="Очистить все параметры">${icon('eraser')} Сброс</button>
     </div>
     <div id="eTextBox" style="display:none;margin:8px 0 4px">
       <textarea class="input" id="eCrit" placeholder="2к юго-запад до 150, с животными"></textarea>
@@ -2029,7 +2035,7 @@ function sheetEditCriteria(c) {
     </div>
 
     <div class="ed-label">Питомцы</div>
-    <div class="chipsel"><button class="chsel ${c.has_pets ? "on" : ""}" id="edPets">🐾 С животными</button></div>
+    <div class="chipsel"><button class="chsel ${c.has_pets ? "on" : ""}" id="edPets">${icon('paw')} С животными</button></div>
 
     <button class="btn btn-primary" id="edSave" style="margin-top:20px">Сохранить критерии</button>
   `);
@@ -2037,7 +2043,7 @@ function sheetEditCriteria(c) {
   const reopen = () => { closeSheet(); go(() => renderClientDetail(c.id), false); };
   b.querySelector("#vSlot").replaceWith(voiceButton(async (text) => {
     await applyCritText(c.id, text); notify("success"); toast("Применил голос ✓", "ok"); reopen();
-  }, "🎤 Надиктовать"));
+  }, icon('mic')+" Надиктовать"));
   b.querySelector("#eTextToggle").onclick = () => {
     const box = b.querySelector("#eTextBox"); box.style.display = box.style.display === "none" ? "block" : "none";
   };
@@ -2080,9 +2086,9 @@ function sheetStatus(c) {
   const opt = (s, label, cls) => `<button class="btn ${cls}" data-st="${s}" ${c.status === s ? "disabled style=opacity:.4" : ""}>${label}</button>`;
   const b = openSheet(`<div class="sheet-title">Статус клиента</div>
     <div style="display:flex;flex-direction:column;gap:10px">
-      ${opt("active", "📌 Активный (в подборе)", "btn-soft")}
-      ${opt("paused", "💤 На паузе", "btn-soft")}
-      ${opt("done", "🎉 Нашёл квартиру (архив)", "btn-soft")}
+      ${opt("active", icon('pin')+" Активный (в подборе)", "btn-soft")}
+      ${opt("paused", icon('moon')+" На паузе", "btn-soft")}
+      ${opt("done", icon('party')+" Нашёл квартиру (архив)", "btn-soft")}
     </div>`);
   b.querySelectorAll("[data-st]").forEach(x => x.onclick = async () => {
     haptic();
@@ -2095,11 +2101,11 @@ function sheetStatus(c) {
 function sheetBroadcast(l) {
   const b = openSheet(`<div class="sheet-title">Рассылка варианта</div>
     <div class="card" style="margin-bottom:14px"><b>${fmtMoney(l.price)} ₽</b> · ${esc(listingTitle(l))}</div>
-    <div class="muted" style="margin-bottom:12px">⚠️ Уйдёт РЕАЛЬНЫМ клиентам выбранной группы. Подтвердите.</div>
+    <div class="muted" style="margin-bottom:12px">${icon('alert')} Уйдёт РЕАЛЬНЫМ клиентам выбранной группы. Подтвердите.</div>
     <div style="display:flex;flex-direction:column;gap:10px">
-      <button class="btn btn-soft" data-g="active">📌 Активным</button>
-      <button class="btn btn-soft" data-g="paused">💤 На паузе</button>
-      <button class="btn btn-danger" data-g="all">👥 Всем</button>
+      <button class="btn btn-soft" data-g="active">${icon('pin')} Активным</button>
+      <button class="btn btn-soft" data-g="paused">${icon('moon')} На паузе</button>
+      <button class="btn btn-danger" data-g="all">${icon('users')} Всем</button>
     </div>`);
   b.querySelectorAll("[data-g]").forEach(x => x.onclick = async () => {
     haptic();
@@ -2184,7 +2190,7 @@ async function renderProfile() {
     connHtml = `<div class="card"><div class="row-between">
       <div><div style="font-weight:640">✅ Аккаунт владельца</div>
       <div class="muted">отправка вариантов работает</div></div></div>
-      <button class="btn btn-primary sm" id="admBtn" style="margin-top:12px">⚙️ Админ-панель</button></div>`;
+      <button class="btn btn-primary sm" id="admBtn" style="margin-top:12px">${icon('settings')} Админ-панель</button></div>`;
   } else if (acc.connected) {
     connHtml = `<div class="card">
       <div class="row-between"><div>
@@ -2195,33 +2201,33 @@ async function renderProfile() {
     </div>`;
   } else {
     connHtml = `<div class="card" style="border-color:var(--amber);border-width:2px">
-      <div style="font-weight:700;color:var(--amber);font-size:15px;margin-bottom:5px">⚠️ Telegram не подключён</div>
+      <div style="font-weight:700;color:var(--amber);font-size:15px;margin-bottom:5px">${icon('alert')} Telegram не подключён</div>
       <div class="muted" style="margin-bottom:12px">Чтобы отправлять варианты клиентам <b>от вашего имени</b>. Без этого кнопка «Отправить» будет недоступна.</div>
-      <button class="btn btn-primary" style="width:100%" id="accConn">📲 Подключить Telegram</button>
+      <button class="btn btn-primary" style="width:100%" id="accConn">${icon('smartphone')} Подключить Telegram</button>
     </div>`;
   }
 
   let arkHtml;
   if (ark.owner) {
     arkHtml = `<div class="card"><div class="row-between">
-      <div><div style="font-weight:640">🏠 Arendok · профиль владельца</div>
+      <div><div style="font-weight:640">${icon('building2')} Arendok · профиль владельца</div>
       <div class="muted">${ark.personal ? "ФДГ публикуется через ваш <b>личный</b> профиль (вход по капче)" : "ФДГ публикуется через файловую сессию кабинета"}</div></div></div>
       ${ark.personal
         ? `<button class="btn btn-danger sm" id="arkDisc" style="margin-top:12px">Отключить личный профиль</button>`
-        : `<button class="btn btn-primary sm" id="arkConn" style="margin-top:12px">🔑 Войти по капче (как риелтор)</button>`}
+        : `<button class="btn btn-primary sm" id="arkConn" style="margin-top:12px">${icon('login')} Войти по капче (как риелтор)</button>`}
       </div>`;
   } else if (ark.connected) {
     arkHtml = `<div class="card"><div class="row-between"><div>
-      <div style="font-weight:640">🏠 Arendok подключён</div>
+      <div style="font-weight:640">${icon('building2')} Arendok подключён</div>
       <div class="muted">ФДГ публикуется через ваш профиль arendok.ru</div>
       </div></div>
       <button class="btn btn-danger sm" id="arkDisc" style="margin-top:12px">Отключить Arendok</button></div>`;
   } else {
     arkHtml = `<div class="card" style="border-color:var(--red);border-width:2px">
-      <div style="font-weight:700;color:var(--red);font-size:15px;margin-bottom:5px">🚫 Arendok не подключён</div>
+      <div style="font-weight:700;color:var(--red);font-size:15px;margin-bottom:5px">${icon('ban')} Arendok не подключён</div>
       <div style="margin-bottom:4px;font-size:13.5px">Без этого <b>ФДГ не выложится</b> — публикация упадёт с ошибкой.</div>
       <div class="muted" style="margin-bottom:12px;font-size:13px">Вход через логин, пароль и капчу arendok.ru.</div>
-      <button class="btn btn-primary" style="width:100%" id="arkConn">🏠 Подключить Arendok</button></div>`;
+      <button class="btn btn-primary" style="width:100%" id="arkConn">${icon('building2')} Подключить Arendok</button></div>`;
   }
 
   wrap.innerHTML = `
@@ -2233,12 +2239,12 @@ async function renderProfile() {
     ${arkHtml}
     <div class="section-title">Оформление</div>
     <div class="seg" id="themeSeg">
-      <button data-th="auto">🌓 Авто</button>
-      <button data-th="light">☀️ Светлая</button>
-      <button data-th="dark">🌙 Тёмная</button>
+      <button data-th="auto">${icon('contrast')} Авто</button>
+      <button data-th="light">${icon('sun')} Светлая</button>
+      <button data-th="dark">${icon('moon')} Тёмная</button>
     </div>
-    <button class="btn btn-ghost" id="onbReplay" style="width:100%;margin-top:6px">❓ Пройти обучение заново</button>
-    <div class="muted" style="margin:18px 4px;font-size:12.5px">🔒 Данные ваших клиентов видите только вы. Подключение хранится в зашифрованном виде.</div>
+    <button class="btn btn-ghost" id="onbReplay" style="width:100%;margin-top:6px">${icon('help')} Пройти обучение заново</button>
+    <div class="muted" style="margin:18px 4px;font-size:12.5px">${icon('lock')} Данные ваших клиентов видите только вы. Подключение хранится в зашифрованном виде.</div>
     <div class="app-ver">Риелти · ${APP_VERSION}</div>`;
   view.appendChild(wrap);
   // переключатель темы: подсветить текущий выбор и навесить смену
@@ -2271,7 +2277,7 @@ function sheetConnectAccount() {
       <div class="muted" style="margin-bottom:12px">Введите номер телефона вашего Telegram (в формате +7…). Придёт код в Telegram.</div>
       <div class="field"><input class="input" id="cPhone" inputmode="tel" placeholder="+79991234567"></div>
       <button class="btn btn-primary" id="cNext">Получить код</button>
-      <div class="muted" style="margin-top:12px;font-size:12px">🔒 Код и пароль не сохраняются. Хранится только зашифрованная сессия для отправки от вашего имени.</div>`);
+      <div class="muted" style="margin-top:12px;font-size:12px">${icon('lock')} Код и пароль не сохраняются. Хранится только зашифрованная сессия для отправки от вашего имени.</div>`);
     b.querySelector("#cNext").onclick = async () => {
       const phone = b.querySelector("#cPhone").value.trim();
       if (!phone) return toast("Введите номер");
@@ -2328,7 +2334,7 @@ function sheetConnectArendok() {
       <div class="field"><input class="input" id="aLogin" placeholder="Телефон или Email"></div>
       <div class="field"><input class="input" id="aPwd" type="password" placeholder="Пароль"></div>
       <button class="btn btn-primary" id="aNext">Далее</button>
-      <div class="muted" style="margin-top:12px;font-size:12px">🔒 Хранится в зашифрованном виде. Дальше нужно будет ввести капчу с картинки.</div>`);
+      <div class="muted" style="margin-top:12px;font-size:12px">${icon('lock')} Хранится в зашифрованном виде. Дальше нужно будет ввести капчу с картинки.</div>`);
     b.querySelector("#aNext").onclick = async () => {
       const login = b.querySelector("#aLogin").value.trim();
       const password = b.querySelector("#aPwd").value;
@@ -2347,7 +2353,7 @@ function sheetConnectArendok() {
       <div style="text-align:center;margin-bottom:10px">
         ${r.img_b64 ? `<img id="aCapImg" src="data:image/png;base64,${r.img_b64}" alt="капча" style="height:62px;border-radius:8px;border:1px solid var(--line)">` : `<div class="muted">картинка не загрузилась</div>`}
       </div>
-      <button class="btn btn-ghost sm" id="aRefresh" style="margin-bottom:10px">↻ Обновить картинку</button>
+      <button class="btn btn-ghost sm" id="aRefresh" style="margin-bottom:10px">${icon('refresh')} Обновить картинку</button>
       <div class="field"><input class="input" id="aCap" inputmode="text" placeholder="символы с картинки"></div>
       <button class="btn btn-primary" id="aLogin2">Войти</button>`);
     b.querySelector("#aRefresh").onclick = async () => {
