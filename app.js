@@ -209,9 +209,9 @@ function commissionLabel(l) {
 }
 function listingTitle(l) {
   const anons = l.is_announcement ? icon('megaphone')+" Анонс · " : "";
-  if (l.jk_name) return anons + "ЖК " + l.jk_name;
-  if (l.address) return anons + l.address;
-  if (l.district) return anons + l.district;
+  if (l.jk_name) return anons + "ЖК " + esc(l.jk_name);
+  if (l.address) return anons + esc(l.address);
+  if (l.district) return anons + esc(l.district);
   return anons + "Объект #" + l.id;
 }
 function listingMeta(l) {
@@ -219,7 +219,7 @@ function listingMeta(l) {
   if (l.rooms) p.push(roomsLabel(l.rooms));
   if (l.area) p.push(l.area + " м²");
   if (l.floor && l.total_floors) p.push(l.floor + "/" + l.total_floors + " эт");
-  if (l.metro) p.push("м. " + l.metro);
+  if (l.metro) p.push("м. " + esc(l.metro));
   const cm = commissionLabel(l);
   if (cm) p.push(cm);
   return p.join(" · ");
@@ -350,8 +350,8 @@ async function loadHomeCarousel() {
         <div class="cc-thumb" data-thumb="${l.id}" data-cov="${l.cover_idx || 0}"><span class="src-badge">${esc(l.source || "")}</span></div>
         <div class="cc-body">
           <div class="cc-price">${fmtMoney(l.price)} ₽</div>
-          <div class="cc-title">${esc(listingTitle(l))}<span class="lid-badge">#${l.id}</span></div>
-          <div class="cc-meta">${esc(listingMeta(l))}</div>
+          <div class="cc-title">${listingTitle(l)}<span class="lid-badge">#${l.id}</span></div>
+          <div class="cc-meta">${listingMeta(l)}</div>
         </div>
       </div>`);
     it.onclick = () => { haptic(); go(() => renderListingDetail(l.id)); };
@@ -888,8 +888,8 @@ function listingCard(l, onSend, openable = true, thumb = true, select = null) {
         <div class="row-between" style="align-items:flex-start">
           <div style="min-width:0">
             <div class="listing-price">${fmtMoney(l.price)} ₽<span class="muted" style="font-size:13px;font-weight:500">/мес</span></div>
-            <div class="listing-title">${esc(listingTitle(l))}<span class="lid-badge">#${l.id}</span></div>
-            <div class="listing-meta">${esc(listingMeta(l))}</div>
+            <div class="listing-title">${listingTitle(l)}<span class="lid-badge">#${l.id}</span></div>
+            <div class="listing-meta">${listingMeta(l)}</div>
             ${l.exclusive ? `<div class="excl-line">${icon('crown')} Эксклюзив${l.exclusive_owner ? ": " + esc(l.exclusive_owner) : ""}</div>` : ""}
           </div>
           ${select ? `<div class="lc-check ${select.checked ? "on" : ""}" data-check>${select.checked ? "✓" : ""}</div>` : ""}
@@ -930,7 +930,7 @@ async function renderListingDetail(id) {
     <div class="detail-thumbs" id="detThumbs" style="display:none"></div>
     <button class="btn btn-soft sm" id="bGallery" style="display:none;width:100%;margin:0 0 6px">${icon('image')} Все фото</button>
     <div class="listing-price" style="font-size:26px">${fmtMoney(l.price)} ₽ <span class="muted" style="font-size:14px;font-weight:500">/мес</span></div>
-    <div class="listing-title" style="font-size:18px;margin:4px 0 14px">${esc(listingTitle(l))}<span class="lid-badge">#${l.id}</span></div>
+    <div class="listing-title" style="font-size:18px;margin:4px 0 14px">${listingTitle(l)}<span class="lid-badge">#${l.id}</span></div>
     <div class="card">
       ${l.rooms ? kv("Комнат", roomsLabel(l.rooms)) : ""}
       ${l.area ? kv("Площадь", l.area + " м²") : ""}
@@ -938,7 +938,7 @@ async function renderListingDetail(id) {
       ${l.metro ? kv("Метро", l.metro) : ""}
       ${l.district ? kv("Район", l.district) : ""}
       ${l.commission != null ? kv("Комиссия", l.commission === 0 ? "без комиссии" : l.commission + "%") : ""}
-      ${l.is_announcement ? kv("Статус", icon('megaphone')+" Анонс — фото пока нет, объект не актуален") : ""}
+      ${l.is_announcement ? kv("Статус", "Анонс — фото пока нет, объект не актуален") : ""}
       ${kv("Источник", l.source || "—")}
       ${l.exclusive ? kv("Эксклюзив", l.exclusive_owner || "да") : ""}
     </div>
@@ -1140,7 +1140,7 @@ async function renderHistory() {
           <div class="hist-ic">${icon('send')}</div>
           <div class="client-main">
             <div class="client-name" style="font-size:15px">${fmtMoney(it.price)} ₽ · ${esc(roomsLabel(it.rooms) || "")}</div>
-            <div class="client-crit">${esc(listingTitle(it))}</div>
+            <div class="client-crit">${listingTitle(it)}</div>
             <div class="hist-meta">→ <b>${esc(it.client_name || "клиент")}</b> · ${esc(fmtSent(it.sent_at))} · #${it.id}</div>
           </div>
           <div class="chev">›</div>
@@ -1481,7 +1481,7 @@ function filterControlsEl(ctx) {
     const advOn = ctx.advActive();
     const sum = advOn ? (ctx.advSummary() || "") : "";
     const advRow = el(`<div class="btn-row" style="margin-bottom:8px">
-      <button class="btn ${advOn ? "btn-primary" : "btn-soft"} sm" data-adv style="flex:1">${icon('sliders')} Фильтры${sum ? " · " + esc(sum) : ""}</button>
+      <button class="btn ${advOn ? "btn-primary" : "btn-soft"} sm" data-adv style="flex:1">${icon('sliders')} Фильтры${sum ? " · " + sum : ""}</button>
       ${advOn ? `<button class="btn btn-soft sm" data-advc>Сброс</button>` : ""}
     </div>`);
     box.appendChild(advRow);
@@ -1849,10 +1849,10 @@ function filtersSummary(f) {
   if (f.rooms) p.push(roomsLabel(f.rooms));
   if (f.budget_min || f.budget_max) p.push((f.budget_min ? Math.round(f.budget_min / 1000) + "" : "до ") + (f.budget_max ? "–" + Math.round(f.budget_max / 1000) + "к" : "к+"));
   if (f.area_min || f.area_max) p.push((f.area_min || 0) + "–" + (f.area_max || "∞") + " м²");
-  if (f.jk) p.push(icon('building')+" " + f.jk);
-  if (f.district) p.push(icon('map-pin')+" " + f.district);
-  if (f.metro) p.push(icon('train')+" " + f.metro);
-  if (hasGeo(f)) { const g = f.geo[0]; p.push(icon('compass')+" " + (g.address || g.label || "точка") + (g.max_minutes ? " ≤" + g.max_minutes + "м" : "")); }
+  if (f.jk) p.push(icon('building')+" " + esc(f.jk));
+  if (f.district) p.push(icon('map-pin')+" " + esc(f.district));
+  if (f.metro) p.push(icon('train')+" " + esc(f.metro));
+  if (hasGeo(f)) { const g = f.geo[0]; p.push(icon('compass')+" " + esc(g.address || g.label || "точка") + (g.max_minutes ? " ≤" + g.max_minutes + "м" : "")); }
   if (hasArea(f)) p.push(icon('map')+" область");
   if (f.commission_max === 0) p.push(icon('percent')+" без комиссии");
   else if (f.commission_max != null) p.push(icon('percent')+" до " + f.commission_max + "%");
@@ -2100,7 +2100,7 @@ function sheetStatus(c) {
 
 function sheetBroadcast(l) {
   const b = openSheet(`<div class="sheet-title">Рассылка варианта</div>
-    <div class="card" style="margin-bottom:14px"><b>${fmtMoney(l.price)} ₽</b> · ${esc(listingTitle(l))}</div>
+    <div class="card" style="margin-bottom:14px"><b>${fmtMoney(l.price)} ₽</b> · ${listingTitle(l)}</div>
     <div class="muted" style="margin-bottom:12px">${icon('alert')} Уйдёт РЕАЛЬНЫМ клиентам выбранной группы. Подтвердите.</div>
     <div style="display:flex;flex-direction:column;gap:10px">
       <button class="btn btn-soft" data-g="active">${icon('pin')} Активным</button>
