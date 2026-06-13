@@ -5,10 +5,25 @@ const tg = window.Telegram?.WebApp;
 const INIT = tg?.initData || "";
 const AUTHQ = encodeURIComponent(INIT);
 
+// ── Тема (тёмная/светлая). Приоритет: ручной выбор > тема Telegram > тёмная (дефолт) ──
+const THEME_KEY = "arendbot_theme";  // 'auto' | 'dark' | 'light'
+function getThemePref() { try { return localStorage.getItem(THEME_KEY) || "auto"; } catch (e) { return "auto"; } }
+function tgScheme() { try { return tg && tg.colorScheme === "light" ? "light" : "dark"; } catch (e) { return "dark"; } }
+function effectiveTheme() { const p = getThemePref(); return p === "auto" ? tgScheme() : p; }
+function applyTheme() {
+  const t = effectiveTheme();
+  document.documentElement.setAttribute("data-theme", t);
+  const hdr = t === "light" ? "#f4f5f7" : "#0d0f12";
+  try { tg?.setHeaderColor?.(hdr); tg?.setBackgroundColor?.(hdr); } catch (e) {}
+}
+function setThemePref(p) { try { localStorage.setItem(THEME_KEY, p); } catch (e) {} applyTheme(); }
+applyTheme();
+
 if (tg) {
   tg.ready(); tg.expand();
-  try { tg.setHeaderColor("#0d0f12"); tg.setBackgroundColor("#0d0f12"); } catch (e) {}
   try { tg.enableClosingConfirmation(); } catch (e) {}
+  // если пользователь не зафиксировал тему вручную (auto) — следуем за темой Telegram
+  try { tg.onEvent("themeChanged", () => { if (getThemePref() === "auto") applyTheme(); }); } catch (e) {}
   // реальная стабильная высота вьюпорта Telegram → CSS-переменная, чтобы нижние панели
   // не уезжали под системный UI/клавиатуру (fallback 100vh для обычного браузера).
   const syncVH = () => {
@@ -2216,10 +2231,23 @@ async function renderProfile() {
     </div>
     ${connHtml}
     ${arkHtml}
+    <div class="section-title">Оформление</div>
+    <div class="seg" id="themeSeg">
+      <button data-th="auto">🌓 Авто</button>
+      <button data-th="light">☀️ Светлая</button>
+      <button data-th="dark">🌙 Тёмная</button>
+    </div>
     <button class="btn btn-ghost" id="onbReplay" style="width:100%;margin-top:6px">❓ Пройти обучение заново</button>
     <div class="muted" style="margin:18px 4px;font-size:12.5px">🔒 Данные ваших клиентов видите только вы. Подключение хранится в зашифрованном виде.</div>
     <div class="app-ver">Риелти · ${APP_VERSION}</div>`;
   view.appendChild(wrap);
+  // переключатель темы: подсветить текущий выбор и навесить смену
+  const themeSeg = $("#themeSeg");
+  if (themeSeg) {
+    const mark = () => { const p = getThemePref(); themeSeg.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.th === p)); };
+    mark();
+    themeSeg.querySelectorAll("button").forEach(b => b.onclick = () => { haptic(); setThemePref(b.dataset.th); mark(); });
+  }
   const onbR = $("#onbReplay"); if (onbR) onbR.onclick = () => { haptic(); startOnboarding(true); };
   const arkC = $("#arkConn"); if (arkC) arkC.onclick = () => { haptic(); sheetConnectArendok(); };
   const arkD = $("#arkDisc"); if (arkD) arkD.onclick = async () => {
