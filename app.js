@@ -9,6 +9,13 @@ if (tg) {
   tg.ready(); tg.expand();
   try { tg.setHeaderColor("#0d0f12"); tg.setBackgroundColor("#0d0f12"); } catch (e) {}
   try { tg.enableClosingConfirmation(); } catch (e) {}
+  // реальная стабильная высота вьюпорта Telegram → CSS-переменная, чтобы нижние панели
+  // не уезжали под системный UI/клавиатуру (fallback 100vh для обычного браузера).
+  const syncVH = () => {
+    try { const h = tg.viewportStableHeight; if (h) document.documentElement.style.setProperty("--tg-vh", h + "px"); } catch (e) {}
+  };
+  syncVH();
+  try { tg.onEvent("viewportChanged", syncVH); } catch (e) {}
 }
 const haptic = (t = "light") => { try { tg?.HapticFeedback?.impactOccurred(t); } catch (e) {} };
 const notify = (t = "success") => { try { tg?.HapticFeedback?.notificationOccurred(t); } catch (e) {} };
@@ -150,7 +157,13 @@ function confirmA(msg) {
     res(confirm(msg));
   });
 }
-function loading() { view.innerHTML = `<div class="loader"><div class="spin"></div></div>`; }
+function loading() {
+  // скелет-карточки вместо спиннера — ощущение скорости (форма повторяет карточку объекта)
+  const card = `<div class="sk-card"><div class="sk-photo"></div>`
+    + `<div class="sk-line w60"></div><div class="sk-line w40"></div>`
+    + `<div class="sk-row"><span class="sk-btn"></span><span class="sk-btn"></span></div></div>`;
+  view.innerHTML = `<div class="sk-list">${card.repeat(4)}</div>`;
+}
 function setTitle(t, sub = "") { $("#tbTitle").textContent = t; $("#tbSub").textContent = sub; }
 
 function roomsLabel(r) {
@@ -474,19 +487,37 @@ function sheetAddGeo(clientId, onDone) {
   };
 }
 
+let matchSource = "all";   // all | exclusives | arendok  (как в «Объектах»/«Поиске»)
+let matchCommMax = null;   // null | 0 | 50
+let matchSort = "";        // см. SORT_OPTS
 async function renderMatch(client, page = 0, acc = null, filter = null) {
   setTitle("Подбор", client.name);
   if (!acc) loading();
   let data;
-  try { data = await api(`/clients/${client.id}/match`, { method: "POST", body: { page, filters: filter || {} } }); }
+  try {
+    data = await api(`/clients/${client.id}/match`, { method: "POST", body: {
+      page, filters: filter || {},
+      source: matchSource, commission_max: matchCommMax, sort: matchSort,
+    } });
+  }
   catch (e) { return toast("Ошибка подбора", "err"); }
   if (!acc) {
     view.innerHTML = "";
     acc = el(`<div class="fade-in"></div>`);
     const on = filtersActive(filter);
-    const fb = el(`<button class="btn ${on ? "btn-primary" : "btn-soft"} sm" style="width:100%;margin-bottom:10px">⚙️ Фильтры${on ? " · " + esc(filtersSummary(filter)) : " — сузить подбор (вкл. область на карте)"}</button>`);
-    fb.onclick = () => { haptic(); sheetFilters(filter || {}, (f) => renderMatch(client, 0, null, filtersActive(f) ? f : null)); };
-    acc.appendChild(fb);
+    // единая панель фильтров — ТА ЖЕ, что в «Объектах» и «Поиске»
+    const filterBar = el(`<div style="margin:0 0 10px"></div>`);
+    acc.appendChild(filterBar);
+    filterBar.appendChild(filterControlsEl({
+      getSource: () => matchSource, setSource: (v) => { matchSource = v; },
+      getComm: () => matchCommMax, setComm: (v) => { matchCommMax = v === "" ? null : parseInt(v); },
+      getSort: () => matchSort, setSort: (v) => { matchSort = v; },
+      advActive: () => filtersActive(filter),
+      advSummary: () => filtersActive(filter) ? filtersSummary(filter) : "",
+      onAdv: () => sheetFilters(filter || {}, (f) => renderMatch(client, 0, null, filtersActive(f) ? f : null)),
+      onAdvClear: () => renderMatch(client, 0, null, null),
+      onChange: () => renderMatch(client, 0, null, filter),
+    }));
     acc.appendChild(el(`<div class="muted" style="margin:2px 4px 12px">Найдено ${data.total} вариантов${on ? " (с фильтрами)" : " под критерии"}</div>`));
     const listWrap = el(`<div id="matchList"></div>`);
     acc.appendChild(listWrap);
@@ -998,7 +1029,10 @@ function openGallery(id, count, startIdx, coverIdx) {
       if (!cacheHi[k]) fetchImg(`/listings/${id}/photo/${k}?q=hi`).then(u => cacheHi[k] = u).catch(() => {});
     }
   }
-  const close = () => { ov.remove(); };
+  // пока галерея открыта — гасим системный свайп-вниз Telegram (иначе он сворачивает
+  // весь мини-апп вместо закрытия фото). Возвращаем при закрытии. Bot API 7.7+.
+  try { tg?.disableVerticalSwipes?.(); } catch (e) {}
+  const close = () => { try { tg?.enableVerticalSwipes?.(); } catch (e) {} ov.remove(); };
   ov.querySelector(".gal-close").onclick = () => { haptic(); close(); };
   ov.querySelector(".prev").onclick = () => { haptic(); show(idx - 1); };
   ov.querySelector(".next").onclick = () => { haptic(); show(idx + 1); };
@@ -1013,13 +1047,38 @@ function openGallery(id, count, startIdx, coverIdx) {
       if (dp) fetchImg(`/listings/${id}/photo?q=hi&c=${idx}`).then(u => dp.src = u).catch(() => {});
     } catch (e) { toast("Не удалось сменить обложку", "err"); }
   };
-  // свайпы: влево/вправо — листать, вниз — закрыть
-  let sx = 0, sy = 0;
-  ov.addEventListener("touchstart", (e) => { const t = e.touches[0]; sx = t.clientX; sy = t.clientY; }, { passive: true });
+  // свайпы: влево/вправо — листать; вниз — фото едет за пальцем и закрывается (как iOS).
+  const stage = ov.querySelector(".gal-stage");
+  let sx = 0, sy = 0, dragging = false, axis = null;
+  const resetDrag = (animate) => {
+    stage.style.transition = animate ? "transform .2s ease" : "";
+    stage.style.transform = "";
+    ov.style.background = "#000";
+    if (animate) setTimeout(() => { stage.style.transition = ""; }, 220);
+  };
+  ov.addEventListener("touchstart", (e) => {
+    if (e.touches.length !== 1) { dragging = false; return; }
+    const t = e.touches[0]; sx = t.clientX; sy = t.clientY; dragging = true; axis = null;
+    stage.style.transition = "";
+  }, { passive: true });
+  ov.addEventListener("touchmove", (e) => {
+    if (!dragging) return;
+    const t = e.touches[0]; const dx = t.clientX - sx, dy = t.clientY - sy;
+    if (axis === null && (Math.abs(dx) > 10 || Math.abs(dy) > 10))
+      axis = Math.abs(dy) > Math.abs(dx) ? "v" : "h";
+    if (axis === "v" && dy > 0) {
+      // фото следует за пальцем + слегка уменьшается, фон тускнеет
+      stage.style.transform = `translateY(${dy}px) scale(${Math.max(0.85, 1 - dy / 1100)})`;
+      ov.style.background = `rgba(0,0,0,${Math.max(0, 1 - dy / (window.innerHeight * 0.6))})`;
+    }
+  }, { passive: true });
   ov.addEventListener("touchend", (e) => {
+    if (!dragging) return;
+    dragging = false;
     const t = e.changedTouches[0]; const dx = t.clientX - sx, dy = t.clientY - sy;
-    if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) { haptic(); show(idx + (dx < 0 ? 1 : -1)); }
-    else if (dy > 70 && dy > Math.abs(dx)) { haptic(); close(); }
+    if (axis === "h" && Math.abs(dx) > 45) { resetDrag(false); haptic(); show(idx + (dx < 0 ? 1 : -1)); return; }
+    if (axis === "v" && dy > 110) { haptic(); close(); return; }  // оттянул достаточно — закрыть
+    resetDrag(true);  // мало — плавно вернуть на место
   }, { passive: true });
   show(idx);
 }
@@ -1920,6 +1979,7 @@ function sheetEditCriteria(c) {
     <div class="btn-row" style="margin-bottom:6px">
       <span id="vSlot" style="flex:1;display:flex"></span>
       <button class="btn btn-soft sm" id="eTextToggle" style="flex:1">✍️ Текстом</button>
+      <button class="btn btn-soft sm" id="eReset" title="Очистить все параметры">🧹 Сброс</button>
     </div>
     <div id="eTextBox" style="display:none;margin:8px 0 4px">
       <textarea class="input" id="eCrit" placeholder="2к юго-запад до 150, с животными"></textarea>
@@ -1974,6 +2034,12 @@ function sheetEditCriteria(c) {
     if (!parts.map(p => p.toLowerCase()).includes(x.dataset.z)) { parts.push(x.dataset.z); loc.value = parts.join(", "); }
   });
   b.querySelector("#edPets").onclick = (e) => { haptic(); e.currentTarget.classList.toggle("on"); };
+  b.querySelector("#eReset").onclick = () => {
+    haptic();
+    b.querySelectorAll("#edRooms .chsel.on, #edPets.on").forEach(x => x.classList.remove("on"));
+    ["#edBmin", "#edBmax", "#edAmin", "#edAmax", "#edLoc", "#eCrit"].forEach(id => { const e = b.querySelector(id); if (e) e.value = ""; });
+    toast("Параметры очищены — впиши новый спрос", "ok");
+  };
   b.querySelector("#edSave").onclick = async () => {
     haptic();
     const rooms = [...b.querySelectorAll("#edRooms .chsel.on")].map(x => x.dataset.v);
@@ -2410,10 +2476,13 @@ async function refreshNotice() {
       if (!el) {
         el = document.createElement("div");
         el.id = "maintBanner";
-        el.style.cssText = "position:fixed;left:0;right:0;top:0;z-index:99999;background:#7c5e10;" +
-          "color:#ffe9a8;font-size:12px;line-height:1.35;padding:7px 12px;text-align:center;" +
-          "box-shadow:0 1px 8px rgba(0,0,0,.45)";
-        document.body.appendChild(el);
+        // В ПОТОКЕ, первым в #app — толкает шапку/контент вниз, а не ложится поверх.
+        // Раньше был fixed top:0 z:99999 и перекрывал кнопку «назад» в шапке и крестик
+        // галереи. Теперь оверлеи (галерея z1100, шторки z100) спокойно лежат сверху.
+        el.style.cssText = "position:relative;z-index:5;background:#7c5e10;" +
+          "color:#ffe9a8;font-size:12px;line-height:1.35;padding:7px 12px;text-align:center;";
+        const app = document.getElementById("app");
+        app.insertBefore(el, app.firstChild);
       }
       el.textContent = "🛠 " + n.text;
     } else if (el) {
