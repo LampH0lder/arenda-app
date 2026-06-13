@@ -648,3 +648,8 @@ body:has(.sel-bar:not(.hidden)) #view{padding-bottom:calc(var(--safe-bot) + 150p
 /* ── Светлая тема: точечные доводки (размытые блики мутнеют на белом) ── */
 :root[data-theme="light"] .stat .glow{opacity:.28;filter:blur(22px);}
 :root[data-theme="light"] .seg button.on{box-shadow:0 1px 4px rgba(20,30,50,.1);}
+
+/* ── Бренд-лого в шапке (справа) ── */
+.brand-logo{flex:0 0 auto;height:18px;width:auto;margin-left:10px;align-self:center;color:var(--txt);}
+.tb-head{overflow:hidden;}
+.tb-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
