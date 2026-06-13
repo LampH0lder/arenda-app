@@ -602,10 +602,13 @@ let listingsFilter = null;
 let listSource = "all";   // all | exclusives | arendok  (синхронно с поиском)
 let listCommMax = null;   // null | 0 | 50
 let listSort = "";        // см. SORT_OPTS
+let listAgent = "";       // фильтр по имени эксклюзив-агента
 const LIST_PAGE = 50;
 function listQueryBody(offset) {
-  return { source: listSource, limit: LIST_PAGE, offset,
-           commission_max: listCommMax, sort: listSort, filters: listingsFilter || {} };
+  const body = { source: listSource, limit: LIST_PAGE, offset,
+                 commission_max: listCommMax, sort: listSort, filters: listingsFilter || {} };
+  if (listAgent) body.filters = { ...(listingsFilter || {}), agent: listAgent };
+  return body;
 }
 async function renderListings() {
   setTitle("Объекты", "последние объявления");
@@ -692,10 +695,11 @@ async function renderListings() {
     getSource: () => listSource, setSource: (v) => { listSource = v; },
     getComm: () => listCommMax, setComm: (v) => { listCommMax = v === "" ? null : parseInt(v); },
     getSort: () => listSort, setSort: (v) => { listSort = v; },
+    getAgent: () => listAgent, setAgent: (v) => { listAgent = v; },
     advActive: () => filtersActive(listingsFilter),
     advSummary: () => filtersActive(listingsFilter) ? filtersSummary(listingsFilter) : "",
     onAdv: () => sheetFilters(listingsFilter || {}, (f) => { listingsFilter = filtersActive(f) ? f : null; renderListings(); }),
-    onAdvClear: () => { listingsFilter = null; renderListings(); },
+    onAdvClear: () => { listingsFilter = null; listAgent = ""; renderListings(); },
     onChange: () => renderListings(),
   }));
 }
@@ -1465,6 +1469,7 @@ let searchState = { text: "", results: [], page: 0, hasMore: false, sel: new Set
 let searchSource = "all";       // all | exclusives | arendok
 let searchCommMax = null;       // null=любая | 0=без комиссии | 50=до 50%
 let searchSort = "";            // ""=по релевантности | price_asc/desc | area_asc/desc | new | jk
+let searchAgent = "";           // фильтр по имени эксклюзив-агента
 const SRC_LABEL = { all: "Все папки", exclusives: "Эксклюзивы", arendok: "Arendok" };
 const COMM_LABEL = (v) => v === null ? "Комиссия: любая" : v === 0 ? "Без комиссии" : "Комиссия до " + v + "%";
 const SORT_OPTS = [
@@ -1482,6 +1487,7 @@ function searchChipBody() {
   if (searchSource && searchSource !== "all") b.source = searchSource;
   if (searchCommMax !== null) b.commission_max = searchCommMax;
   if (searchSort) b.sort = searchSort;
+  if (searchAgent) b.filters = { agent: searchAgent };
   return b;
 }
 /* ── Единая панель фильтров: ОДИНАКОВАЯ в «Объектах» и «Поиске» ──
@@ -1489,6 +1495,7 @@ function searchChipBody() {
         advActive(), advSummary(), onAdv(), onAdvClear(), onChange() */
 function filterControlsEl(ctx) {
   const box = el(`<div></div>`);
+  let agentTimer = null;
   function paint() {
     box.innerHTML = "";
     const advOn = ctx.advActive();
@@ -1499,12 +1506,30 @@ function filterControlsEl(ctx) {
     </div>`);
     box.appendChild(advRow);
     const src = ctx.getSource(), comm = ctx.getComm(), sort = ctx.getSort();
+    const agentVal = ctx.getAgent ? ctx.getAgent() : "";
     const mini = el(`<div class="mini-row">
       <button class="mini-chip ${src !== "all" ? "act" : ""}" data-msrc>${icon('folder')} ${esc(SRC_LABEL[src])} ▾</button>
       <button class="mini-chip ${comm !== null ? "act" : ""}" data-mcomm>${icon('percent')} ${esc(COMM_LABEL(comm))} ▾</button>
       <button class="mini-chip ${sort ? "act" : ""}" data-msort>⇅ ${esc(SORT_LABEL(sort))} ▾</button>
     </div>`);
     box.appendChild(mini);
+    // поле поиска по агенту (только для вкладок с поддержкой агент-фильтра)
+    if (ctx.getAgent) {
+      const agentRow = el(`<div style="margin-top:6px;position:relative">
+        <input class="input" id="agentInp" placeholder="${icon('key')} Поиск по агенту…" value="${esc(agentVal)}"
+          style="font-size:13px;padding:8px 12px 8px 36px;width:100%;box-sizing:border-box">
+        <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none;opacity:.5">${icon('key')}</span>
+        ${agentVal ? `<button data-agclr style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--txt-2);font-size:16px;cursor:pointer">✕</button>` : ""}
+      </div>`);
+      box.appendChild(agentRow);
+      const inp = agentRow.querySelector("#agentInp");
+      inp.addEventListener("input", () => {
+        clearTimeout(agentTimer);
+        agentTimer = setTimeout(() => { ctx.setAgent(inp.value.trim()); paint(); ctx.onChange(); }, 400);
+      });
+      const clr = agentRow.querySelector("[data-agclr]");
+      if (clr) clr.onclick = () => { ctx.setAgent(""); paint(); ctx.onChange(); };
+    }
     advRow.querySelector("[data-adv]").onclick = () => { haptic(); ctx.onAdv(); };
     const ac = advRow.querySelector("[data-advc]"); if (ac) ac.onclick = () => { haptic(); ctx.onAdvClear(); };
     mini.querySelector("[data-msrc]").onclick = () => { haptic(); sheetPick("Источник объявлений",
@@ -1552,16 +1577,17 @@ async function renderSearch() {
     getSource: () => searchSource, setSource: (v) => { searchSource = v; },
     getComm: () => searchCommMax, setComm: (v) => { searchCommMax = v === "" ? null : parseInt(v); },
     getSort: () => searchSort, setSort: (v) => { searchSort = v; },
+    getAgent: () => searchAgent, setAgent: (v) => { searchAgent = v; },
     advActive: () => filtersActive(searchState.filters || critToFilters(searchState.applied)),
     advSummary: () => { const f = searchState.filters || critToFilters(searchState.applied); return filtersActive(f) ? filtersSummary(f) : ""; },
     onAdv: () => sheetFilters(searchState.filters || critToFilters(searchState.applied), applySearchFilters),
-    onAdvClear: () => { searchState.filters = null; searchState.applied = null; renderSearch(); },
+    onAdvClear: () => { searchState.filters = null; searchState.applied = null; searchAgent = ""; renderSearch(); },
     onChange: () => reSearch(),
   }));
   $("#sReset").onclick = () => {
     haptic();
     searchState = { text: "", results: [], page: 0, hasMore: false, sel: new Set(), filters: null, applied: null };
-    searchSource = "all"; searchCommMax = null; searchSort = "";
+    searchSource = "all"; searchCommMax = null; searchSort = ""; searchAgent = "";
     renderSearch();
     const ta = $("#sInput"); if (ta) ta.focus();
   };
