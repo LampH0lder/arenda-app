@@ -34,6 +34,16 @@ if (tg) {
 }
 const haptic = (t = "light") => { try { tg?.HapticFeedback?.impactOccurred(t); } catch (e) {} };
 const notify = (t = "success") => { try { tg?.HapticFeedback?.notificationOccurred(t); } catch (e) {} };
+// Открыть ссылку объявления: t.me -> openTelegramLink, внешние (Циан/Авито) -> openLink, иначе новое окно.
+function openPost(url) {
+  if (!url) return;
+  try {
+    const isTg = /^tg:|\/\/(?:t|telegram)\.me\//i.test(url);
+    if (isTg && tg?.openTelegramLink) return tg.openTelegramLink(url);
+    if (tg?.openLink) return tg.openLink(url);
+  } catch (e) {}
+  window.open(url, "_blank", "noopener");
+}
 
 // показываемая версия (фиксированная семантическая); кэш-бастер ?v=N — отдельно и невидим
 const APP_VERSION = "v1.4.8.8";
@@ -909,7 +919,7 @@ function listingCard(l, onSend, openable = true, thumb = true, select = null) {
   }
   if (onSend) card.querySelector("[data-send]").onclick = (e) => { e.stopPropagation(); haptic(); onSend(); };
   const openBtn = card.querySelector("[data-open]");
-  if (openBtn) openBtn.onclick = (e) => { e.stopPropagation(); haptic(); tg?.openTelegramLink ? tg.openTelegramLink(l.url) : window.open(l.url); };
+  if (openBtn) openBtn.onclick = (e) => { e.stopPropagation(); haptic(); openPost(l.url); };
   card.querySelector("[data-detail]").onclick = (e) => { e.stopPropagation(); haptic(); go(() => renderListingDetail(l.id)); };
   // тап по любому месту карточки → подробнее (кнопки/галочка перехватывают свой клик)
   if (openable) card.onclick = () => { haptic(); go(() => renderListingDetail(l.id)); };
@@ -987,7 +997,7 @@ async function renderListingDetail(id) {
   }).catch(() => {});
   $("#bSend").onclick = () => { haptic(); sheetClientPicker((cid, cname) => sendListing(l, cid, cname)); };
   $("#bBroad").onclick = () => { haptic(); sheetBroadcast(l); };
-  const ob = $("#bOpen"); if (ob) ob.onclick = () => { haptic(); tg?.openTelegramLink ? tg.openTelegramLink(l.url) : window.open(l.url); };
+  const ob = $("#bOpen"); if (ob) ob.onclick = () => { haptic(); openPost(l.url); };
 }
 const kv = (k, v) => `<div class="kv"><span class="k">${esc(k)}</span><span class="v">${esc(String(v))}</span></div>`;
 
