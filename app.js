@@ -1516,9 +1516,8 @@ function filterControlsEl(ctx) {
     // поле поиска по агенту (только для вкладок с поддержкой агент-фильтра)
     if (ctx.getAgent) {
       const agentRow = el(`<div style="margin-top:6px;position:relative">
-        <input class="input" id="agentInp" placeholder="${icon('key')} Поиск по агенту…" value="${esc(agentVal)}"
-          style="font-size:13px;padding:8px 12px 8px 36px;width:100%;box-sizing:border-box">
-        <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none;opacity:.5">${icon('key')}</span>
+        <input class="input" id="agentInp" placeholder="Агент: поиск по имени…" value="${esc(agentVal)}"
+          style="font-size:13px;padding:8px 12px;width:100%;box-sizing:border-box">
         ${agentVal ? `<button data-agclr style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--txt-2);font-size:16px;cursor:pointer">✕</button>` : ""}
       </div>`);
       box.appendChild(agentRow);
