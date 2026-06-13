@@ -32,7 +32,7 @@ body{
   overscroll-behavior-y:none;
   -webkit-font-smoothing:antialiased;
 }
-#app{display:flex;flex-direction:column;min-height:100vh;}
+#app{display:flex;flex-direction:column;min-height:var(--tg-vh,100vh);}
 
 /* ── Top bar ── */
 #topbar{
@@ -535,6 +535,7 @@ html,body,#app,#view{max-width:100%;overflow-x:hidden;}
   position:fixed;inset:0;z-index:1100;background:#000;
   display:flex;flex-direction:column;
   animation:onbPop .2s ease both;
+  overscroll-behavior:none;touch-action:none;  /* не триггерим pull-to-refresh/back-жест браузера */
 }
 .gal-top{
   display:flex;align-items:center;justify-content:space-between;
@@ -574,3 +575,21 @@ html,body,#app,#view{max-width:100%;overflow-x:hidden;}
 .pick-row.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-2);}
 .pick-row:active{opacity:.8;}
 .pick-ok{color:var(--accent-2);font-size:17px;}
+
+/* ── Когда видна панель «отправить выбранные» — поднимаем низ списка, чтобы она не
+   перекрывала кнопку «Загрузить ещё». :has() — без JS (мягкая деградация на старье). ── */
+body:has(.sel-bar:not(.hidden)) #view{padding-bottom:calc(var(--safe-bot) + 150px);}
+
+/* ── Skeleton-загрузка (вместо спиннера): мерцающие карточки формы объявления ── */
+.sk-list{display:flex;flex-direction:column;gap:14px;padding-top:6px;}
+.sk-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;}
+.sk-photo{height:180px;border-radius:12px;margin-bottom:12px;}
+.sk-line{height:14px;border-radius:7px;margin:8px 0;}
+.sk-line.w60{width:60%;} .sk-line.w40{width:40%;}
+.sk-row{display:flex;gap:8px;margin-top:14px;}
+.sk-btn{flex:1;height:38px;border-radius:11px;}
+.sk-photo,.sk-line,.sk-btn{
+  background:linear-gradient(90deg,var(--card-2) 25%,var(--line) 50%,var(--card-2) 75%);
+  background-size:200% 100%;animation:sk-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes sk-shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
