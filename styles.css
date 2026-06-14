@@ -321,6 +321,13 @@ textarea.input{resize:vertical;min-height:70px;}
   margin-left:6px;font-size:0.78em;font-weight:400;
   opacity:0.35;letter-spacing:.01em;
 }
+/* «Анонс» — объект пока не актуален/без фото: яркий янтарный бейдж, чтобы не сливался */
+.anons-badge{
+  display:inline-flex;align-items:center;gap:4px;vertical-align:middle;margin-right:3px;
+  font-size:11px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;
+  color:#3a2700;background:#f5b945;border-radius:6px;padding:2px 7px;line-height:1.35;
+}
+.anons-badge svg{width:12px;height:12px;}
 
 /* ── Чипы-кнопки выбора (циан-стиль) ── */
 .chipsel{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px;}
@@ -440,6 +447,12 @@ img.listing-thumb{transition:filter .35s ease;}
 .dotm{width:10px;height:10px;border-radius:50%;display:inline-block;margin-left:8px;}
 .dotm.blue{background:#5b8cff;}
 .dotm.amber{background:#f5b945;}
+.area-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;}
+.area-chips:empty{display:none;}
+.area-chip{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;color:var(--txt);background:var(--card-2);border:1px solid var(--line);border-radius:999px;padding:5px 6px 5px 11px;}
+.area-chip svg{width:13px;height:13px;opacity:.7;}
+.area-x{border:none;background:rgba(127,127,127,.16);color:var(--txt-2);width:18px;height:18px;border-radius:50%;font-size:11px;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;}
+.area-x:active{background:rgba(127,127,127,.3);}
 .leaflet-container{background:var(--map-bg);font:inherit;}
 
 /* ── Карусель последних объектов (Главная) ── */
