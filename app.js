@@ -177,8 +177,13 @@ const STATUS_RU = { active: "активный", paused: "на паузе", done:
 
 function toast(msg, kind = "") {
   const t = $("#toast");
-  t.textContent = msg; t.className = "toast " + kind;
-  clearTimeout(t._t); t._t = setTimeout(() => t.classList.add("hidden"), 2600);
+  clearTimeout(t._t); clearTimeout(t._t2);
+  t.textContent = msg; t.className = "toast " + kind;  // снимает hidden/out, перезапускает вход
+  // через 2.6с — плавный уход (opacity+сдвиг), потом прячем
+  t._t = setTimeout(() => {
+    t.classList.add("out");
+    t._t2 = setTimeout(() => t.classList.add("hidden"), 200);
+  }, 2600);
 }
 // Нативное подтверждение Telegram (аккуратный диалог) вместо браузерного confirm(),
 // который в WebView выглядит криво (с заголовком домена). Фолбэк — обычный confirm().
@@ -239,10 +244,22 @@ function listingMeta(l) {
 function openSheet(html) {
   const s = $("#sheet"), b = $("#sheetBody");
   b.innerHTML = `<div class="sheet-grip"></div>` + html;
-  s.classList.remove("hidden");
+  s.classList.remove("hidden", "closing");  // closing мог остаться, если открыли во время ухода
   return b;
 }
-function closeSheet() { $("#sheet").classList.add("hidden"); }
+function closeSheet() {
+  const s = $("#sheet");
+  if (s.classList.contains("hidden")) return;
+  const body = $("#sheetBody");
+  s.classList.add("closing");  // CSS: sheet-body уезжает вниз, backdrop гаснет
+  let done = false;
+  const finish = () => {
+    if (done) return; done = true;
+    s.classList.add("hidden"); s.classList.remove("closing");
+  };
+  body.addEventListener("transitionend", finish, { once: true });
+  setTimeout(finish, 280);  // фолбэк, если transitionend не придёт (reduced-motion и т.п.)
+}
 // Универсальная шторка одиночного выбора: opts = [[value,label],...]
 function sheetPick(title, opts, current, onPick) {
   const rows = opts.map(([v, label]) =>
@@ -1095,7 +1112,7 @@ function openGallery(id, count, startIdx, coverIdx) {
   // пока галерея открыта — гасим системный свайп-вниз Telegram (иначе он сворачивает
   // весь мини-апп вместо закрытия фото). Возвращаем при закрытии. Bot API 7.7+.
   try { tg?.disableVerticalSwipes?.(); } catch (e) {}
-  const close = () => { try { tg?.enableVerticalSwipes?.(); } catch (e) {} ov.remove(); };
+  const close = () => { try { tg?.enableVerticalSwipes?.(); } catch (e) {} ov.classList.add("closing"); setTimeout(() => ov.remove(), 180); };
   ov.querySelector(".gal-close").onclick = () => { haptic(); close(); };
   ov.querySelector(".prev").onclick = () => { haptic(); show(idx - 1); };
   ov.querySelector(".next").onclick = () => { haptic(); show(idx + 1); };
@@ -1233,7 +1250,7 @@ async function renderAutopost() {
     <div class="muted" style="margin-top:8px">Обработаю все по очереди (парсинг + чистка фото). Перед публикацией каждого покажу превью — подтверждаешь сам.</div>
   </div>`));
   const bar = el(`<div style="margin-top:10px">
-    <button class="btn btn-soft sm" id="apPubAll" style="width:100%">✅ Опубликовать все готовые</button>
+    <button class="btn btn-soft sm" id="apPubAll" style="width:100%">${icon('check')} Опубликовать все готовые</button>
   </div>`);
   wrap.appendChild(bar);
   const q = el(`<div id="apQueue" style="margin-top:12px"></div>`);
@@ -1259,7 +1276,7 @@ async function renderAutopost() {
     const btn = $("#apPubAll"); btn.disabled = true;
     let ok = 0, fail = 0, i = 0;
     for (const rec of ready) {
-      i++; btn.textContent = `📝 Публикую ${i}/${ready.length}…`;
+      i++; btn.innerHTML = `${icon('send-h')} Публикую ${i}/${ready.length}…`;
       try {
         await api(`/autopost/${rec.id}/publish`, { method: "POST" });
         let done = false;
@@ -1272,7 +1289,7 @@ async function renderAutopost() {
         if (!done) fail++;
       } catch (e) { fail++; }
     }
-    btn.disabled = false; btn.textContent = "✅ Опубликовать все готовые";
+    btn.disabled = false; btn.innerHTML = `${icon('check')} Опубликовать все готовые`;
     toast(`Готово: опубликовано ${ok}${fail ? ", ошибок " + fail : ""}`, fail ? "err" : "ok");
     renderAutopost();
   };
@@ -1304,14 +1321,21 @@ async function renderAutopost() {
   };
 }
 
+// Статус карточки ФДГ: SVG-иконка + текст (без эмодзи). cls: '' | 'ok' | 'err'
+function apSt(stEl, name, txt, cls) {
+  if (!stEl) return;
+  const col = cls === "ok" ? "var(--green)" : cls === "err" ? "var(--red)" : "var(--txt-2)";
+  stEl.innerHTML = `<span style="color:${col};display:inline-flex;align-items:center;gap:4px">${icon(name)} ${esc(txt)}</span>`;
+}
+
 function apBuildItem(url, q) {
   const state = { alive: true, id: null, published: false };
   const item = el(`<div class="card ap-item fade-in">
     <div class="row-between" style="gap:8px;align-items:flex-start">
       <div class="muted ap-url" style="word-break:break-all;flex:1;font-size:12px">${esc(url || "")}</div>
       <div style="display:flex;align-items:center;gap:6px;white-space:nowrap">
-        <span class="ap-st" style="font-size:12px">⏳ в очереди</span>
-        <button class="ap-rm" title="Убрать из очереди" style="background:none;border:none;color:var(--muted);font-size:17px;line-height:1;cursor:pointer;padding:0 2px">✕</button>
+        <span class="ap-st" style="font-size:12px"><span style="color:var(--txt-2);display:inline-flex;align-items:center;gap:4px">${icon('clock')} в очереди</span></span>
+        <button class="ap-rm" title="Убрать из очереди" style="background:none;border:none;color:var(--txt-2);font-size:17px;line-height:1;cursor:pointer;padding:0 2px">${icon('x')}</button>
       </div>
     </div>
     <div class="ap-body"></div>
@@ -1337,12 +1361,12 @@ async function apEnqueueOne(url, q) {
     state.id = r.id;
     apTrack(state);
   } catch (e) {
-    stEl.textContent = "❌ " + (e.message || e);
-    item.style.borderColor = "var(--danger)";
+    apSt(stEl, 'alert', (e.message || e), "err");
+    item.style.borderColor = "var(--red)";
     return;
   }
   if (!state.alive) { try { await api(`/autopost/${state.id}/cancel`, { method: "POST" }); } catch (e) {} return; }
-  stEl.textContent = "⏳ обрабатываю…";
+  apSt(stEl, 'loader', "обрабатываю…");
   apPollItem(state, stEl, body);  // fire-and-forget: каждый элемент опрашивается параллельно
 }
 
@@ -1353,18 +1377,18 @@ async function apRestoreItem(rec, q) {
   apTrack(state);
   // превью готово и данные пришли прямо в списке → рисуем сразу, без второго запроса
   if (rec.status === "preview" && rec.data) {
-    stEl.textContent = "👀 готово";
+    apSt(stEl, 'check', "готово", "ok");
     return apRenderPreview(state, rec, body, stEl);
   }
   // processing Stage B (публикация) — запускаем apPollDone вместо apPollItem
   if (rec.status === "processing" && rec.publishing) {
-    stEl.textContent = "📝 публикую…";
+    apSt(stEl, 'send-h', "публикую…");
     state.published = true;
     body.innerHTML = `<div class="muted" style="margin-top:8px"><span class="sq-spin"></span> Публикую на arendok.ru… ~минуту.</div>`;
     apPollDone(state, stEl, body);
     return;
   }
-  stEl.textContent = "⏳ обрабатываю…";
+  apSt(stEl, 'loader', "обрабатываю…");
   apPollItem(state, stEl, body);  // ещё в работе → опрашиваем, превью нарисуется само
 }
 
@@ -1378,22 +1402,22 @@ async function apPollItem(state, stEl, body) {
     if (st.status === "processing") {
       if (st.publishing) {
         // перешли в Stage B (публикация) — переключаемся на apPollDone
-        stEl.textContent = "📝 публикую…";
+        apSt(stEl, 'send-h', "публикую…");
         state.published = true;
         body.innerHTML = `<div class="muted" style="margin-top:8px"><span class="sq-spin"></span> Публикую на arendok.ru… ~минуту.</div>`;
         return apPollDone(state, stEl, body);
       }
-      stEl.textContent = "⏳ парсинг + фото…"; continue;
+      apSt(stEl, 'loader', "парсинг + фото…"); continue;
     }
-    if (st.status === "preview") { stEl.textContent = "👀 готово"; return apRenderPreview(state, st, body, stEl); }
+    if (st.status === "preview") { apSt(stEl, 'check', "готово", "ok"); return apRenderPreview(state, st, body, stEl); }
     if (st.status === "error") {
-      stEl.textContent = "❌ ошибка";
-      body.innerHTML = `<div class="muted" style="color:var(--danger);margin-top:6px">${esc(st.error || "ошибка")}</div>`;
+      apSt(stEl, 'alert', "ошибка", "err");
+      body.innerHTML = `<div class="muted" style="color:var(--red);margin-top:6px">${esc(st.error || "ошибка")}</div>`;
       return;
     }
-    if (st.status === "done") { stEl.textContent = "✅ опубликовано"; return; }
+    if (st.status === "done") { apSt(stEl, 'check', "опубликовано", "ok"); return; }
   }
-  stEl.textContent = "⏳ долго…";
+  apSt(stEl, 'clock', "долго…");
 }
 
 function apRenderPreview(state, st, body, stEl) {
@@ -1419,7 +1443,7 @@ function apRenderPreview(state, st, body, stEl) {
     <div style="margin-top:12px">
       <div class="muted" style="margin-bottom:4px;font-size:12px">${icon('pencil')} Внутреннее описание для агентов <span style="opacity:.5">(опционально)</span></div>
       <textarea id="apNotes-${id}" rows="3" style="width:100%;box-sizing:border-box;background:var(--card);color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:8px;font-size:13px;resize:vertical" placeholder="Ванна раздельная, бонус агенту 50%, хозяева готовы торговаться…">${esc(st.agent_notes || "")}</textarea>
-      <button class="btn btn-soft sm" id="apSaveNotes-${id}" style="margin-top:4px;width:100%">💾 Сохранить описание</button>
+      <button class="btn btn-soft sm" id="apSaveNotes-${id}" style="margin-top:4px;width:100%">Сохранить описание</button>
     </div>
     <div style="display:flex;gap:8px;margin-top:10px">
       <button class="btn btn-primary" id="apPub-${id}" style="flex:1">${icon('check')} Опубликовать</button>
@@ -1438,9 +1462,9 @@ function apRenderPreview(state, st, body, stEl) {
     const btn = body.querySelector(`#apSaveNotes-${id}`);
     try {
       await api(`/autopost/${id}/notes`, { method: "POST", body: { agent_notes: notes } });
-      btn.textContent = "✅ Сохранено";
-      setTimeout(() => { if (btn) btn.textContent = "💾 Сохранить описание"; }, 1800);
-    } catch (e) { notify("error"); btn.textContent = "❌ Ошибка"; setTimeout(() => { if (btn) btn.textContent = "💾 Сохранить описание"; }, 1800); }
+      btn.innerHTML = `${icon('check')} Сохранено`;
+      setTimeout(() => { if (btn) btn.textContent = "Сохранить описание"; }, 1800);
+    } catch (e) { notify("error"); btn.innerHTML = `${icon('alert')} Ошибка`; setTimeout(() => { if (btn) btn.textContent = "Сохранить описание"; }, 1800); }
   };
   body.querySelector(`#apPub-${id}`).onclick = async () => {
     haptic();
@@ -1450,17 +1474,17 @@ function apRenderPreview(state, st, body, stEl) {
       try { await api(`/autopost/${id}/notes`, { method: "POST", body: { agent_notes: notes } }); } catch (e) {}
     }
     state.published = true;
-    stEl.textContent = "📝 публикую…";
+    apSt(stEl, 'send-h', "публикую…");
     body.innerHTML = `<div class="muted" style="margin-top:8px"><span class="sq-spin"></span> Публикую на arendok.ru… ~минуту.</div>`;
     try { await api(`/autopost/${id}/publish`, { method: "POST" }); }
-    catch (e) { state.published = false; stEl.textContent = "❌ ошибка"; body.innerHTML = `<div class="muted" style="color:var(--danger);margin-top:6px">${esc(e.message || e)}</div>`; return; }
+    catch (e) { state.published = false; apSt(stEl, 'alert', "ошибка", "err"); body.innerHTML = `<div class="muted" style="color:var(--red);margin-top:6px">${esc(e.message || e)}</div>`; return; }
     apPollDone(state, stEl, body);
   };
   body.querySelector(`#apCancel-${id}`).onclick = async () => {
     haptic();
     state.alive = false;
     try { await api(`/autopost/${id}/cancel`, { method: "POST" }); } catch (e) {}
-    stEl.textContent = "✖ отменено";
+    apSt(stEl, 'x', "отменено");
     body.innerHTML = "";
   };
 }
@@ -1472,18 +1496,18 @@ async function apPollDone(state, stEl, body) {
     let st;
     try { st = await api(`/autopost/${state.id}`); } catch (e) { continue; }
     if (st.status === "done") {
-      stEl.textContent = "✅ опубликовано";
-      body.innerHTML = `<div style="margin-top:8px;color:var(--green)">✅ <b>Опубликовано!</b>${st.arendok_url ? `<br><a href="${esc(st.arendok_url)}" target="_blank" style="color:var(--accent);word-break:break-all">${esc(st.arendok_url)}</a>` : ""}</div>`;
+      apSt(stEl, 'check', "опубликовано", "ok");
+      body.innerHTML = `<div style="margin-top:8px;color:var(--green);display:flex;align-items:center;gap:6px">${icon('check')} <b>Опубликовано!</b>${st.arendok_url ? `<br><a href="${esc(st.arendok_url)}" target="_blank" style="color:var(--accent);word-break:break-all">${esc(st.arendok_url)}</a>` : ""}</div>`;
       if (typeof notify === "function") notify("success");
       return;
     }
     if (st.status === "error") {
-      stEl.textContent = "❌ ошибка";
-      body.innerHTML = `<div class="muted" style="color:var(--danger);margin-top:6px">${esc(st.error || "ошибка")}</div>`;
+      apSt(stEl, 'alert', "ошибка", "err");
+      body.innerHTML = `<div class="muted" style="color:var(--red);margin-top:6px">${esc(st.error || "ошибка")}</div>`;
       return;
     }
   }
-  stEl.textContent = "⏳ долго…";
+  apSt(stEl, 'clock', "долго…");
 }
 
 /* ════════════════════════ SEARCH ════════════════════════ */
@@ -1746,7 +1770,11 @@ function sendQClearDone() {
 
 function renderSendQ() {
   let panel = $("#sendq");
-  if (!sendQ.length) { if (panel) panel.remove(); view.style.paddingBottom = ""; return; }
+  if (!sendQ.length) {
+    if (panel) { panel.classList.add("leaving"); const p = panel; setTimeout(() => { if (p.classList.contains("leaving")) p.remove(); }, 220); }
+    view.style.paddingBottom = ""; return;
+  }
+  if (panel) panel.classList.remove("leaving");  // снова появились задачи — отменяем уход
   if (!panel) {
     panel = el(`<div id="sendq"></div>`);
     $("#app").appendChild(panel);
@@ -2231,13 +2259,13 @@ async function renderProfile() {
   let connHtml;
   if (acc.owner) {
     connHtml = `<div class="card"><div class="row-between">
-      <div><div style="font-weight:640">✅ Аккаунт владельца</div>
+      <div><div style="font-weight:640;display:flex;align-items:center;gap:6px"><span style="color:var(--green);display:inline-flex">${icon('check')}</span> Аккаунт владельца</div>
       <div class="muted">отправка вариантов работает</div></div></div>
       <button class="btn btn-primary sm" id="admBtn" style="margin-top:12px">${icon('settings')} Админ-панель</button></div>`;
   } else if (acc.connected) {
     connHtml = `<div class="card">
       <div class="row-between"><div>
-        <div style="font-weight:640">✅ Telegram подключён</div>
+        <div style="font-weight:640;display:flex;align-items:center;gap:6px"><span style="color:var(--green);display:inline-flex">${icon('check')}</span> Telegram подключён</div>
         <div class="muted">${esc(acc.name || "")}${acc.username ? " · @" + esc(acc.username) : ""}${acc.phone ? " · " + esc(acc.phone) : ""}</div>
       </div></div>
       <button class="btn btn-danger sm" id="accDisc" style="margin-top:12px">Отключить аккаунт</button>
