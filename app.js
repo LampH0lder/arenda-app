@@ -218,7 +218,7 @@ function commissionLabel(l) {
   return l.commission === 0 ? icon('percent')+" без комиссии" : icon('percent')+" комиссия " + l.commission + "%";
 }
 function listingTitle(l) {
-  const anons = l.is_announcement ? icon('megaphone')+" Анонс · " : "";
+  const anons = l.is_announcement ? `<span class="anons-badge">${icon('megaphone')} Анонс</span> ` : "";
   if (l.jk_name) return anons + "ЖК " + esc(l.jk_name);
   if (l.address) return anons + esc(l.address);
   if (l.district) return anons + esc(l.district);
@@ -736,7 +736,7 @@ function pointInPoly(lat, lng, poly) {
   return inside;
 }
 
-async function renderMap(source = "all", pick = null, initialPoly = null) {
+async function renderMap(source = "all", pick = null, initialPolys = null) {
   setTitle(pick ? "Выбор области" : "Карта", "обведите район пальцем");
   removeFab();
   loading();
@@ -752,6 +752,7 @@ async function renderMap(source = "all", pick = null, initialPoly = null) {
     </div>
     <div id="map" class="map-box"></div>
     <div class="map-legend"><span class="dotm blue"></span>точный адрес <span class="dotm amber"></span>у метро (примерно)</div>
+    <div id="mAreas" class="area-chips"></div>
     <div id="mResults" style="margin-top:14px"></div>`;
   view.appendChild(wrap);
 
@@ -779,7 +780,8 @@ async function renderMap(source = "all", pick = null, initialPoly = null) {
 
   const mapEl = $("#map");
   const mDraw = $("#mDraw"), mClear = $("#mClear"), mInfo = $("#mInfo");
-  let drawing = false, pathLL = [], preview = null, poly = null;
+  let drawing = false, pathLL = [], preview = null;
+  const areas = [];  // [{ path:[[lat,lng]...], layer }] — несколько контуров, объединение (OR)
 
   const ptOf = (e) => {
     const r = mapEl.getBoundingClientRect();
@@ -809,54 +811,79 @@ async function renderMap(source = "all", pick = null, initialPoly = null) {
     mapEl.style.cursor = on ? "crosshair" : "";
     mapEl.classList.toggle("drawing", on);
   }
+
+  // объект попадает в выборку, если он внутри ЛЮБОЙ из обведённых областей
+  const ptsInAreas = () => data.points.filter(pt => areas.some(a => pointInPoly(pt.lat, pt.lng, a.path)));
+  const pathsOf = () => areas.map(a => a.path.slice());
+
+  function addArea(path) {
+    const layer = L.polygon(path, { color: "#37d39b", weight: 2, fillColor: "#37d39b", fillOpacity: .08 }).addTo(map);
+    areas.push({ path: path.slice(), layer });
+  }
+  function removeArea(i) {
+    const a = areas[i]; if (!a) return;
+    map.removeLayer(a.layer); areas.splice(i, 1); afterChange();
+  }
+
   function enterDraw() {
-    if (poly) { map.removeLayer(poly); poly = null; }
-    $("#mResults").innerHTML = "";
     setDrawMode(true);
     mDraw.style.display = "none"; mClear.style.display = "";
     mInfo.textContent = "Веди пальцем по карте";
     mapEl.addEventListener("pointerdown", onDown);
   }
-  function drawPoly(p) {
-    if (poly) { map.removeLayer(poly); }
-    poly = L.polygon(p, { color: "#37d39b", weight: 2, fillColor: "#37d39b", fillOpacity: .08 }).addTo(map);
-    return data.points.filter(pt => pointInPoly(pt.lat, pt.lng, p)).length;
-  }
   function finishDraw() {
     setDrawMode(false);
     mapEl.removeEventListener("pointerdown", onDown);
-    mDraw.style.display = ""; mDraw.innerHTML = icon('pencil')+" Обвести заново";
+    mDraw.style.display = "";
     if (preview) { map.removeLayer(preview); preview = null; }
-    if (pathLL.length < 3) { mInfo.textContent = "Мало точек, попробуй ещё"; return; }
-    const cnt = drawPoly(pathLL);
-    mInfo.textContent = `${cnt} в области`;
-    if (pick) showApplyBar(pathLL.slice(), cnt);
-    else showMapResults(data.points.filter(p => pointInPoly(p.lat, p.lng, pathLL)));
+    if (pathLL.length < 3) { mInfo.textContent = "Мало точек, попробуй ещё"; afterChange(); return; }
+    addArea(pathLL); afterChange();
   }
+
+  // перерисовать инфо / кнопки / чипы областей / результаты после любого изменения набора
+  function afterChange() {
+    const cnt = ptsInAreas().length;
+    mDraw.innerHTML = icon('pencil') + (areas.length ? " Добавить ещё область" : " Обвести область");
+    mClear.style.display = areas.length ? "" : "none";
+    mInfo.textContent = areas.length ? `${areas.length} обл · ${cnt} в области` : `${data.points.length} объектов`;
+    renderAreaChips();
+    if (pick) showApplyBar(cnt);
+    else if (areas.length) showMapResults(ptsInAreas());
+    else $("#mResults").innerHTML = "";
+  }
+
+  function renderAreaChips() {
+    const box = $("#mAreas"); if (!box) return;
+    box.innerHTML = "";
+    areas.forEach((a, i) => {
+      const chip = el(`<span class="area-chip">${icon('map')} Область ${i + 1}<button class="area-x" data-x="${i}">✕</button></span>`);
+      chip.querySelector("[data-x]").onclick = () => { haptic(); removeArea(i); };
+      box.appendChild(chip);
+    });
+  }
+
   mDraw.onclick = () => { haptic(); enterDraw(); };
   mClear.onclick = () => {
-    haptic(); if (poly) { map.removeLayer(poly); poly = null; }
-    mClear.style.display = "none"; mDraw.innerHTML = icon('pencil')+" Обвести область";
-    mInfo.textContent = `${data.points.length} объектов`; $("#mResults").innerHTML = "";
+    haptic(); areas.forEach(a => map.removeLayer(a.layer)); areas.length = 0; afterChange();
   };
 
-  // режим ВЫБОРА области для фильтра: рисуешь → «Применить область»
-  function showApplyBar(p, n) {
+  // режим ВЫБОРА области для фильтра: рисуешь (можно несколько) → «Применить области»
+  function showApplyBar(n) {
     const box = $("#mResults"); box.innerHTML = "";
     box.appendChild(el(`<div style="display:flex;flex-direction:column;gap:10px">
-      <button class="btn btn-primary" id="mApplyArea">${icon('check')} Применить область (${n})</button>
+      <button class="btn btn-primary" id="mApplyArea" ${areas.length ? "" : "disabled"}>${icon('check')} Применить ${areas.length > 1 ? "области" : "область"} (${n})</button>
       <button class="btn btn-soft" id="mNoArea">Без области</button>
     </div>`));
-    box.querySelector("#mApplyArea").onclick = () => { haptic(); pick(p); back(); };
+    box.querySelector("#mApplyArea").onclick = () => { if (!areas.length) return; haptic(); pick(pathsOf()); back(); };
     box.querySelector("#mNoArea").onclick = () => { haptic(); pick(null); back(); };
   }
-  if (pick && initialPoly && initialPoly.length >= 3) {
-    const cnt = drawPoly(initialPoly);
-    mClear.style.display = ""; mDraw.innerHTML = icon('pencil')+" Обвести заново";
-    mInfo.textContent = `${cnt} в области`;
-    showApplyBar(initialPoly, cnt);
-    try { map.fitBounds(poly.getBounds().pad(0.2)); } catch (e) {}
+
+  // восстановление набора областей при повторном входе из фильтра
+  if (initialPolys && initialPolys.length) {
+    initialPolys.forEach(p => { if (Array.isArray(p) && p.length >= 3) addArea(p); });
+    if (areas.length) { try { map.fitBounds(L.featureGroup(areas.map(a => a.layer)).getBounds().pad(0.2)); } catch (e) {} }
   }
+  if (pick) afterChange();
 
   // результаты внутри области: карточки + мультивыбор + отправка
   const sel = new Set();
@@ -1847,7 +1874,14 @@ function critToFilters(c) {
     geo: (c.geo_points && c.geo_points.length) ? c.geo_points : null,
   };
 }
-function hasArea(f) { return !!(f && Array.isArray(f.polygon) && f.polygon.length >= 3); }
+// нормализованный список обведённых контуров: новый ключ polygons[] или legacy polygon
+function getPolys(f) {
+  if (!f) return [];
+  if (Array.isArray(f.polygons)) return f.polygons.filter(p => Array.isArray(p) && p.length >= 3);
+  if (Array.isArray(f.polygon) && f.polygon.length >= 3) return [f.polygon];  // обратная совместимость
+  return [];
+}
+function hasArea(f) { return getPolys(f).length > 0; }
 function hasGeo(f) { return !!(f && Array.isArray(f.geo) && f.geo.length); }
 function filtersActive(f) {
   return !!(f && (f.rooms || f.budget_min || f.budget_max || f.area_min || f.area_max || f.district || f.metro || f.jk || hasArea(f) || hasGeo(f) || f.commission_max != null));
@@ -1862,14 +1896,14 @@ function filtersSummary(f) {
   if (f.district) p.push(icon('map-pin')+" " + esc(f.district));
   if (f.metro) p.push(icon('train')+" " + esc(f.metro));
   if (hasGeo(f)) { const g = f.geo[0]; p.push(icon('compass')+" " + esc(g.address || g.label || "точка") + (g.max_minutes ? " ≤" + g.max_minutes + "м" : "")); }
-  if (hasArea(f)) p.push(icon('map')+" область");
+  if (hasArea(f)) { const n = getPolys(f).length; p.push(icon('map')+" " + (n > 1 ? n + " области" : "область")); }
   if (f.commission_max === 0) p.push(icon('percent')+" без комиссии");
   else if (f.commission_max != null) p.push(icon('percent')+" до " + f.commission_max + "%");
   return p.join(" · ");
 }
 function sheetFilters(init, onApply) {
   init = init || {};
-  let poly = hasArea(init) ? init.polygon : null;
+  let polys = getPolys(init);
   const curRooms = new Set(String(init.rooms || "").split(",").map(s => s.trim()).filter(Boolean));
   const b = openSheet(`
     <div class="sheet-title">Фильтры</div>
@@ -1891,10 +1925,10 @@ function sheetFilters(init, onApply) {
     <div class="tags" id="fJkTags"></div>
     <input class="input" id="fJk" placeholder="введите ЖК и нажмите Enter">
     <div class="ed-label">Местоположение</div>
-    <button class="btn ${poly ? "btn-primary" : "btn-soft"} sm" id="fArea" style="width:100%;margin-bottom:8px">
-      ${poly ? "${icon('map')} Область задана ✓ — изменить" : "${icon('map')} Обвести область на карте"}
+    <button class="btn ${polys.length ? "btn-primary" : "btn-soft"} sm" id="fArea" style="width:100%;margin-bottom:8px">
+      ${icon('map')} ${polys.length ? (polys.length > 1 ? polys.length + " области заданы ✓ — изменить" : "Область задана ✓ — изменить") : "Обвести область на карте"}
     </button>
-    ${poly ? `<button class="btn btn-soft sm" id="fAreaClear" style="width:100%;margin-bottom:8px">Убрать область</button>` : ""}
+    ${polys.length ? `<button class="btn btn-soft sm" id="fAreaClear" style="width:100%;margin-bottom:8px">Убрать ${polys.length > 1 ? "области" : "область"}</button>` : ""}
     <div class="tags" id="fDistTags"></div>
     <input class="input" id="fDistrict" placeholder="район/зона + Enter (Раменки, юго-запад…)">
     <div class="chipsel" id="fZones" style="margin-top:8px">
@@ -1977,7 +2011,7 @@ function sheetFilters(init, onApply) {
       jk: jkTags.get(),
       district: distTags.get(),
       metro: metroTags.get(),
-      polygon: poly, source: init.source || "",
+      polygons: polys, source: init.source || "",
       commission_max: isNaN(commMax) ? null : commMax,
       geo: geoFilter(),
     };
@@ -1994,13 +2028,13 @@ function sheetFilters(init, onApply) {
   // обвести область на карте — сохраняем текущие поля, уходим на карту, возвращаемся
   b.querySelector("#fArea").onclick = () => {
     haptic(); const cur = readForm(); closeSheet();
-    go(() => renderMap(cur.source || "all", (p) => {
-      cur.polygon = (p && p.length >= 3) ? p : null;
+    go(() => renderMap(cur.source || "all", (ps) => {
+      cur.polygons = (ps && ps.length) ? ps : null;
       sheetFilters(cur, onApply);
-    }, poly));
+    }, polys));
   };
   const ac = b.querySelector("#fAreaClear");
-  if (ac) ac.onclick = () => { haptic(); poly = null; const cur = readForm(); cur.polygon = null; closeSheet(); sheetFilters(cur, onApply); };
+  if (ac) ac.onclick = () => { haptic(); polys = []; const cur = readForm(); cur.polygons = null; closeSheet(); sheetFilters(cur, onApply); };
   b.querySelector("#fReset").onclick = () => { haptic(); closeSheet(); onApply({}); };
   b.querySelector("#fApply").onclick = () => { haptic(); closeSheet(); onApply(readForm()); };
 }
