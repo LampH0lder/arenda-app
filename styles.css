@@ -406,8 +406,13 @@ textarea.input{resize:vertical;min-height:70px;}
   display:flex;gap:8px;align-items:center;padding:10px;border-radius:14px;
   background:var(--panel);border:1px solid var(--accent);
   box-shadow:0 8px 22px rgba(0,0,0,.28);backdrop-filter:blur(10px);animation:sqIn .2s ease;
+  transition:opacity .18s cubic-bezier(.22,.9,.3,1),transform .18s cubic-bezier(.22,.9,.3,1);
 }
-.sel-bar.hidden{display:none;}
+/* уход панели выбора: опускается + растворяется (visibility с задержкой убирает её после анимации) */
+.sel-bar.hidden{
+  opacity:0;transform:translateY(16px);pointer-events:none;visibility:hidden;
+  transition:opacity .16s ease,transform .16s ease,visibility 0s linear .16s;
+}
 
 /* ── Галочка выбора: заметнее ── */
 .lc-check{
@@ -671,3 +676,26 @@ body:has(.sel-bar:not(.hidden)) #view{padding-bottom:calc(var(--safe-bot) + 150p
 .tb-row{display:flex;align-items:center;gap:10px;min-width:0;}
 .tb-row .tb-title{flex:1;}
 .brand-logo{margin-left:0;align-self:auto;}
+
+/* ── Расширяем tap-область мелких крестиков/кнопок до 44×44 (визуал не трогаем) ──
+   Невидимый псевдоэлемент по центру ловит палец — клик уходит на родителя. */
+.area-x,.tag-x,.ls-clr,.gal-close,.sq-cancel,.ap-rm{position:relative;}
+.area-x::after,.tag-x::after,.ls-clr::after,.gal-close::after,.sq-cancel::after,.ap-rm::after{
+  content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:44px;height:44px;
+}
+
+/* ── Выходные анимации слоёв (зеркалят входы, короче по времени) ── */
+.sheet.closing .sheet-body{animation:none;transform:translateY(100%);transition:transform .2s cubic-bezier(.22,.9,.3,1);}
+.sheet.closing .sheet-backdrop{animation:none;opacity:0;transition:opacity .2s ease;}
+#sendq.leaving{opacity:0;transform:translateY(16px);transition:opacity .18s ease,transform .18s ease;}
+.gallery-ov.closing{opacity:0;transition:opacity .18s ease;}
+.toast.out{opacity:0;transform:translate(-50%,8px);transition:opacity .2s ease,transform .2s ease;}
+
+/* ── Уважаем системную настройку «уменьшить движение» (a11y) ── */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms!important;animation-iteration-count:1!important;
+    transition-duration:.001ms!important;scroll-behavior:auto!important;
+  }
+}
