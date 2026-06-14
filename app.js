@@ -995,6 +995,8 @@ async function renderListingDetail(id) {
       ${kv("Источник", l.source || "—")}
       ${l.exclusive ? kv("Эксклюзив", l.exclusive_owner || "да") : ""}
     </div>
+    ${ownerEditedHint(l)}
+    ${l.is_owner ? `<button class="btn btn-soft sm" id="bEdit" style="width:100%;margin-top:10px">${icon('pencil')} Править объявление</button>` : ""}
     ${l.raw_text ? `<div class="section-title">Текст объявления</div><div class="card muted" style="white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;color:var(--txt)">${esc(l.raw_text)}</div>` : ""}
     <div class="btn btn-green" id="bSend" style="margin-top:18px">${icon('send')} Отправить клиенту</div>
     <div class="btn-row" style="margin-top:10px">
@@ -1041,8 +1043,60 @@ async function renderListingDetail(id) {
   $("#bSend").onclick = () => { haptic(); sheetClientPicker((cid, cname) => sendListing(l, cid, cname)); };
   $("#bBroad").onclick = () => { haptic(); sheetBroadcast(l); };
   const ob = $("#bOpen"); if (ob) ob.onclick = () => { haptic(); openPost(l.url); };
+  const eb = $("#bEdit"); if (eb) eb.onclick = () => { haptic(); sheetEditListing(l); };
 }
 const kv = (k, v) => `<div class="kv"><span class="k">${esc(k)}</span><span class="v">${esc(String(v))}</span></div>`;
+
+// Подсказка «отредактировано вручную» в карточке (видна всем, но правка — только владельцу)
+function ownerEditedHint(l) {
+  let mf = []; try { mf = JSON.parse(l.manual_fields || "[]"); } catch (e) {}
+  if (!mf || !mf.length) return "";
+  return `<div class="muted" style="margin:8px 2px 0;font-size:12.5px">${icon('pencil')} Отредактировано вручную — парсер эти поля не трогает</div>`;
+}
+
+// Шторка ручной правки объявления (только владелец). Шлёт только ИЗМЕНЁННЫЕ поля,
+// чтобы не лочить от парсера то, что владелец не трогал.
+function sheetEditListing(l) {
+  const FIELDS = [
+    ["jk_name", "ЖК", "text"], ["metro", "Метро", "text"], ["address", "Адрес", "text"],
+    ["district", "Район", "text"], ["agent_contact", "Контакт агента", "text"],
+    ["price", "Цена, ₽/мес", "number"], ["rooms", "Комнат (число)", "text"],
+    ["area", "Площадь, м²", "number"], ["floor", "Этаж", "number"],
+    ["total_floors", "Этажей в доме", "number"], ["commission", "Комиссия, %", "number"],
+  ];
+  let locked = []; try { locked = JSON.parse(l.manual_fields || "[]"); } catch (e) {}
+  const rows = FIELDS.map(([k, label, type]) => {
+    const v = (l[k] === null || l[k] === undefined) ? "" : l[k];
+    const lk = locked.includes(k) ? ` <span class="chip accent" style="font-size:10px">правка</span>` : "";
+    const step = type === "number" ? ' step="any"' : "";
+    return `<div class="ed-label" style="margin-top:10px">${esc(label)}${lk}</div>
+      <input class="input" data-f="${k}" type="${type}"${step} value="${esc(String(v))}">`;
+  }).join("");
+  const b = openSheet(`<div class="sheet-title">${icon('pencil')} Править объявление <span class="muted">#${l.id}</span></div>
+    <div class="muted" style="margin-bottom:6px;font-size:12.5px">Меняешь только ты. Изменённые поля защищаются от перезаписи парсером.</div>
+    <div style="max-height:54vh;overflow:auto">${rows}</div>
+    <button class="btn btn-green" id="edSave" style="width:100%;margin-top:14px">${icon('check')} Сохранить</button>`);
+  b.querySelector("#edSave").onclick = async () => {
+    const payload = {};
+    b.querySelectorAll("[data-f]").forEach(inp => {
+      const k = inp.dataset.f, nv = inp.value.trim();
+      const ov = (l[k] === null || l[k] === undefined) ? "" : String(l[k]);
+      if (nv !== ov) payload[k] = nv;  // только изменённые
+    });
+    if (!Object.keys(payload).length) { closeSheet(); return toast("Ничего не изменено"); }
+    haptic();
+    const btn = b.querySelector("#edSave");
+    btn.disabled = true; btn.innerHTML = `<span class="sq-spin"></span> Сохраняю…`;
+    try {
+      await api("/listings/" + l.id, { method: "PATCH", body: payload });
+      closeSheet(); notify("success"); toast("Сохранено ✓", "ok");
+      renderListingDetail(l.id);
+    } catch (e) {
+      btn.disabled = false; btn.innerHTML = `${icon('check')} Сохранить`;
+      toast("Ошибка: " + (e.message || e), "err");
+    }
+  };
+}
 
 /* ── Полноэкранная галерея фото объекта (свайп + смена обложки) ── */
 function openGallery(id, count, startIdx, coverIdx) {
