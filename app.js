@@ -2456,6 +2456,7 @@ async function renderProfile() {
       <div><h2>${esc(fullName)}</h2><div class="sub">${esc(uname)}</div></div>
     </div>
     ${connHtml}
+    ${(acc.admin && !acc.owner) ? `<button class="btn btn-primary sm" id="admBtn" style="width:100%;margin:-4px 0 12px">${icon('settings')} Админ-панель</button>` : ""}
     ${arkHtml}
     <button class="btn btn-soft" id="favBtn" style="width:100%;margin-top:6px">${icon('star')} Избранное</button>
     <div class="section-title">Оформление</div>
