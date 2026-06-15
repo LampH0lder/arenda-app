@@ -46,7 +46,7 @@ function openPost(url) {
 }
 
 // показываемая версия (фиксированная семантическая); кэш-бастер ?v=N — отдельно и невидим
-const APP_VERSION = "v1.5.0";
+const APP_VERSION = "v1.5.1";
 
 /* ── API ──
    Фронт может быть на другом домене (GitHub Pages, чистый HTTPS без заглушки),
@@ -981,7 +981,7 @@ async function renderMap(source = "all", pick = null, initialPolys = null) {
 function listingCard(l, onSend, openable = true, thumb = true, select = null) {
   const card = el(`
     <div class="card pad0 ${openable ? "tap" : ""} ${select && select.checked ? "lc-sel" : ""}">
-      ${thumb ? `<div class="card-thumb" data-thumb="${l.id}" data-cov="${l.cover_idx || 0}"><span class="src-badge">${esc(l.source || "")}</span>${select ? `<div class="lc-check ${select.checked ? "on" : ""}" data-check>${select.checked ? "✓" : ""}</div>` : ""}<button class="fav-btn ${FAVS.has(l.id) ? "on" : ""}" data-fav title="В избранное">${icon('heart')}</button></div>` : ""}
+      ${thumb ? `<div class="card-thumb" data-thumb="${l.id}" data-cov="${l.cover_idx || 0}"><span class="src-badge">${esc(l.source || "")}</span><button class="fav-btn ${FAVS.has(l.id) ? "on" : ""}" data-fav title="В избранное">${icon('heart')}</button></div>` : ""}
       <div class="card-body">
         <div class="row-between" style="align-items:flex-start">
           <div style="min-width:0">
@@ -990,6 +990,7 @@ function listingCard(l, onSend, openable = true, thumb = true, select = null) {
             <div class="listing-meta">${listingMeta(l)}</div>
             ${l.exclusive ? `<div class="excl-line">${icon('crown')} Эксклюзив${l.exclusive_owner ? ": " + esc(l.exclusive_owner) : ""}</div>` : ""}
           </div>
+          ${select ? `<div class="lc-check ${select.checked ? "on" : ""}" data-check>${select.checked ? "✓" : ""}</div>` : ""}
         </div>
         ${(l.geo && l.geo.length) ? `<div style="margin-top:8px">${l.geo.map(g => `<div class="geo-line">${esc(g)}</div>`).join("")}</div>` : ""}
         <div class="btn-row" style="margin-top:12px">
