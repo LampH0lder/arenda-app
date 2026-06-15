@@ -667,15 +667,16 @@ body:has(.sel-bar:not(.hidden)) #view{padding-bottom:calc(var(--safe-bot) + 150p
 :root[data-theme="light"] .stat .glow{opacity:.28;filter:blur(22px);}
 :root[data-theme="light"] .seg button.on{box-shadow:0 1px 4px rgba(20,30,50,.1);}
 
-/* ── Бренд-лого в шапке (справа) ── */
-.brand-logo{flex:0 0 auto;height:18px;width:auto;margin-left:10px;align-self:center;color:var(--txt);}
-.tb-head{overflow:hidden;}
+/* ── Шапка: «Главная» слева · лого АрендБОТ по центру (меньше) · колокольчик справа ── */
+.tb-head{overflow:visible;}  /* visible — чтобы значок колокольчика не обрезался */
 .tb-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-
-/* лого на одной линии с заголовком (а подзаголовок — под ними) */
-.tb-row{display:flex;align-items:center;gap:10px;min-width:0;}
-.tb-row .tb-title{flex:1;}
-.brand-logo{margin-left:0;align-self:auto;}
+.tb-row{display:flex;align-items:center;gap:10px;min-width:0;position:relative;}
+.tb-row .tb-title{flex:1;min-width:0;max-width:calc(50% - 52px);}  /* не залезать под центр-лого */
+/* лого абсолютно по центру строки (не зависит от ширины заголовка), не ловит тапы */
+.brand-logo{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  height:13px;width:auto;margin:0;color:var(--txt);pointer-events:none;
+}
 
 /* ── Расширяем tap-область мелких крестиков/кнопок до 44×44 (визуал не трогаем) ──
    Невидимый псевдоэлемент по центру ловит палец — клик уходит на родителя. */
@@ -703,7 +704,7 @@ body:has(.sel-bar:not(.hidden)) #view{padding-bottom:calc(var(--safe-bot) + 150p
 /* ════════ Колокольчик уведомлений (в шапке справа) ════════ */
 .bell-btn{
   flex:0 0 auto;position:relative;background:none;border:none;color:var(--txt-2);
-  padding:4px;margin-left:6px;cursor:pointer;display:inline-flex;align-items:center;
+  padding:4px;margin-left:auto;cursor:pointer;display:inline-flex;align-items:center;
   transition:color .18s,transform .1s;
 }
 .bell-btn:active{transform:scale(.9);color:var(--accent-2);}
@@ -732,10 +733,10 @@ body:has(.sel-bar:not(.hidden)) #view{padding-bottom:calc(var(--safe-bot) + 150p
 /* ════════ Reveal-on-scroll «менюшка» (поиск+фильтры) ════════ */
 .sticky-menu{
   position:sticky;top:0;z-index:15;background:var(--bg);
-  padding-top:6px;margin-top:-6px;
+  padding:6px 0 4px;
   transition:transform .25s ease,opacity .25s ease;
 }
-.sticky-menu.hdr-hidden{transform:translateY(-115%);opacity:0;pointer-events:none;}
+.sticky-menu.hdr-hidden{transform:translateY(-135%);opacity:0;pointer-events:none;}
 
 /* ════════ Комментарии к объекту ════════ */
 .cmts{display:flex;flex-direction:column;gap:8px;}
