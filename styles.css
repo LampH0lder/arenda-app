@@ -840,3 +840,74 @@ body{font-family:'Onest',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helv
   -webkit-mask-composite:xor;mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask-composite:exclude;
 }
 @keyframes flow{to{background-position:300% 0;}}
+
+/* ════════════════════════════════════════════════════════════════════════
+   REDESIGN PHASE 2 v47 — полировка: карточки/списки, экран объекта, галерея,
+   комментарии, уведомления. Логику/JS НЕ меняет (CSS-only). Тяжёлое —
+   в :root:not([data-theme="light"]). Откат: удалить блок + вернуть v46.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* — Карточка объекта: обложка обрезается по радиусу + читаемый нижний скрим — */
+.card.pad0{overflow:hidden;}
+.card-thumb::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(0,0,0,.16) 0%,transparent 20%,transparent 56%,rgba(0,0,0,.5) 100%);
+}
+.card-thumb.nophoto::after{background:none;}
+.src-badge{
+  margin:9px;padding:3px 9px;border-radius:8px;font-size:11px;font-weight:600;
+  letter-spacing:.01em;background:rgba(10,12,17,.55);
+}
+.lid-badge{opacity:.4;}
+.listing-meta,.cc-meta,.notif-date,.hist-meta{font-variant-numeric:tabular-nums;}
+
+/* — Звезда избранного: стеклянная, мягкая пружина — */
+.fav-btn{
+  width:32px;height:32px;background:rgba(10,12,17,.5);backdrop-filter:blur(8px);
+  box-shadow:0 2px 8px rgba(0,0,0,.32);
+  transition:transform .14s var(--ease-spring),color .15s,background .15s;
+}
+.fav-btn:active{transform:scale(.82);}
+.fav-btn.on{background:rgba(245,185,69,.2);}
+
+/* — Экран объекта: обложка со скруглением снизу + тень, миниатюры с пружиной — */
+.detail-photo{border-radius:0 0 18px 18px;}
+:root:not([data-theme="light"]) .detail-photo{box-shadow:0 12px 30px rgba(0,0,0,.45);}
+.dthumb{transition:opacity .25s ease,transform .14s var(--ease-spring);}
+.dthumb:active{transform:scale(.9);}
+
+/* — Характеристики (kv): хайрлайны между строк, числа табличные, выравнивание — */
+.kv{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 0;font-variant-numeric:tabular-nums;}
+.kv+.kv{border-top:1px solid var(--line);}
+.kv .k{color:var(--txt-2);font-size:13.5px;}
+.kv .v{font-weight:620;text-align:right;}
+
+/* — Комментарии: акцентная полоса слева, имя дисплейным шрифтом, пружина — */
+.cmt{border-left:2px solid var(--accent-ring);transition:transform .14s var(--ease-spring);}
+.cmt:active{transform:scale(.99);}
+.cmt-author{font-family:var(--font-display);font-size:12.5px;font-weight:600;}
+.cmt-form .input{border-radius:14px;}
+
+/* — Уведомления: непрочитанные с точкой и свечением, плавное появление — */
+.notif{transition:transform .14s var(--ease-spring),border-color .18s;animation:notifIn .3s var(--ease-spring) both;}
+.notif:active{transform:scale(.99);}
+@keyframes notifIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+:root:not([data-theme="light"]) .notif.unread{box-shadow:0 0 0 1px var(--accent-ring),0 6px 18px rgba(155,125,255,.18);}
+.notif.unread .notif-text::before{
+  content:"";display:inline-block;width:7px;height:7px;border-radius:50%;
+  background:var(--accent);margin-right:8px;vertical-align:middle;
+}
+
+/* — Колокольчик: значок «выскакивает» пружиной при появлении — */
+.bell-badge:not(.hidden){animation:bellPop .32s var(--ease-spring);}
+@keyframes bellPop{from{transform:scale(0);}to{transform:scale(1);}}
+
+/* — Быстрые действия + карусель: глубина и пружина (только тёмная) — */
+.quick-btn{transition:transform .14s var(--ease-spring),border-color .18s,box-shadow .2s;}
+.quick-btn:active{transform:scale(.96);}
+.ccard{transition:transform .14s var(--ease-spring),box-shadow .2s;}
+:root:not([data-theme="light"]) .quick-btn{box-shadow:0 1px 0 var(--topedge) inset,0 6px 18px rgba(0,0,0,.3);}
+:root:not([data-theme="light"]) .ccard{box-shadow:0 1px 0 var(--topedge) inset,0 8px 22px rgba(0,0,0,.35);}
+
+/* — Пустые состояния мягче — */
+.empty .em-ic{opacity:.5;}
