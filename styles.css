@@ -764,3 +764,79 @@ body:has(.sel-bar:not(.hidden)) #view{padding-bottom:calc(var(--safe-bot) + 150p
 .notif.unread{border-color:var(--accent);background:var(--accent-soft);}
 .notif-text{font-size:14px;line-height:1.42;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;}
 .notif-date{font-size:11.5px;color:var(--txt-3);margin-top:5px;}
+
+/* ════════════════════════════════════════════════════════════════════════
+   REDESIGN LAYER v46 — слой «живости» поверх базы. Логику НЕ меняет.
+   Откат: удалить весь блок ниже + вернуть styles.css?v=45 в index.html.
+   Тяжёлые эффекты завёрнуты в :root:not([data-theme="light"]) → светлая тема цела.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* — токены: палитра ТЁМНОЙ (светлую перебьёт её же правило выше по спец.) + новые — */
+:root{
+  --bg:#0a0c11;
+  --card:#161921;
+  --card-2:#1c2029;
+  --ease-spring:cubic-bezier(.34,1.56,.64,1);
+  --topedge:rgba(255,255,255,.06);
+  --font-display:'Unbounded','Onest',-apple-system,sans-serif;
+}
+
+/* — шрифт интерфейса (обе темы, живая кириллица) — */
+body{font-family:'Onest',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+
+/* — фон: ambient-свечение + зерно (только тёмная; под контентом, не мешает скроллу) — */
+#app{position:relative;}
+:root:not([data-theme="light"]) #app::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    radial-gradient(ellipse 85% 45% at 20% 0%, rgba(155,125,255,.10) 0%, transparent 60%),
+    radial-gradient(ellipse 65% 40% at 90% 100%, rgba(52,214,168,.06) 0%, transparent 55%);
+}
+:root:not([data-theme="light"]) #app::after{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.4;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+#topbar,#view,#tabbar{position:relative;z-index:1;}
+
+/* — типографика: цены/числа дисплейным Unbounded, секции без CAPS + линия — */
+.listing-price,.stat .num{font-family:var(--font-display);font-variant-numeric:tabular-nums;font-weight:700;letter-spacing:-.02em;}
+.section-title{text-transform:none;letter-spacing:.02em;display:flex;align-items:center;gap:9px;}
+.section-title::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent);}
+
+/* — пружина на тапе — */
+.card{transition:transform .14s var(--ease-spring),border-color .18s,box-shadow .2s;}
+.card.tap:active{transform:scale(.985);}
+.btn{transition:transform .12s var(--ease-spring),opacity .15s,box-shadow .25s;}
+.btn:active{transform:scale(.96);}
+.tab:active{transform:scale(.9);}
+.chip:active{transform:scale(.94);}
+
+/* — глубина: top-edge + тени (только тёмная, светлая остаётся плоской) — */
+:root:not([data-theme="light"]) .card,
+:root:not([data-theme="light"]) .stat{
+  box-shadow:0 1px 0 var(--topedge) inset,0 10px 28px rgba(0,0,0,.4),0 2px 6px rgba(0,0,0,.28);
+}
+
+/* — CTA glow (только тёмная) — */
+:root:not([data-theme="light"]) .btn-green{box-shadow:0 6px 20px rgba(52,214,168,.38),0 1px 0 rgba(255,255,255,.22) inset;}
+:root:not([data-theme="light"]) .btn-primary{box-shadow:0 6px 20px rgba(155,125,255,.4),0 1px 0 rgba(255,255,255,.2) inset;}
+
+/* — стекло таб-бара (только тёмная) — */
+:root:not([data-theme="light"]) #tabbar{backdrop-filter:blur(20px) saturate(1.4);box-shadow:0 -1px 0 rgba(255,255,255,.05) inset;}
+
+/* — цветные числа статов (только тёмная) — */
+:root:not([data-theme="light"]) .stat.a .num{color:#bfb0ff;}
+:root:not([data-theme="light"]) .stat.g .num{color:#5fe7c4;}
+:root:not([data-theme="light"]) .stat.am .num{color:#f7c662;}
+:root:not([data-theme="light"]) .stat.p .num{color:#d2a3ff;}
+
+/* — живой градиентный обвод эксклюзива (фолбэк: webview без :has() просто без обвода) — */
+.card:has(.excl-line){position:relative;border-color:transparent;}
+.card:has(.excl-line)::before{
+  content:"";position:absolute;inset:0;border-radius:inherit;padding:1.5px;z-index:4;pointer-events:none;
+  background:linear-gradient(135deg,#9b7dff,rgba(255,255,255,.5) 35%,#34d6a8 70%,#9b7dff);
+  background-size:300% 300%;animation:flow 6s linear infinite;
+  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask-composite:exclude;
+}
+@keyframes flow{to{background-position:300% 0;}}
