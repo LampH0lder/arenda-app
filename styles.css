@@ -75,7 +75,10 @@ body{
   overscroll-behavior-y:none;
   -webkit-font-smoothing:antialiased;
 }
-#app{display:flex;flex-direction:column;min-height:var(--tg-vh,100vh);}
+/* height (а не min-height) — чтобы скроллился ВНУТРЕННИЙ #view, а не всё окно.
+   Иначе #view (overflow-y:auto) не получал чёткую высоту, скроллился body, и не
+   работали: sticky-меню, reveal при скролле, подсветка шапки, сброс прокрутки. */
+#app{display:flex;flex-direction:column;height:var(--tg-vh,100vh);min-height:0;}
 
 /* ── Top bar ── */
 #topbar{
