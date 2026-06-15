@@ -736,7 +736,7 @@ body:has(.sel-bar:not(.hidden)) #view{padding-bottom:calc(var(--safe-bot) + 150p
 /* ════════ Reveal-on-scroll «менюшка» (поиск+фильтры) ════════ */
 .sticky-menu{
   position:sticky;top:0;z-index:15;background:var(--bg);
-  padding:6px 0 4px;
+  padding:0 0 6px;margin-top:-6px;  /* −6px съедает верхний padding #view → без дырки под шапкой */
   transition:transform .25s ease,opacity .25s ease;
 }
 .sticky-menu.hdr-hidden{transform:translateY(-135%);opacity:0;pointer-events:none;}
