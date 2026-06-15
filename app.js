@@ -46,7 +46,7 @@ function openPost(url) {
 }
 
 // показываемая версия (фиксированная семантическая); кэш-бастер ?v=N — отдельно и невидим
-const APP_VERSION = "v1.4.9.1";
+const APP_VERSION = "v1.5.0";
 
 /* ── API ──
    Фронт может быть на другом домене (GitHub Pages, чистый HTTPS без заглушки),
@@ -62,6 +62,7 @@ _ICONS['eraser']='<path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 
 _ICONS['x']='<path d="M18 6 6 18"/><path d="m6 6 12 12"/>';
 _ICONS['bell']='<path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.41 5.956-2.738 7.326"/>';
 _ICONS['trash']='<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>';
+_ICONS['heart']='<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>';
 _ICONS['comment']='<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>';
 function icon(n){return '<svg class="lic" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.16em;flex:none" aria-hidden="true">'+(_ICONS[n]||'')+'</svg>';}
 
@@ -386,7 +387,7 @@ async function renderHome() {
       <button class="quick-btn" id="qSearch"><span class="qi">${icon('search')}</span><span class="qt">Поиск вариантов</span><span class="qs">по всей базе</span></button>
       <button class="quick-btn" id="qHist"><span class="qi">${icon('refresh')}</span><span class="qt">История отправок</span><span class="qs">что уже ушло</span></button>
       <button class="quick-btn" id="qScan"><span class="qi">${icon('download')}</span><span class="qt">Собрать объявления</span><span class="qs">за период</span></button>
-      <button class="quick-btn" id="qFav"><span class="qi">${icon('star')}</span><span class="qt">Избранное</span><span class="qs">сохранённые объекты</span></button>
+      <button class="quick-btn" id="qFav"><span class="qi">${icon('heart')}</span><span class="qt">Избранное</span><span class="qs">сохранённые объекты</span></button>
     </div>
     ${(!acc.connected) ? `
     <div class="card" id="connCard" style="border-color:var(--accent);margin-top:6px">
@@ -980,7 +981,7 @@ async function renderMap(source = "all", pick = null, initialPolys = null) {
 function listingCard(l, onSend, openable = true, thumb = true, select = null) {
   const card = el(`
     <div class="card pad0 ${openable ? "tap" : ""} ${select && select.checked ? "lc-sel" : ""}">
-      ${thumb ? `<div class="card-thumb" data-thumb="${l.id}" data-cov="${l.cover_idx || 0}"><span class="src-badge">${esc(l.source || "")}</span><button class="fav-btn ${FAVS.has(l.id) ? "on" : ""}" data-fav title="В избранное">${icon('star')}</button></div>` : ""}
+      ${thumb ? `<div class="card-thumb" data-thumb="${l.id}" data-cov="${l.cover_idx || 0}"><span class="src-badge">${esc(l.source || "")}</span>${select ? `<div class="lc-check ${select.checked ? "on" : ""}" data-check>${select.checked ? "✓" : ""}</div>` : ""}<button class="fav-btn ${FAVS.has(l.id) ? "on" : ""}" data-fav title="В избранное">${icon('heart')}</button></div>` : ""}
       <div class="card-body">
         <div class="row-between" style="align-items:flex-start">
           <div style="min-width:0">
@@ -989,7 +990,6 @@ function listingCard(l, onSend, openable = true, thumb = true, select = null) {
             <div class="listing-meta">${listingMeta(l)}</div>
             ${l.exclusive ? `<div class="excl-line">${icon('crown')} Эксклюзив${l.exclusive_owner ? ": " + esc(l.exclusive_owner) : ""}</div>` : ""}
           </div>
-          ${select ? `<div class="lc-check ${select.checked ? "on" : ""}" data-check>${select.checked ? "✓" : ""}</div>` : ""}
         </div>
         ${(l.geo && l.geo.length) ? `<div style="margin-top:8px">${l.geo.map(g => `<div class="geo-line">${esc(g)}</div>`).join("")}</div>` : ""}
         <div class="btn-row" style="margin-top:12px">
@@ -1048,7 +1048,7 @@ async function renderListingDetail(id) {
     <div class="btn-row" style="margin-top:10px">
       ${l.url ? `<button class="btn btn-soft" id="bOpen">${icon('ext-link')} Открыть пост</button>` : ""}
       <button class="btn btn-soft" id="bBroad">${icon('megaphone')} Рассылка</button>
-      <button class="btn btn-soft fav-toggle ${FAVS.has(l.id) ? "on" : ""}" id="bFav" title="В избранное">${icon('star')}</button>
+      <button class="btn btn-soft fav-toggle ${FAVS.has(l.id) ? "on" : ""}" id="bFav" title="В избранное">${icon('heart')}</button>
     </div>
     <div class="section-title">${icon('comment')} Комментарии</div>
     <div id="cmts" class="cmts"><div class="loader" style="height:50px"><div class="spin"></div></div></div>
@@ -2458,7 +2458,7 @@ async function renderProfile() {
     ${connHtml}
     ${(acc.admin && !acc.owner) ? `<button class="btn btn-primary sm" id="admBtn" style="width:100%;margin:-4px 0 12px">${icon('settings')} Админ-панель</button>` : ""}
     ${arkHtml}
-    <button class="btn btn-soft" id="favBtn" style="width:100%;margin-top:6px">${icon('star')} Избранное</button>
+    <button class="btn btn-soft" id="favBtn" style="width:100%;margin-top:6px">${icon('heart')} Избранное</button>
     <div class="section-title">Оформление</div>
     <div class="seg" id="themeSeg">
       <button data-th="auto">${icon('contrast')} Авто</button>
@@ -2503,12 +2503,12 @@ async function renderFavorites() {
   const wrap = el(`<div class="fade-in"></div>`);
   view.appendChild(wrap);
   if (!ids.length) {
-    wrap.appendChild(el(`<div class="empty"><span class="em-ic">${icon('star')}</span>Пока ничего не в избранном.<br>Жми звёздочку на карточке объекта.</div>`));
+    wrap.appendChild(el(`<div class="empty"><span class="em-ic">${icon('heart')}</span>Пока ничего не в избранном.<br>Жми сердечко на карточке объекта.</div>`));
     return;
   }
   // тянем карточки по id (избранных обычно немного)
   const items = (await Promise.all(ids.map(id => api("/listings/" + id).catch(() => null)))).filter(Boolean);
-  if (!items.length) { wrap.appendChild(el(`<div class="empty"><span class="em-ic">${icon('star')}</span>Объекты больше недоступны</div>`)); return; }
+  if (!items.length) { wrap.appendChild(el(`<div class="empty"><span class="em-ic">${icon('heart')}</span>Объекты больше недоступны</div>`)); return; }
   for (const l of items) {
     wrap.appendChild(listingCard(l, () => sheetClientPicker((cid, cname) => sendListing(l, cid, cname)), true, true));
   }
