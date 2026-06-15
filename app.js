@@ -46,7 +46,7 @@ function openPost(url) {
 }
 
 // показываемая версия (фиксированная семантическая); кэш-бастер ?v=N — отдельно и невидим
-const APP_VERSION = "v1.4.8.8";
+const APP_VERSION = "v1.4.9.0";
 
 /* ── API ──
    Фронт может быть на другом домене (GitHub Pages, чистый HTTPS без заглушки),
@@ -59,7 +59,11 @@ const BASE_HEADERS = { "X-Init-Data": INIT, "ngrok-skip-browser-warning": "true"
 // ── Lucide-иконки (контурные, красятся в currentColor; size = 1em по контексту) ──
 const _ICONS = {"mic": "<path d=\"M12 19v3\"/><path d=\"M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z\"/><path d=\"M19 10v2a7 7 0 0 1-14 0v-2\"/>", "loader": "<path d=\"M21 12a9 9 0 1 1-6.219-8.56\"/>", "square": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\"/>", "percent": "<path d=\"M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z\"/><path d=\"m15 9-6 6\"/><path d=\"M9 9h.01\"/><path d=\"M15 15h.01\"/>", "megaphone": "<path d=\"m3 11 18-5v12L3 14v-3z\"/><path d=\"M11.6 16.8a3 3 0 1 1-5.8-1.6\"/>", "bed": "<path d=\"M2 4v16\"/><path d=\"M2 8h18a2 2 0 0 1 2 2v10\"/><path d=\"M2 17h20\"/><path d=\"M6 8v9\"/>", "wallet": "<path d=\"M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1\"/><path d=\"M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4\"/>", "map-pin": "<path d=\"M20 10c0 4.4-8 12-8 12s-8-7.6-8-12a8 8 0 0 1 16 0Z\"/><circle cx=\"12\" cy=\"10\" r=\"3\"/>", "train": "<rect x=\"4\" y=\"3\" width=\"16\" height=\"16\" rx=\"2\"/><path d=\"M4 11h16\"/><path d=\"M12 3v8\"/><path d=\"m8 19-2 3\"/><path d=\"m18 22-2-3\"/><circle cx=\"8\" cy=\"15\" r=\"1\"/><circle cx=\"16\" cy=\"15\" r=\"1\"/>", "ruler": "<path d=\"M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.4 2.4 0 0 1 0-3.4l2.6-2.6a2.4 2.4 0 0 1 3.4 0Z\"/><path d=\"m14.5 12.5 2-2\"/><path d=\"m11.5 9.5 2-2\"/><path d=\"m8.5 6.5 2-2\"/><path d=\"m17.5 15.5 2-2\"/>", "paw": "<circle cx=\"11\" cy=\"4\" r=\"2\"/><circle cx=\"18\" cy=\"8\" r=\"2\"/><circle cx=\"20\" cy=\"16\" r=\"2\"/><path d=\"M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z\"/>", "compass": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><polygon points=\"16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76\"/>", "plus": "<path d=\"M5 12h14\"/><path d=\"M12 5v14\"/>", "search": "<circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/>", "pencil": "<path d=\"M12 20h9\"/><path d=\"M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z\"/>", "sliders": "<line x1=\"21\" y1=\"4\" x2=\"14\" y2=\"4\"/><line x1=\"10\" y1=\"4\" x2=\"3\" y2=\"4\"/><line x1=\"21\" y1=\"12\" x2=\"12\" y2=\"12\"/><line x1=\"8\" y1=\"12\" x2=\"3\" y2=\"12\"/><line x1=\"21\" y1=\"20\" x2=\"16\" y2=\"20\"/><line x1=\"12\" y1=\"20\" x2=\"3\" y2=\"20\"/><line x1=\"14\" y1=\"2\" x2=\"14\" y2=\"6\"/><line x1=\"8\" y1=\"10\" x2=\"8\" y2=\"14\"/><line x1=\"16\" y1=\"18\" x2=\"16\" y2=\"22\"/>", "settings": "<path d=\"M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>", "footprints": "<path d=\"M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z\"/><path d=\"M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z\"/><path d=\"M16 17h4\"/><path d=\"M4 13h4\"/>", "car": "<path d=\"M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2\"/><circle cx=\"7\" cy=\"17\" r=\"2\"/><path d=\"M9 17h6\"/><circle cx=\"17\" cy=\"17\" r=\"2\"/>", "send": "<path d=\"m22 2-7 20-4-9-9-4Z\"/><path d=\"M22 2 11 13\"/>", "send-h": "<path d=\"M3.7 3a.5.5 0 0 0-.68.62l2.84 7.62a2 2 0 0 1 0 1.4L3.02 20.3a.5.5 0 0 0 .68.62l18-8.5a.5.5 0 0 0 0-.9z\"/><path d=\"M6 12h16\"/>", "ext-link": "<path d=\"M15 3h6v6\"/><path d=\"M10 14 21 3\"/><path d=\"M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6\"/>", "crown": "<path d=\"M11.6 3.3a.5.5 0 0 1 .9 0l2.9 5.6a1 1 0 0 0 1.5.3l4.3-3.7a.5.5 0 0 1 .8.5l-2.8 10.3a1 1 0 0 1-1 .7H5.8a1 1 0 0 1-1-.7L2 6a.5.5 0 0 1 .8-.5l4.3 3.7a1 1 0 0 0 1.5-.3z\"/><path d=\"M5 21h14\"/>", "login": "<path d=\"M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4\"/><polyline points=\"10 17 15 12 10 7\"/><line x1=\"15\" y1=\"12\" x2=\"3\" y2=\"12\"/>", "star": "<polygon points=\"12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2\"/>", "check": "<path d=\"M20 6 9 17l-5-5\"/>", "inbox": "<polyline points=\"22 12 16 12 14 15 10 15 8 12 2 12\"/><path d=\"M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z\"/>", "map": "<path d=\"M14.1 5.5a2 2 0 0 0 1.8 0l3.6-1.8A1 1 0 0 1 21 4.6v12.8a1 1 0 0 1-.55.9l-4.55 2.3a2 2 0 0 1-1.8 0l-4.2-2.1a2 2 0 0 0-1.8 0l-3.6 1.8A1 1 0 0 1 3 19.4V6.6a1 1 0 0 1 .55-.9l4.55-2.3a2 2 0 0 1 1.8 0z\"/><path d=\"M15 5.8v15\"/><path d=\"M9 3.2v15\"/>", "refresh": "<path d=\"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8\"/><path d=\"M21 3v5h-5\"/><path d=\"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16\"/><path d=\"M3 21v-5h5\"/>", "smartphone": "<rect width=\"14\" height=\"20\" x=\"5\" y=\"2\" rx=\"2\"/><path d=\"M12 18h.01\"/>", "building2": "<path d=\"M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z\"/><path d=\"M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2\"/><path d=\"M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2\"/><path d=\"M10 6h4\"/><path d=\"M10 10h4\"/><path d=\"M10 14h4\"/>", "building": "<rect width=\"16\" height=\"20\" x=\"4\" y=\"2\" rx=\"2\"/><path d=\"M9 22v-4h6v4\"/><path d=\"M8 6h.01\"/><path d=\"M16 6h.01\"/><path d=\"M12 6h.01\"/><path d=\"M12 10h.01\"/><path d=\"M8 10h.01\"/><path d=\"M16 10h.01\"/>", "clock": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><polyline points=\"12 6 12 12 16 14\"/>", "pin": "<path d=\"M12 17v5\"/><path d=\"M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1Z\"/>", "moon": "<path d=\"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z\"/>", "party": "<path d=\"M5.8 11.3 2 22l10.7-3.79\"/><path d=\"M4 3h.01\"/><path d=\"M22 8h.01\"/><path d=\"M15 2h.01\"/><path d=\"m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10\"/><path d=\"m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11-.11.7-.72 1.22-1.43 1.22H17\"/><path d=\"M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z\"/>", "alert": "<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/>", "ban": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m4.9 4.9 14.2 14.2\"/>", "lock": "<rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\"/><path d=\"M7 11V7a5 5 0 0 1 10 0v4\"/>", "image": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\"/><circle cx=\"9\" cy=\"9\" r=\"2\"/><path d=\"m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21\"/>", "layers": "<path d=\"M12.8 2.2a2 2 0 0 0-1.6 0L2.6 6.1a1 1 0 0 0 0 1.8l8.6 3.9a2 2 0 0 0 1.6 0l8.6-3.9a1 1 0 0 0 0-1.8Z\"/><path d=\"M2 12a1 1 0 0 0 .6.9l8.6 3.9a2 2 0 0 0 1.6 0l8.6-3.9A1 1 0 0 0 22 12\"/><path d=\"M2 17a1 1 0 0 0 .6.9l8.6 3.9a2 2 0 0 0 1.6 0l8.6-3.9A1 1 0 0 0 22 17\"/>", "shower": "<path d=\"m4 4 2.5 2.5\"/><path d=\"M13.5 6.5a4.95 4.95 0 0 0-7 7\"/><path d=\"M15 5 5 15\"/><path d=\"M14 17v.01\"/><path d=\"M10 16v.01\"/><path d=\"M13 13v.01\"/><path d=\"M16 10v.01\"/><path d=\"M11 20v.01\"/><path d=\"M17 14v.01\"/>", "briefcase": "<path d=\"M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16\"/><rect width=\"20\" height=\"14\" x=\"2\" y=\"6\" rx=\"2\"/>", "phone": "<path d=\"M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7 12.8 12.8 0 0 0 .7 2.8 2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4 12.8 12.8 0 0 0 2.8.7A2 2 0 0 1 22 16.9z\"/>", "folder": "<path d=\"M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z\"/>", "type": "<polyline points=\"4 7 4 4 20 4 20 7\"/><line x1=\"9\" y1=\"20\" x2=\"15\" y2=\"20\"/><line x1=\"12\" y1=\"4\" x2=\"12\" y2=\"20\"/>", "help": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3\"/><path d=\"M12 17h.01\"/>", "users": "<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/>", "chart": "<path d=\"M3 3v18h18\"/><path d=\"M18 17V9\"/><path d=\"M13 17V5\"/><path d=\"M8 17v-3\"/>", "sun": "<circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 2v2\"/><path d=\"M12 20v2\"/><path d=\"m4.93 4.93 1.41 1.41\"/><path d=\"m17.66 17.66 1.41 1.41\"/><path d=\"M2 12h2\"/><path d=\"M20 12h2\"/><path d=\"m6.34 17.66-1.41 1.41\"/><path d=\"m19.07 4.93-1.41 1.41\"/>", "contrast": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 18a6 6 0 0 0 0-12v12z\"/>"};
 _ICONS['eraser']='<path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/>';_ICONS['download']='<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>';
-_ICONS['x']='<path d="M18 6 6 18"/><path d="m6 6 12 12"/>';function icon(n){return '<svg class="lic" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.16em;flex:none" aria-hidden="true">'+(_ICONS[n]||'')+'</svg>';}
+_ICONS['x']='<path d="M18 6 6 18"/><path d="m6 6 12 12"/>';
+_ICONS['bell']='<path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.41 5.956-2.738 7.326"/>';
+_ICONS['trash']='<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>';
+_ICONS['comment']='<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>';
+function icon(n){return '<svg class="lic" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.16em;flex:none" aria-hidden="true">'+(_ICONS[n]||'')+'</svg>';}
 
 
 async function api(path, opts = {}) {
@@ -320,7 +324,42 @@ function switchTab(tab) {
   else if (tab === "profile") go(renderProfile);
 }
 document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => switchTab(t.dataset.tab)));
-view.addEventListener("scroll", () => $("#topbar").classList.toggle("scrolled", view.scrollTop > 6));
+
+/* ── Reveal-on-scroll меню (как в нативных приложениях): листаешь вниз — «менюшка»
+   с поиском/фильтрами прячется; чуть листнул вверх — возвращается. Один общий
+   обработчик скролла, активное меню задаётся через setRevealMenu() при рендере. ── */
+let _revealEl = null, _revealLastY = 0;
+function setRevealMenu(elm) {
+  _revealEl = elm || null;
+  _revealLastY = view.scrollTop;
+  if (elm) { elm.classList.add("sticky-menu"); elm.classList.remove("hdr-hidden"); }
+}
+view.addEventListener("scroll", () => {
+  $("#topbar").classList.toggle("scrolled", view.scrollTop > 6);
+  if (_revealEl && _revealEl.isConnected) {
+    const y = view.scrollTop;
+    if (y < 40) _revealEl.classList.remove("hdr-hidden");           // у самого верха — всегда видно
+    else if (y > _revealLastY + 6) _revealEl.classList.add("hdr-hidden");    // вниз → прячем
+    else if (y < _revealLastY - 6) _revealEl.classList.remove("hdr-hidden"); // вверх → показываем
+    _revealLastY = y;
+  }
+});
+
+/* ── Избранное агента (звёзды на карточках) — единый набор id, грузим один раз ── */
+const FAVS = new Set();
+async function loadFavs() {
+  try { const r = await api("/favorites"); FAVS.clear(); (r.ids || []).forEach(i => FAVS.add(i)); }
+  catch (e) {}
+}
+async function toggleFav(id, btn) {
+  const was = FAVS.has(id);
+  haptic();
+  try {
+    if (was) { await api("/favorites/" + id, { method: "DELETE" }); FAVS.delete(id); }
+    else { await api("/favorites/" + id, { method: "POST" }); FAVS.add(id); }
+    if (btn) btn.classList.toggle("on", !was);
+  } catch (e) { toast("Не сохранить", "err"); }
+}
 
 /* ════════════════════════ HOME ════════════════════════ */
 async function renderHome() {
@@ -636,12 +675,15 @@ async function renderListings() {
   } catch (e) {}
   view.innerHTML = "";
   const wrap = el(`<div class="fade-in"></div>`);
+  // «менюшка» поиска+фильтров — sticky, прячется при скролле вниз / возвращается при вверх
+  const menu = el(`<div></div>`);
+  wrap.appendChild(menu);
   // строка поиска — по тапу открывает полноценное меню поиска и фильтров
   const searchBar = el(`<button class="search-bar" id="oSearch"><span class="sb-ic">${icon('search')}</span><span>Поиск вариантов и фильтры…</span></button>`);
-  wrap.appendChild(searchBar);
+  menu.appendChild(searchBar);
   // единая панель фильтров (та же, что в «Поиске»)
   const filterBar = el(`<div style="margin:0 0 12px"></div>`);
-  wrap.appendChild(filterBar);
+  menu.appendChild(filterBar);
   const on = filtersActive(listingsFilter);
   if (!listings.length) {
     wrap.appendChild(el(`<div class="empty"><span class="em-ic">${icon('inbox')}</span>${on ? "Под фильтры ничего не нашлось" : "Здесь пока пусто"}</div>`));
@@ -714,6 +756,7 @@ async function renderListings() {
     onAdvClear: () => { listingsFilter = null; renderListings(); },
     onChange: () => renderListings(),
   }));
+  setRevealMenu(menu);  // включаем reveal-on-scroll для «менюшки»
 }
 
 /* ════════════════════════ КАРТА (обвести область) ════════════════════════ */
@@ -936,7 +979,7 @@ async function renderMap(source = "all", pick = null, initialPolys = null) {
 function listingCard(l, onSend, openable = true, thumb = true, select = null) {
   const card = el(`
     <div class="card pad0 ${openable ? "tap" : ""} ${select && select.checked ? "lc-sel" : ""}">
-      ${thumb ? `<div class="card-thumb" data-thumb="${l.id}" data-cov="${l.cover_idx || 0}"><span class="src-badge">${esc(l.source || "")}</span></div>` : ""}
+      ${thumb ? `<div class="card-thumb" data-thumb="${l.id}" data-cov="${l.cover_idx || 0}"><span class="src-badge">${esc(l.source || "")}</span><button class="fav-btn ${FAVS.has(l.id) ? "on" : ""}" data-fav title="В избранное">${icon('star')}</button></div>` : ""}
       <div class="card-body">
         <div class="row-between" style="align-items:flex-start">
           <div style="min-width:0">
@@ -956,6 +999,8 @@ function listingCard(l, onSend, openable = true, thumb = true, select = null) {
       </div>
     </div>`);
   if (thumb && thumbObserver) thumbObserver.observe(card.querySelector(".card-thumb"));
+  const favB = card.querySelector("[data-fav]");
+  if (favB) favB.onclick = (e) => { e.stopPropagation(); toggleFav(l.id, favB); };
   if (select) {
     const chk = card.querySelector("[data-check]");
     if (chk) chk.onclick = (e) => { e.stopPropagation(); haptic(); select.onToggle(); };
@@ -1002,6 +1047,13 @@ async function renderListingDetail(id) {
     <div class="btn-row" style="margin-top:10px">
       ${l.url ? `<button class="btn btn-soft" id="bOpen">${icon('ext-link')} Открыть пост</button>` : ""}
       <button class="btn btn-soft" id="bBroad">${icon('megaphone')} Рассылка</button>
+      <button class="btn btn-soft fav-toggle ${FAVS.has(l.id) ? "on" : ""}" id="bFav" title="В избранное">${icon('star')}</button>
+    </div>
+    <div class="section-title">${icon('comment')} Комментарии</div>
+    <div id="cmts" class="cmts"><div class="loader" style="height:50px"><div class="spin"></div></div></div>
+    <div class="cmt-form">
+      <textarea class="input" id="cmtInput" rows="2" placeholder="Комментарий для команды…"></textarea>
+      <button class="btn btn-green sm" id="cmtSend">${icon('send-h')} Отправить</button>
     </div>`;
   view.appendChild(wrap);
   // обложка (через fetch+blob, чтобы обойти заглушку ngrok) — сначала мелкое, потом резкое
@@ -1044,6 +1096,47 @@ async function renderListingDetail(id) {
   $("#bBroad").onclick = () => { haptic(); sheetBroadcast(l); };
   const ob = $("#bOpen"); if (ob) ob.onclick = () => { haptic(); openPost(l.url); };
   const eb = $("#bEdit"); if (eb) eb.onclick = () => { haptic(); sheetEditListing(l); };
+  const fb = $("#bFav"); if (fb) fb.onclick = () => toggleFav(l.id, fb);
+  loadComments(id);
+  $("#cmtSend").onclick = async () => {
+    const ta = $("#cmtInput"); const text = (ta.value || "").trim();
+    if (!text) return toast("Пустой комментарий");
+    haptic(); $("#cmtSend").disabled = true;
+    try { await api(`/listings/${id}/comments`, { method: "POST", body: { text } }); ta.value = ""; await loadComments(id); }
+    catch (e) { toast("Не отправить", "err"); }
+    finally { $("#cmtSend").disabled = false; }
+  };
+}
+
+// Комментарии объекта (общие для всех агентов, с именем автора)
+async function loadComments(id) {
+  const box = $("#cmts"); if (!box) return;
+  let data; try { data = await api(`/listings/${id}/comments`); } catch (e) { box.innerHTML = `<div class="muted" style="padding:6px 2px">Не загрузить комментарии</div>`; return; }
+  const me = data.me; const list = data.comments || [];
+  if (!list.length) { box.innerHTML = `<div class="muted" style="padding:6px 2px">Пока нет комментариев. Будь первым.</div>`; return; }
+  box.innerHTML = "";
+  for (const c of list) {
+    const mine = c.owner_id === me;
+    const row = el(`<div class="cmt">
+      <div class="cmt-head"><span class="cmt-author">${esc(c.author_name || "Агент")}</span><span class="cmt-date">${fmtDate(c.created_at)}</span>${mine ? `<button class="cmt-del" data-del title="Удалить">${icon('trash')}</button>` : ""}</div>
+      <div class="cmt-text">${esc(c.text || "")}</div>
+    </div>`);
+    const db = row.querySelector("[data-del]");
+    if (db) db.onclick = async () => { haptic(); try { await api(`/comments/${c.id}`, { method: "DELETE" }); await loadComments(id); } catch (e) { toast("Не удалить", "err"); } };
+    box.appendChild(row);
+  }
+}
+
+// Короткая дата для комментов/уведомлений: «15.06 14:57» (или «вчера», «сегодня»)
+function fmtDate(iso) {
+  try {
+    const d = new Date(iso); const now = new Date();
+    const hh = String(d.getHours()).padStart(2, "0"), mm = String(d.getMinutes()).padStart(2, "0");
+    const sameDay = d.toDateString() === now.toDateString();
+    if (sameDay) return `сегодня ${hh}:${mm}`;
+    const dd = String(d.getDate()).padStart(2, "0"), mo = String(d.getMonth() + 1).padStart(2, "0");
+    return `${dd}.${mo} ${hh}:${mm}`;
+  } catch (e) { return ""; }
 }
 const kv = (k, v) => `<div class="kv"><span class="k">${esc(k)}</span><span class="v">${esc(String(v))}</span></div>`;
 
@@ -1673,6 +1766,7 @@ async function renderSearch() {
   };
   $("#lidGo").onclick = openById;
   $("#lidInput").addEventListener("keydown", (e) => { if (e.key === "Enter") openById(); });
+  setRevealMenu($("#sFilterBar"));  // фильтры прячутся/появляются при скролле — как в «Объекты»
   if (searchState.results.length) paintSearch();
 }
 async function runSearch() {
@@ -2362,6 +2456,7 @@ async function renderProfile() {
     </div>
     ${connHtml}
     ${arkHtml}
+    <button class="btn btn-soft" id="favBtn" style="width:100%;margin-top:6px">${icon('star')} Избранное</button>
     <div class="section-title">Оформление</div>
     <div class="seg" id="themeSeg">
       <button data-th="auto">${icon('contrast')} Авто</button>
@@ -2379,6 +2474,7 @@ async function renderProfile() {
     mark();
     themeSeg.querySelectorAll("button").forEach(b => b.onclick = () => { haptic(); setThemePref(b.dataset.th); mark(); });
   }
+  const favBtn = $("#favBtn"); if (favBtn) favBtn.onclick = () => { haptic(); go(renderFavorites); };
   const onbR = $("#onbReplay"); if (onbR) onbR.onclick = () => { haptic(); startOnboarding(true); };
   const arkC = $("#arkConn"); if (arkC) arkC.onclick = () => { haptic(); sheetConnectArendok(); };
   const arkD = $("#arkDisc"); if (arkD) arkD.onclick = async () => {
@@ -2393,6 +2489,27 @@ async function renderProfile() {
     haptic(); try { await api("/account/disconnect", { method: "POST", body: {} }); toast("Аккаунт отключён", "ok"); renderProfile(); }
     catch (e) { toast("Ошибка", "err"); }
   };
+}
+
+async function renderFavorites() {
+  setTitle("Избранное", "сохранённые объекты");
+  removeFab();
+  loading();
+  await loadFavs();
+  const ids = [...FAVS];
+  view.innerHTML = "";
+  const wrap = el(`<div class="fade-in"></div>`);
+  view.appendChild(wrap);
+  if (!ids.length) {
+    wrap.appendChild(el(`<div class="empty"><span class="em-ic">${icon('star')}</span>Пока ничего не в избранном.<br>Жми звёздочку на карточке объекта.</div>`));
+    return;
+  }
+  // тянем карточки по id (избранных обычно немного)
+  const items = (await Promise.all(ids.map(id => api("/listings/" + id).catch(() => null)))).filter(Boolean);
+  if (!items.length) { wrap.appendChild(el(`<div class="empty"><span class="em-ic">${icon('star')}</span>Объекты больше недоступны</div>`)); return; }
+  for (const l of items) {
+    wrap.appendChild(listingCard(l, () => sheetClientPicker((cid, cname) => sendListing(l, cid, cname)), true, true));
+  }
 }
 
 function sheetConnectAccount() {
@@ -2655,8 +2772,45 @@ async function refreshNotice() {
 refreshNotice();
 setInterval(refreshNotice, 60000);
 
+/* ── Колокольчик: счётчик непрочитанных + лента уведомлений в шторке ── */
+async function refreshBell() {
+  try {
+    const r = await api("/notifications");
+    const badge = document.getElementById("bellBadge");
+    if (!badge) return;
+    const n = r.unread || 0;
+    if (n > 0) { badge.textContent = n > 99 ? "99+" : String(n); badge.classList.remove("hidden"); }
+    else badge.classList.add("hidden");
+  } catch (e) {}
+}
+async function openNotifications() {
+  haptic();
+  const b = openSheet(`<div class="sheet-title">${icon('bell')} Уведомления</div>
+    <div id="notifList" class="notif-list"><div class="loader" style="height:50px"><div class="spin"></div></div></div>`);
+  let r; try { r = await api("/notifications"); } catch (e) { b.querySelector("#notifList").innerHTML = `<div class="muted" style="padding:8px">Не загрузить</div>`; return; }
+  const list = r.items || [];
+  const box = b.querySelector("#notifList");
+  if (!list.length) { box.innerHTML = `<div class="muted" style="padding:14px 8px;text-align:center">Пока нет уведомлений</div>`; }
+  else {
+    box.innerHTML = "";
+    for (const it of list) {
+      box.appendChild(el(`<div class="notif ${it.read ? "" : "unread"}">
+        <div class="notif-text">${esc(it.text || "")}</div>
+        <div class="notif-date">${fmtDate(it.created_at)}</div>
+      </div>`));
+    }
+  }
+  // открыл ленту → всё прочитано
+  try { await api("/notifications/read", { method: "POST", body: {} }); } catch (e) {}
+  refreshBell();
+}
+document.getElementById("bellBtn")?.addEventListener("click", openNotifications);
+refreshBell();
+setInterval(refreshBell, 60000);
+
 /* ── start ── */
 switchTab("home");
+loadFavs();
 (async () => {
   let done = false;
   try { done = localStorage.getItem(ONB_KEY) === "1"; } catch (e) {}
