@@ -46,7 +46,7 @@ function openPost(url) {
 }
 
 // показываемая версия (фиксированная семантическая); кэш-бастер ?v=N — отдельно и невидим
-const APP_VERSION = "v1.4.9.0";
+const APP_VERSION = "v1.4.9.1";
 
 /* ── API ──
    Фронт может быть на другом домене (GitHub Pages, чистый HTTPS без заглушки),
@@ -386,7 +386,7 @@ async function renderHome() {
       <button class="quick-btn" id="qSearch"><span class="qi">${icon('search')}</span><span class="qt">Поиск вариантов</span><span class="qs">по всей базе</span></button>
       <button class="quick-btn" id="qHist"><span class="qi">${icon('refresh')}</span><span class="qt">История отправок</span><span class="qs">что уже ушло</span></button>
       <button class="quick-btn" id="qScan"><span class="qi">${icon('download')}</span><span class="qt">Собрать объявления</span><span class="qs">за период</span></button>
-      <button class="quick-btn" id="qCov"><span class="qi">${icon('chart')}</span><span class="qt">Охват по чатам</span><span class="qs">что собрано</span></button>
+      <button class="quick-btn" id="qFav"><span class="qi">${icon('star')}</span><span class="qt">Избранное</span><span class="qs">сохранённые объекты</span></button>
     </div>
     ${(!acc.connected) ? `
     <div class="card" id="connCard" style="border-color:var(--accent);margin-top:6px">
@@ -401,7 +401,7 @@ async function renderHome() {
   $("#qSearch").onclick = () => { haptic(); go(renderSearch); };
   $("#qHist").onclick = () => { haptic(); go(renderHistory); };
   $("#qScan").onclick = () => sheetScan();
-  $("#qCov").onclick = () => sheetCoverage();
+  $("#qFav").onclick = () => { haptic(); go(renderFavorites); };
   const connBtn = $("#connBtn"); if (connBtn) connBtn.onclick = () => { haptic(); switchTab("profile"); };
 }
 
@@ -674,16 +674,17 @@ async function renderListings() {
     listHasMore = !!r.has_more;
   } catch (e) {}
   view.innerHTML = "";
-  const wrap = el(`<div class="fade-in"></div>`);
-  // «менюшка» поиска+фильтров — sticky, прячется при скролле вниз / возвращается при вверх
+  // «менюшка» поиска+фильтров — sticky, прячется при скролле вниз / возвращается при вверх.
+  // ВАЖНО: menu — ПРЯМОЙ ребёнок #view, НЕ внутри .fade-in: у .fade-in анимация с transform,
+  // а transform у родителя ломает position:sticky (родитель становится containing block).
   const menu = el(`<div></div>`);
-  wrap.appendChild(menu);
-  // строка поиска — по тапу открывает полноценное меню поиска и фильтров
   const searchBar = el(`<button class="search-bar" id="oSearch"><span class="sb-ic">${icon('search')}</span><span>Поиск вариантов и фильтры…</span></button>`);
   menu.appendChild(searchBar);
   // единая панель фильтров (та же, что в «Поиске»)
   const filterBar = el(`<div style="margin:0 0 12px"></div>`);
   menu.appendChild(filterBar);
+  view.appendChild(menu);
+  const wrap = el(`<div class="fade-in"></div>`);
   const on = filtersActive(listingsFilter);
   if (!listings.length) {
     wrap.appendChild(el(`<div class="empty"><span class="em-ic">${icon('inbox')}</span>${on ? "Под фильтры ничего не нашлось" : "Здесь пока пусто"}</div>`));
@@ -797,7 +798,7 @@ function pointInPoly(lat, lng, poly) {
 }
 
 async function renderMap(source = "all", pick = null, initialPolys = null) {
-  setTitle(pick ? "Выбор области" : "Карта", "обведите район пальцем");
+  setTitle(pick ? "Область" : "Карта", "обведите район пальцем");
   removeFab();
   loading();
   try { await ensureLeaflet(); } catch (e) { return toast("Карта не загрузилась (проверь интернет)", "err"); }
@@ -1325,7 +1326,7 @@ function fmtSent(s) {
 }
 
 async function renderHistory() {
-  setTitle("История отправок", "что уже ушло клиентам");
+  setTitle("История", "что уже ушло клиентам");
   removeFab();
   loading();
   let items = []; try { items = await api("/history"); } catch (e) {}
@@ -1714,7 +1715,7 @@ function filterControlsEl(ctx) {
   return box;
 }
 async function renderSearch() {
-  setTitle("Поиск вариантов", "по всей базе объявлений");
+  setTitle("Поиск", "по всей базе объявлений");
   removeFab();
   view.innerHTML = "";
   const wrap = el(`<div class="fade-in"></div>`);
@@ -1766,7 +1767,7 @@ async function renderSearch() {
   };
   $("#lidGo").onclick = openById;
   $("#lidInput").addEventListener("keydown", (e) => { if (e.key === "Enter") openById(); });
-  setRevealMenu($("#sFilterBar"));  // фильтры прячутся/появляются при скролле — как в «Объекты»
+  setRevealMenu(null);  // в «Поиске» reveal не используем (фильтры остаются в потоке)
   if (searchState.results.length) paintSearch();
 }
 async function runSearch() {
