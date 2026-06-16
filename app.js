@@ -100,6 +100,17 @@ async function api(path, opts = {}) {
   throw lastErr;
 }
 
+// Прогрев тяжёлых ассетов объекта (подпись+медиа+PDF+предзаливка file_id) ДО отправки,
+// чтобы «Отправить» сработало мгновенно. Дедуп по сессии: один объект греем один раз
+// (бэк всё равно кэширует, но лишний POST через туннель ни к чему). Бэк сам уступает
+// живым отправкам и держит лимит скачиваний — флудить не должен.
+const _warmed = new Set();
+function prewarmListing(id) {
+  if (!id || _warmed.has(id)) return;
+  _warmed.add(id);
+  api(`/listings/${id}/prewarm`, { method: "POST", body: {} }).catch(() => { _warmed.delete(id); });
+}
+
 // Картинку нельзя грузить простым <img src> (cross-origin не добавит заголовок и
 // упрётся в заглушку ngrok). Тянем через fetch с заголовком и отдаём blob-URL.
 // Кэшируем в Cache Storage по URL → при повторном открытии/прокрутке мгновенно,
@@ -655,6 +666,9 @@ async function renderMatch(client, page = 0, acc = null, filter = null) {
     };
   }
   acc._allListings.push(...data.listings);
+  // греем верхние варианты подбора заранее — их агент вероятнее всего и отправит.
+  // только 1-я страница и только топ-4: это кандидаты «на виду», без нагрузки на юзербот.
+  if (page === 0) (data.listings || []).slice(0, 4).forEach(l => prewarmListing(l.id));
   acc._rerender();
   const oldMore = acc.querySelector(".more-btn"); if (oldMore) oldMore.remove();
   if (data.has_more) {
@@ -1018,7 +1032,12 @@ function listingCard(l, onSend, openable = true, thumb = true, select = null) {
   if (favB) favB.onclick = (e) => { e.stopPropagation(); toggleFav(l.id, favB); };
   if (select) {
     const chk = card.querySelector("[data-check]");
-    if (chk) chk.onclick = (e) => { e.stopPropagation(); haptic(); select.onToggle(); };
+    if (chk) chk.onclick = (e) => {
+      e.stopPropagation(); haptic();
+      // переход в «выбрано» (select.checked — состояние ДО клика) → греем ассеты заранее
+      if (!select.checked) prewarmListing(l.id);
+      select.onToggle();
+    };
   }
   if (onSend) card.querySelector("[data-send]").onclick = (e) => { e.stopPropagation(); haptic(); onSend(); };
   const openBtn = card.querySelector("[data-open]");
