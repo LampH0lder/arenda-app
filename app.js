@@ -1029,7 +1029,7 @@ function listingCard(l, onSend, openable = true, thumb = true, select = null) {
 }
 
 async function renderListingDetail(id) {
-  removeFab(); setTitle("Объект", "детали объявления");
+  removeFab(); setTitle("Объект");
   loading();
   let l; try { l = await api("/listings/" + id); } catch (e) { return toast("Не загрузить", "err"); }
   view.innerHTML = ""; view.scrollTop = 0;
