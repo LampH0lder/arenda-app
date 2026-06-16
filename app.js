@@ -52,7 +52,7 @@ const APP_VERSION = "v1.5.1";
    Фронт может быть на другом домене (GitHub Pages, чистый HTTPS без заглушки),
    а данные брать с ngrok. На github.io берём API с ngrok; иначе — со своего origin.
    Заголовок ngrok-skip-browser-warning снимает заглушку для fetch/картинок. */
-const NGROK_BASE = "https://151.244.246.58.sslip.io";
+const NGROK_BASE = "https://arendbot.ru";
 const API_BASE = location.hostname.endsWith("github.io") ? NGROK_BASE : "";
 const BASE_HEADERS = { "X-Init-Data": INIT, "ngrok-skip-browser-warning": "true" };
 
