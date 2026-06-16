@@ -147,11 +147,12 @@ body{
 .stat.p .glow{background:var(--pet);}
 
 /* ── Quick actions ── */
-.quick{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.quick{display:grid;grid-template-columns:1fr 1fr;gap:12px;grid-auto-rows:1fr;}
 .quick-btn{
   background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
   padding:18px 16px;text-align:left;color:var(--txt);cursor:pointer;
   display:flex;flex-direction:column;gap:8px;transition:transform .1s,border-color .18s;
+  height:100%;box-sizing:border-box;
 }
 .quick-btn:active{transform:scale(.97);}
 .quick-btn .qi{font-size:22px;}
@@ -231,7 +232,7 @@ body{
 .input,textarea.input{
   width:100%;background:var(--bg-soft);border:1px solid var(--line);
   border-radius:12px;padding:13px 14px;color:var(--txt);font-size:15px;
-  font-family:inherit;transition:border-color .18s;
+  font-family:inherit;transition:border-color .18s;resize:none;
 }
 .input:focus,textarea.input:focus{outline:none;border-color:var(--accent);}
 textarea.input{resize:vertical;min-height:70px;}
@@ -527,7 +528,7 @@ html,body,#app,#view{max-width:100%;overflow-x:hidden;}
   flex:0 0 auto;background:none;border:none;color:var(--accent-2);
   font-size:32px;line-height:1;font-weight:400;padding:0 8px 0 0;cursor:pointer;
 }
-.back-btn.hidden{display:none;}
+.back-btn.hidden{visibility:hidden;}
 .back-btn:active{opacity:.55;}
 
 /* ── 4 вкладки → шрифт крупнее ── */
@@ -981,3 +982,22 @@ body{font-family:'Onest',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helv
   background:linear-gradient(135deg,#7c5cfc,#10c39c 50%,#7c5cfc);
   background-size:300% 300%;
 }
+
+/* ── Правки пакет 16.06 ── */
+/* Кнопки в карточке — не переносить текст */
+.card-body .btn{white-space:nowrap;}
+/* Кнопки в sel-bar — не переносить */
+.sel-bar .btn{white-space:nowrap;}
+/* Поля в шторке — бОльший отступ */
+.sheet-body .field{margin-bottom:20px;}
+/* Glow на btn-green в detail — убрать лишнее расстояние (mб вниз, не тень) */
+#bSend{margin-bottom:4px;}
+/* cmt-form: кнопка отправки узкая (иконка) */
+.cmt-form .btn{padding:13px 16px;}
+/* Чипы комнат: sm-паддинг чтобы влезли в 1 строку */
+#fRooms .chsel{padding:8px 11px;font-size:13.5px;}
+/* Минут чипсы: такие же */
+#fGeoMin .chsel{padding:8px 12px;font-size:13px;}
+/* Кнопки фильтров низа — правки layout */
+.filter-apply-row{display:flex;gap:8px;margin-top:20px;align-items:center;}
+.filter-apply-row .btn-reset-icon{flex:0 0 auto;padding:10px 14px;}
