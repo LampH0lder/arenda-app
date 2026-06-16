@@ -750,16 +750,18 @@ body:has(.sel-bar:not(.hidden)) #view{padding-bottom:calc(var(--safe-bot) + 150p
 #view:has(> .search-wrap){padding-top:0;}
 .search-wrap{padding-top:12px;}
 
-/* ── Кнопка «наверх»: всплывает при долгом скролле. Слева снизу, чтобы не пересекаться
-   с FAB (он справа). .hidden тут — фейд, а не display:none. ── */
+/* ── Кнопка «наверх»: всплывает при долгом скролле. Справа снизу; если на экране есть
+   FAB (он тоже справа) — поднимаемся над ним. .hidden тут — фейд, не display:none. ── */
 .to-top{
-  position:fixed;left:16px;bottom:calc(var(--safe-bot) + 78px);
+  position:fixed;right:16px;bottom:calc(var(--safe-bot) + 78px);
   width:44px;height:44px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
   background:var(--card);color:var(--txt);border:1px solid var(--line);
   box-shadow:0 6px 18px rgba(0,0,0,.28);z-index:24;cursor:pointer;
   opacity:1;transform:translateY(0);transition:opacity .2s ease,transform .2s ease;
 }
+/* когда есть FAB — кнопка «наверх» встаёт над ним (FAB 54px + зазор) */
+body:has(#fab) .to-top{bottom:calc(var(--safe-bot) + 144px);}
 .to-top:active{transform:scale(.92);}
 .to-top.hidden{opacity:0;transform:translateY(14px);pointer-events:none;}
 
