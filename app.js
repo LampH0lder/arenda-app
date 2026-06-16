@@ -500,7 +500,7 @@ async function renderClientDetail(id) {
   wrap.innerHTML = `
     <div class="detail-hero">
       <div class="avatar" data-av="${c.id}">${esc(initials(c.name))}</div>
-      <div><h2>${esc(c.name)}</h2><div class="sub">${esc(contact)} · ${STATUS_RU[c.status] || ""}</div></div>
+      <div style="min-width:0"><h2 style="display:flex;align-items:center;gap:7px;min-width:0"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.name)}</span><button id="bEditName" aria-label="Изменить имя" style="flex:none;background:none;border:none;color:var(--accent-2);padding:2px;cursor:pointer;display:inline-flex">${icon('pencil')}</button></h2><div class="sub">${esc(contact)} · ${STATUS_RU[c.status] || ""}</div></div>
     </div>
     <div class="chips" style="margin-bottom:18px">
       ${c.rooms ? `<span class="chip accent">${icon('bed')} ${esc(roomsLabel(c.rooms))}</span>` : ""}
@@ -527,6 +527,7 @@ async function renderClientDetail(id) {
   $("#bMatch").onclick = () => { haptic(); go(() => renderMatch(c)); };
   $("#bEdit").onclick = () => sheetEditCriteria(c);
   $("#bStatus").onclick = () => sheetStatus(c);
+  $("#bEditName").onclick = () => sheetEditClient(c);
   const addGeoBtn = wrap.querySelector("#bAddGeo");
   if (addGeoBtn) addGeoBtn.onclick = () => { haptic(); sheetAddGeo(c.id, () => renderClientDetail(c.id)); };
   wrap.querySelectorAll(".geo-del").forEach(x => x.onclick = async () => {
@@ -2084,6 +2085,35 @@ function sheetAddClient() {
       closeSheet(); notify("success"); toast("Клиент создан ✓", "ok");
       switchTab("clients");
     } catch (e) { saveBtn.disabled = false; saveBtn.textContent = "Создать клиента"; toast("Ошибка: " + e.message, "err"); }
+  };
+}
+
+// Правка имени/контакта клиента (критерии — отдельно, через «Критерии»).
+function sheetEditClient(c) {
+  const curUser = c.username ? "@" + c.username : (c.telegram_id ? String(c.telegram_id) : "");
+  const b = openSheet(`<div class="sheet-title">Изменить клиента</div>
+    <div class="field"><label>Имя</label><input class="input" id="eName" value="${esc(c.name || "")}" placeholder="Например, Вероника"></div>
+    <div class="field"><label>Telegram</label><input class="input" id="eUser" value="${esc(curUser)}" placeholder="@username или id"></div>
+    <button class="btn btn-primary" id="eSave">Сохранить</button>`);
+  const saveBtn = b.querySelector("#eSave");
+  saveBtn.onclick = async () => {
+    if (saveBtn.disabled) return;
+    const name = b.querySelector("#eName").value.trim();
+    if (!name) return toast("Введите имя");
+    haptic();
+    saveBtn.disabled = true; saveBtn.textContent = "Сохраняю…";
+    const body = { name };
+    const u = b.querySelector("#eUser").value.trim();
+    if (u) {
+      const raw = u.replace("@", "");
+      if (/^-?\d+$/.test(raw)) { body.telegram_id = parseInt(raw); body.telegram_username = null; }
+      else { body.telegram_username = raw; body.telegram_id = null; }
+    } else { body.telegram_id = null; body.telegram_username = null; }
+    try {
+      await api("/clients/" + c.id, { method: "PATCH", body });
+      closeSheet(); notify("success"); toast("Сохранено ✓", "ok");
+      renderClientDetail(c.id);
+    } catch (e) { saveBtn.disabled = false; saveBtn.textContent = "Сохранить"; toast("Ошибка: " + e.message, "err"); }
   };
 }
 
