@@ -736,14 +736,14 @@ body:has(.sel-bar:not(.hidden)) #view{padding-bottom:calc(var(--safe-bot) + 150p
 /* ════════ Reveal-on-scroll «менюшка» (поиск+фильтры) ════════ */
 .sticky-menu{
   position:sticky;top:0;z-index:15;background:var(--bg);
-  padding:0 0 6px;margin-top:0;
+  padding:10px 0 6px;margin-top:0;   /* воздух СВЕРХУ внутри менюшки (не лип к шапке) */
   transition:transform .25s ease,opacity .25s ease;
 }
 .sticky-menu.hdr-hidden{transform:translateY(-135%);opacity:0;pointer-events:none;}
-/* Зазор 6px между шапкой и поиском: отрицательный margin у .sticky-menu схлопывается
-   и НЕ срабатывает. Точечно убираем верхний padding #view ТОЛЬКО на вкладках, где
-   первый элемент — sticky-менюшка (Объекты/Поиск). Прочие вкладки сохраняют 6px. */
-#view:has(> .sticky-menu:first-child){padding-top:10px;}
+/* Менюшку клеим ВПЛОТНУЮ к шапке (padding-top:0), а воздух над поиском даёт сама
+   .sticky-menu (padding-top:10px выше). Точечно ТОЛЬКО на вкладках, где первый
+   элемент — sticky-менюшка (Объекты/Поиск). Прочие вкладки сохраняют дефолтный отступ. */
+#view:has(> .sticky-menu:first-child){padding-top:0;}
 
 /* ════════ Комментарии к объекту ════════ */
 .cmts{display:flex;flex-direction:column;gap:8px;}
