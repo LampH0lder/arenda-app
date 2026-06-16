@@ -1007,9 +1007,9 @@ function listingCard(l, onSend, openable = true, thumb = true, select = null) {
         </div>
         ${(l.geo && l.geo.length) ? `<div style="margin-top:8px">${l.geo.map(g => `<div class="geo-line">${esc(g)}</div>`).join("")}</div>` : ""}
         <div class="btn-row" style="margin-top:12px">
-          ${onSend ? `<button class="btn btn-green sm" style="flex:1" data-send>${icon('send')} Отправить</button>` : ""}
-          ${l.url ? `<button class="btn btn-soft sm" style="flex:1" data-open>${icon('ext-link')} Пост</button>` : ""}
-          <button class="btn btn-soft sm" style="flex:1" data-detail>Подробнее&nbsp;›</button>
+          ${onSend ? `<button class="btn btn-green sm" style="flex:1.3" data-send>${icon('send')} Отправить</button>` : ""}
+          ${l.url ? `<button class="btn btn-soft sm" style="flex:.8" data-open>${icon('ext-link')} Пост</button>` : ""}
+          <button class="btn btn-soft sm" style="flex:1.1" data-detail>Подробнее&nbsp;›</button>
         </div>
       </div>
     </div>`);
