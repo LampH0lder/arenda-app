@@ -269,7 +269,7 @@ function closeSheet() {
 function sheetPick(title, opts, current, onPick) {
   const rows = opts.map(([v, label]) =>
     `<button class="pick-row ${String(v) === String(current) ? "on" : ""}" data-v="${esc(String(v))}">
-       <span>${esc(label)}</span>${String(v) === String(current) ? '<span class="pick-ok">✓</span>' : ""}
+       <span>${esc(label)}</span>${String(v) === String(current) ? `<span class="pick-ok">${icon('check')}</span>` : ""}
      </button>`).join("");
   const b = openSheet(`<div class="sheet-title">${esc(title)}</div><div class="pick-list">${rows}</div>`);
   b.querySelectorAll(".pick-row").forEach(r => r.onclick = () => {
@@ -993,7 +993,7 @@ function listingCard(l, onSend, openable = true, thumb = true, select = null) {
             <div class="listing-meta">${listingMeta(l)}</div>
             ${l.exclusive ? `<div class="excl-line">${icon('crown')} Эксклюзив${l.exclusive_owner ? ": " + esc(l.exclusive_owner) : ""}</div>` : ""}
           </div>
-          ${select ? `<div class="lc-check ${select.checked ? "on" : ""}" data-check>${select.checked ? "✓" : ""}</div>` : ""}
+          ${select ? `<div class="lc-check ${select.checked ? "on" : ""}" data-check>${select.checked ? icon('check') : ""}</div>` : ""}
         </div>
         ${(l.geo && l.geo.length) ? `<div style="margin-top:8px">${l.geo.map(g => `<div class="geo-line">${esc(g)}</div>`).join("")}</div>` : ""}
         <div class="btn-row" style="margin-top:12px">
@@ -1737,7 +1737,7 @@ function filterControlsEl(ctx) {
       <button class="mini-chip ${src !== "all" ? "act" : ""}" data-msrc title="Источник">${icon('folder')}${src !== "all" ? dot : ""}</button>
       <button class="mini-chip ${comm !== null ? "act" : ""}" data-mcomm title="Комиссия">${icon('percent')}${comm !== null ? dot : ""}</button>
       <button class="mini-chip ${sort ? "act" : ""}" data-msort title="Сортировка" style="font-size:14px;font-weight:700">⇅${sort ? dot : ""}</button>
-      <button class="mini-chip ${onlyJk ? "act" : ""}" data-mjk title="Только с ЖК" style="font-size:14px">🏙${onlyJk ? dot : ""}</button>
+      <button class="mini-chip ${onlyJk ? "act" : ""}" data-mjk title="Только с ЖК">${icon('building')}${onlyJk ? dot : ""}</button>
       ${advOn ? `<button class="mini-chip" data-advc title="Сбросить фильтры">${icon('x')}</button>` : ""}
     </div>`);
     box.appendChild(row);
