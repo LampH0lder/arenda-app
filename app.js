@@ -283,8 +283,10 @@ let stack = [];
 // при переходе на НОВЫЙ экран всегда мотаем наверх (иначе деталь объекта открывается
 // на середине/внизу — на позиции скролла списка). fn() сперва рисует skeleton (короткий),
 // поэтому scrollTop=0 после fn() надёжно ставит верх.
-function go(fn, push = true) { if (push) stack.push(fn); fn(); if (push) view.scrollTop = 0; updateBack(); }
-function back() { if (stack.length > 1) { stack.pop(); stack[stack.length - 1](); view.scrollTop = 0; updateBack(); } }
+function go(fn, push = true) { if (push) stack.push(fn); fn(); if (push) view.scrollTop = 0; hideToTop(); updateBack(); }
+function back() { if (stack.length > 1) { stack.pop(); stack[stack.length - 1](); view.scrollTop = 0; hideToTop(); updateBack(); } }
+// Кнопка «наверх»: прячем при любой навигации (новый экран всегда открывается сверху).
+function hideToTop() { const b = document.getElementById("toTop"); if (b) b.classList.add("hidden"); }
 function updateBack() {
   const show = stack.length > 1;
   const bb = $("#backBtn"); if (bb) bb.classList.toggle("hidden", !show);
@@ -337,6 +339,9 @@ function setRevealMenu(elm) {
 }
 view.addEventListener("scroll", () => {
   $("#topbar").classList.toggle("scrolled", view.scrollTop > 6);
+  // кнопка «наверх» — всплывает, когда пролистал заметно вниз (любой длинный список)
+  const tt = document.getElementById("toTop");
+  if (tt) tt.classList.toggle("hidden", view.scrollTop < 600);
   if (_revealEl && _revealEl.isConnected) {
     const y = view.scrollTop;
     if (y < 40) _revealEl.classList.remove("hdr-hidden");           // у самого верха — всегда видно
@@ -344,6 +349,9 @@ view.addEventListener("scroll", () => {
     else if (y < _revealLastY - 6) _revealEl.classList.remove("hdr-hidden"); // вверх → показываем
     _revealLastY = y;
   }
+});
+document.getElementById("toTop")?.addEventListener("click", () => {
+  haptic(); view.scrollTo({ top: 0, behavior: "smooth" });
 });
 
 /* ── Избранное агента (звёзды на карточках) — единый набор id, грузим один раз ── */
@@ -1761,7 +1769,7 @@ async function renderSearch() {
   setTitle("Поиск", "по всей базе объявлений");
   removeFab();
   view.innerHTML = "";
-  const wrap = el(`<div class="fade-in"></div>`);
+  const wrap = el(`<div class="fade-in search-wrap"></div>`);
   wrap.innerHTML = `
     <div class="field">
       <textarea class="input" id="sInput" placeholder="Напишите или надиктуйте: «2к юго-запад до 150», «студия у метро Фили 60 метров»…">${esc(searchState.text)}</textarea>
