@@ -291,12 +291,33 @@ function sheetPick(title, opts, current, onPick) {
 $("#sheet").addEventListener("click", (e) => { if (e.target.classList.contains("sheet-backdrop")) closeSheet(); });
 
 /* ── Router ── */
+// stack хранит элементы { fn, y }: fn — рендер экрана, y — позиция скролла этого экрана.
+// НОВЫЙ экран открывается сверху (y=0). При возврате восстанавливаем сохранённую позицию
+// списка, из которого уходили (чтобы «Назад» не кидало в самый верх).
 let stack = [];
-// при переходе на НОВЫЙ экран всегда мотаем наверх (иначе деталь объекта открывается
-// на середине/внизу — на позиции скролла списка). fn() сперва рисует skeleton (короткий),
-// поэтому scrollTop=0 после fn() надёжно ставит верх.
-function go(fn, push = true) { if (push) stack.push(fn); fn(); if (push) view.scrollTop = 0; hideToTop(); updateBack(); }
-function back() { if (stack.length > 1) { stack.pop(); stack[stack.length - 1](); view.scrollTop = 0; hideToTop(); updateBack(); } }
+function go(fn, push = true) {
+  if (push) {
+    if (stack.length) stack[stack.length - 1].y = view.scrollTop; // запомнить, где стоял список
+    stack.push({ fn, y: 0 });
+  }
+  fn();                       // fn рисует skeleton сразу, контент догружается асинхронно
+  if (push) view.scrollTop = 0;
+  hideToTop(); updateBack();
+}
+function back() {
+  if (stack.length > 1) {
+    stack.pop();
+    const top = stack[stack.length - 1];
+    const p = top.fn();       // async-рендер → ждём, потом восстанавливаем scrollTop
+    restoreScroll(top.y, p);
+    hideToTop(); updateBack();
+  }
+}
+// Восстановить позицию скролла после (возможно) асинхронного рендера списка.
+function restoreScroll(y, p) {
+  const apply = () => requestAnimationFrame(() => requestAnimationFrame(() => { view.scrollTop = y || 0; }));
+  if (p && typeof p.then === "function") p.then(apply, apply); else apply();
+}
 // Кнопка «наверх»: прячем при любой навигации (новый экран всегда открывается сверху).
 function hideToTop() { const b = document.getElementById("toTop"); if (b) b.classList.add("hidden"); }
 function updateBack() {
@@ -480,7 +501,7 @@ async function renderClients(status = "active") {
     lazyAvatar(row.querySelector("[data-av]"), c);
   }
   view.appendChild(wrap);
-  wrap.querySelectorAll(".seg button").forEach(b => b.onclick = () => { haptic(); stack[stack.length - 1] = () => renderClients(b.dataset.s); renderClients(b.dataset.s); });
+  wrap.querySelectorAll(".seg button").forEach(b => b.onclick = () => { haptic(); stack[stack.length - 1] = { fn: () => renderClients(b.dataset.s), y: 0 }; renderClients(b.dataset.s); });
   // FAB
   let fab = $("#fab"); if (fab) fab.remove();
   fab = el(`<button class="fab" id="fab">${icon('plus')}</button>`);
@@ -1793,7 +1814,7 @@ async function renderSearch() {
   const wrap = el(`<div class="fade-in search-wrap"></div>`);
   wrap.innerHTML = `
     <div class="field">
-      <textarea class="input" id="sInput" placeholder="Напишите или надиктуйте: «2к юго-запад до 150», «студия у метро Фили 60 метров»…">${esc(searchState.text)}</textarea>
+      <textarea class="input" id="sInput" rows="1" placeholder="Напишите или надиктуйте: «2к юго-запад до 150», «студия у метро Фили 60 метров»…">${esc(searchState.text)}</textarea>
     </div>
     <div class="btn-row">
       <span id="sVoice" style="flex:1;display:flex"></span>
@@ -1808,8 +1829,13 @@ async function renderSearch() {
     </div>
     <div id="sResults" style="margin-top:18px"></div>`;
   view.appendChild(wrap);
+  // Поле поиска: старт в 1 строку, авто-рост по контенту (до max-height из CSS).
+  const _sTa = $("#sInput");
+  const sGrow = () => { _sTa.style.height = "auto"; _sTa.style.height = Math.min(_sTa.scrollHeight, 140) + "px"; };
+  _sTa.addEventListener("input", sGrow);
+  requestAnimationFrame(sGrow);
   $("#sVoice").replaceWith(voiceButton((text) => {
-    const ta = $("#sInput"); ta.value = ta.value ? (ta.value + " " + text) : text; runSearch();
+    const ta = $("#sInput"); ta.value = ta.value ? (ta.value + " " + text) : text; sGrow(); runSearch();
   }, icon('mic')+" Голосом"));
   $("#sGo").onclick = runSearch;
   function reSearch() {
@@ -2871,12 +2897,13 @@ async function refreshNotice() {
         // В ПОТОКЕ, первым в #app — толкает шапку/контент вниз, а не ложится поверх.
         // Раньше был fixed top:0 z:99999 и перекрывал кнопку «назад» в шапке и крестик
         // галереи. Теперь оверлеи (галерея z1100, шторки z100) спокойно лежат сверху.
-        el.style.cssText = "position:relative;z-index:5;background:#7c5e10;" +
-          "color:#ffe9a8;font-size:12px;line-height:1.35;padding:7px 12px;text-align:center;";
         const app = document.getElementById("app");
         app.insertBefore(el, app.firstChild);
       }
-      el.textContent = "🛠 " + n.text;
+      // Одна строка фиксированной высоты + бегущая строка (marquee, стиль в styles.css).
+      // Текст дублируем дважды для бесшовного цикла.
+      const t = esc("🛠 " + n.text);
+      el.innerHTML = `<div class="maint-track"><span>${t}</span><span aria-hidden="true">${t}</span></div>`;
     } else if (el) {
       el.remove();
     }
