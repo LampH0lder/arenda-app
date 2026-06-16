@@ -657,11 +657,13 @@ async function renderMatch(client, page = 0, acc = null, filter = null) {
 /* ════════════════════════ LISTINGS ════════════════════════ */
 let listingsFilter = null;
 let listSource = "all";   // all | exclusives | arendok  (синхронно с поиском)
+let listOnlyJk = false;   // показывать только объекты с заполненным ЖК
 let listCommMax = null;   // null | 0 | 50
 let listSort = "";        // см. SORT_OPTS
 const LIST_PAGE = 50;
 function listQueryBody(offset) {
-  return { source: listSource, limit: LIST_PAGE, offset, commission_max: listCommMax, sort: listSort, filters: listingsFilter || {} };
+  return { source: listSource, limit: LIST_PAGE, offset, commission_max: listCommMax, sort: listSort,
+           filters: { ...(listingsFilter || {}), ...(listOnlyJk ? { only_jk: 1 } : {}) } };
 }
 async function renderListings() {
   setTitle("Объекты", "последние объявления");
@@ -752,6 +754,7 @@ async function renderListings() {
     getSource: () => listSource, setSource: (v) => { listSource = v; },
     getComm: () => listCommMax, setComm: (v) => { listCommMax = v === "" ? null : parseInt(v); },
     getSort: () => listSort, setSort: (v) => { listSort = v; },
+    getOnlyJk: () => listOnlyJk, setOnlyJk: (v) => { listOnlyJk = v; },
     advActive: () => filtersActive(listingsFilter),
     advSummary: () => filtersActive(listingsFilter) ? filtersSummary(listingsFilter) : "",
     onAdv: () => sheetFilters(listingsFilter || {}, (f) => { listingsFilter = filtersActive(f) ? f : null; renderListings(); }),
@@ -1668,6 +1671,7 @@ async function apPollDone(state, stEl, body) {
 /* ════════════════════════ SEARCH ════════════════════════ */
 let searchState = { text: "", results: [], page: 0, hasMore: false, sel: new Set(), filters: null, applied: null };
 let searchSource = "all";       // all | exclusives | arendok
+let searchOnlyJk = false;       // показывать только объекты с заполненным ЖК
 let searchCommMax = null;       // null=любая | 0=без комиссии | 50=до 50%
 
 // ── История поиска (последние текстовые запросы, локально в браузере) ──────────
@@ -1714,6 +1718,7 @@ function searchChipBody() {
   if (searchSource && searchSource !== "all") b.source = searchSource;
   if (searchCommMax !== null) b.commission_max = searchCommMax;
   if (searchSort) b.sort = searchSort;
+  if (searchOnlyJk) b.only_jk = 1;
   return b;
 }
 /* ── Единая панель фильтров: ОДИНАКОВАЯ в «Объектах» и «Поиске» ──
@@ -1725,12 +1730,14 @@ function filterControlsEl(ctx) {
     box.innerHTML = "";
     const advOn = ctx.advActive();
     const src = ctx.getSource(), comm = ctx.getComm(), sort = ctx.getSort();
+    const onlyJk = ctx.getOnlyJk ? ctx.getOnlyJk() : false;
     const dot = `<span class="mc-dot"></span>`;
     const row = el(`<div class="mini-row">
       <button class="mini-chip ${advOn ? "act" : ""}" data-adv title="Расширенные фильтры">${icon('sliders')}${advOn ? dot : ""}</button>
       <button class="mini-chip ${src !== "all" ? "act" : ""}" data-msrc title="Источник">${icon('folder')}${src !== "all" ? dot : ""}</button>
       <button class="mini-chip ${comm !== null ? "act" : ""}" data-mcomm title="Комиссия">${icon('percent')}${comm !== null ? dot : ""}</button>
       <button class="mini-chip ${sort ? "act" : ""}" data-msort title="Сортировка" style="font-size:14px;font-weight:700">⇅${sort ? dot : ""}</button>
+      <button class="mini-chip ${onlyJk ? "act" : ""}" data-mjk title="Только с ЖК" style="font-size:14px">🏙${onlyJk ? dot : ""}</button>
       ${advOn ? `<button class="mini-chip" data-advc title="Сбросить фильтры">${icon('x')}</button>` : ""}
     </div>`);
     box.appendChild(row);
@@ -1744,6 +1751,8 @@ function filterControlsEl(ctx) {
       comm === null ? "" : String(comm), (v) => { ctx.setComm(v); paint(); ctx.onChange(); }); };
     row.querySelector("[data-msort]").onclick = () => { haptic(); sheetPick("Сортировка", SORT_OPTS,
       sort, (v) => { ctx.setSort(v); paint(); ctx.onChange(); }); };
+    const jb = row.querySelector("[data-mjk]");
+    if (jb) jb.onclick = () => { haptic(); ctx.setOnlyJk(!onlyJk); paint(); ctx.onChange(); };
   }
   paint();
   return box;
@@ -1782,6 +1791,7 @@ async function renderSearch() {
     getSource: () => searchSource, setSource: (v) => { searchSource = v; },
     getComm: () => searchCommMax, setComm: (v) => { searchCommMax = v === "" ? null : parseInt(v); },
     getSort: () => searchSort, setSort: (v) => { searchSort = v; },
+    getOnlyJk: () => searchOnlyJk, setOnlyJk: (v) => { searchOnlyJk = v; },
     advActive: () => filtersActive(searchState.filters || critToFilters(searchState.applied)),
     advSummary: () => { const f = searchState.filters || critToFilters(searchState.applied); return filtersActive(f) ? filtersSummary(f) : ""; },
     onAdv: () => sheetFilters(searchState.filters || critToFilters(searchState.applied), applySearchFilters),
@@ -1791,7 +1801,7 @@ async function renderSearch() {
   $("#sReset").onclick = () => {
     haptic();
     searchState = { text: "", results: [], page: 0, hasMore: false, sel: new Set(), filters: null, applied: null };
-    searchSource = "all"; searchCommMax = null; searchSort = "";
+    searchSource = "all"; searchCommMax = null; searchSort = ""; searchOnlyJk = false;
     renderSearch();
     const ta = $("#sInput"); if (ta) ta.focus();
   };
