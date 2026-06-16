@@ -236,6 +236,23 @@ body{
 }
 .input:focus,textarea.input:focus{outline:none;border-color:var(--accent);}
 textarea.input{resize:vertical;min-height:70px;}
+/* Поле поиска: одна строка по дефолту, авто-рост задаётся из JS (sGrow). */
+textarea.input#sInput{resize:none;min-height:0;height:auto;max-height:140px;overflow-y:auto;line-height:1.4;}
+
+/* ── Плашка техработ: одна строка, бегущая строка (marquee) ── */
+#maintBanner{position:relative;z-index:5;background:#7c5e10;color:#ffe9a8;
+  font-size:12px;height:26px;line-height:26px;overflow:hidden;white-space:nowrap;}
+#maintBanner .maint-track{display:flex;width:max-content;will-change:transform;
+  animation:maint-marquee 22s linear infinite;}
+#maintBanner .maint-track span{padding-right:64px;white-space:nowrap;}
+@keyframes maint-marquee{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+@media (prefers-reduced-motion:reduce){
+  #maintBanner .maint-track{animation:none;}
+  #maintBanner{text-align:center;}
+  #maintBanner .maint-track{width:auto;justify-content:center;}
+  #maintBanner .maint-track span:last-child{display:none;}
+  #maintBanner .maint-track span{padding-right:0;}
+}
 
 /* ── Detail header ── */
 .detail-hero{display:flex;align-items:center;gap:15px;margin-bottom:18px;}
