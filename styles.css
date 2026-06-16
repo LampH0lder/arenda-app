@@ -94,7 +94,7 @@ body{
 .tb-sub{font-size:13px;color:var(--txt-2);margin-top:2px;}
 
 /* ── Main view ── */
-#view{flex:1;padding:6px 16px 96px;overflow-y:auto;}
+#view{flex:1;padding:12px 16px 96px;overflow-y:auto;}
 
 /* ── Tab bar ── */
 #tabbar{
@@ -743,7 +743,7 @@ body:has(.sel-bar:not(.hidden)) #view{padding-bottom:calc(var(--safe-bot) + 150p
 /* Зазор 6px между шапкой и поиском: отрицательный margin у .sticky-menu схлопывается
    и НЕ срабатывает. Точечно убираем верхний padding #view ТОЛЬКО на вкладках, где
    первый элемент — sticky-менюшка (Объекты/Поиск). Прочие вкладки сохраняют 6px. */
-#view:has(> .sticky-menu:first-child){padding-top:0;}
+#view:has(> .sticky-menu:first-child){padding-top:10px;}
 
 /* ════════ Комментарии к объекту ════════ */
 .cmts{display:flex;flex-direction:column;gap:8px;}
