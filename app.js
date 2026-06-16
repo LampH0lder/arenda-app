@@ -206,7 +206,7 @@ function loading() {
     + `<div class="sk-row"><span class="sk-btn"></span><span class="sk-btn"></span></div></div>`;
   view.innerHTML = `<div class="sk-list">${card.repeat(4)}</div>`;
 }
-function setTitle(t, sub = "") { $("#tbTitle").textContent = t; $("#tbSub").textContent = sub; }
+function setTitle(t) { $("#tbTitle").textContent = t; $("#tbSub").textContent = ""; }
 
 function roomsLabel(r) {
   if (!r) return "";
