@@ -1040,6 +1040,7 @@ async function renderListingDetail(id) {
       ${l.commission != null ? kv("Комиссия", l.commission === 0 ? "без комиссии" : l.commission + "%") : ""}
       ${l.is_announcement ? kv("Статус", "Анонс — фото пока нет, объект не актуален") : ""}
       ${kv("Источник", l.source || "—")}
+      ${l.parsed_at ? kv("Добавлено", fmtAdded(l.parsed_at)) : ""}
       ${l.exclusive ? kv("Эксклюзив", l.exclusive_owner || "да") : ""}
     </div>
     ${ownerEditedHint(l)}
@@ -1139,6 +1140,11 @@ function fmtDate(iso) {
     const dd = String(d.getDate()).padStart(2, "0"), mo = String(d.getMonth() + 1).padStart(2, "0");
     return `${dd}.${mo} ${hh}:${mm}`;
   } catch (e) { return ""; }
+}
+// Дата заливки объекта (когда появился в канале) — полная дата без времени.
+function fmtAdded(iso) {
+  try { return new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" }); }
+  catch (e) { return ""; }
 }
 const kv = (k, v) => `<div class="kv"><span class="k">${esc(k)}</span><span class="v">${esc(String(v))}</span></div>`;
 
@@ -1663,6 +1669,33 @@ async function apPollDone(state, stEl, body) {
 let searchState = { text: "", results: [], page: 0, hasMore: false, sel: new Set(), filters: null, applied: null };
 let searchSource = "all";       // all | exclusives | arendok
 let searchCommMax = null;       // null=любая | 0=без комиссии | 50=до 50%
+
+// ── История поиска (последние текстовые запросы, локально в браузере) ──────────
+const SHIST_KEY = "arendbot_search_hist";
+function getSearchHist() { try { return JSON.parse(localStorage.getItem(SHIST_KEY) || "[]"); } catch (e) { return []; } }
+function pushSearchHist(text) {
+  text = (text || "").trim(); if (!text) return;
+  let h = getSearchHist().filter(x => x !== text);
+  h.unshift(text); h = h.slice(0, 8);
+  try { localStorage.setItem(SHIST_KEY, JSON.stringify(h)); } catch (e) {}
+}
+function clearSearchHist() { try { localStorage.removeItem(SHIST_KEY); } catch (e) {} }
+// Перерисовать чипы недавних запросов в контейнер #sHist (клик — повторить поиск).
+function paintSearchHist() {
+  const box = $("#sHist"); if (!box) return;
+  const h = getSearchHist();
+  if (!h.length) { box.innerHTML = ""; return; }
+  box.innerHTML = `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+    <span class="muted" style="font-size:12px">Недавние:</span>
+    ${h.map(t => `<span class="shist-chip" data-q="${esc(t)}" style="display:inline-block;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:5px 10px;border:1px solid var(--line);border-radius:14px;font-size:13px;cursor:pointer;background:var(--card)">${esc(t)}</span>`).join("")}
+    <span class="shist-clear" style="font-size:12px;color:var(--muted);cursor:pointer;padding:5px 4px">Очистить</span>
+  </div>`;
+  box.querySelectorAll(".shist-chip").forEach(c => c.onclick = () => {
+    haptic(); const ta = $("#sInput"); if (ta) ta.value = c.dataset.q; runSearch();
+  });
+  const clr = box.querySelector(".shist-clear");
+  if (clr) clr.onclick = () => { haptic(); clearSearchHist(); paintSearchHist(); };
+}
 let searchSort = "";            // ""=по релевантности | price_asc/desc | area_asc/desc | new | jk
 const SRC_LABEL = { all: "Все папки", exclusives: "Эксклюзивы", arendok: "Arendok" };
 const COMM_LABEL = (v) => v === null ? "Комиссия: любая" : v === 0 ? "Без комиссии" : "Комиссия до " + v + "%";
@@ -1729,6 +1762,7 @@ async function renderSearch() {
       <button class="btn btn-primary" id="sGo" style="flex:1.4">${icon('search')} Найти</button>
       <button class="btn btn-soft" id="sReset" title="Очистить и начать новый запрос" style="flex:0 0 52px;width:52px;padding:14px 0">✕</button>
     </div>
+    <div id="sHist" style="margin-top:10px"></div>
     <div id="sFilterBar" style="margin-top:10px"></div>
     <div class="idsearch" style="margin-top:10px">
       <input class="input" id="lidInput" inputmode="numeric" placeholder="Открыть объект по номеру: #776">
@@ -1769,11 +1803,13 @@ async function renderSearch() {
   $("#lidGo").onclick = openById;
   $("#lidInput").addEventListener("keydown", (e) => { if (e.key === "Enter") openById(); });
   setRevealMenu(null);  // в «Поиске» reveal не используем (фильтры остаются в потоке)
+  paintSearchHist();
   if (searchState.results.length) paintSearch();
 }
 async function runSearch() {
   const text = $("#sInput").value.trim();
   if (!text) return toast("Напишите критерии");
+  pushSearchHist(text); paintSearchHist();
   haptic(); searchState = { text, results: [], page: 0, hasMore: false, sel: new Set(), filters: null, applied: null };
   $("#sResults").innerHTML = `<div class="loader"><div class="spin"></div></div>`;
   let data; try { data = await api("/search", { method: "POST", body: { text, page: 0, ...searchChipBody() } }); }
