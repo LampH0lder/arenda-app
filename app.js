@@ -1812,7 +1812,7 @@ async function renderSearch() {
   };
   $("#lidGo").onclick = openById;
   $("#lidInput").addEventListener("keydown", (e) => { if (e.key === "Enter") openById(); });
-  setRevealMenu(null);  // в «Поиске» reveal не используем (фильтры остаются в потоке)
+  setRevealMenu($("#sFilterBar"));  // панель фильтров всплывает при скролле вверх (как в Объектах)
   paintSearchHist();
   if (searchState.results.length) paintSearch();
 }
