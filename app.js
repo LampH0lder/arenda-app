@@ -438,7 +438,7 @@ async function loadHomeCarousel() {
 
 /* ════════════════════════ CLIENTS ════════════════════════ */
 async function renderClients(status = "active") {
-  setTitle("Клиенты");
+  setTitle("Клиенты", "ваши покупатели");
   loading();
   let clients = []; try { clients = await api("/clients?status=" + status); } catch (e) {}
   view.innerHTML = "";
@@ -490,7 +490,7 @@ function removeFab() { const f = $("#fab"); if (f) f.remove(); }
 
 async function renderClientDetail(id) {
   removeFab();
-  setTitle("Клиент");
+  setTitle("Клиент", "история и подбор");
   loading();
   let c; try { c = await api("/clients/" + id); } catch (e) { return toast("Не загрузить клиента", "err"); }
   view.innerHTML = "";
@@ -1029,7 +1029,7 @@ function listingCard(l, onSend, openable = true, thumb = true, select = null) {
 }
 
 async function renderListingDetail(id) {
-  removeFab(); setTitle("Объект");
+  removeFab(); setTitle("Объект", "детали объявления");
   loading();
   let l; try { l = await api("/listings/" + id); } catch (e) { return toast("Не загрузить", "err"); }
   view.innerHTML = ""; view.scrollTop = 0;
@@ -1386,7 +1386,7 @@ function apTrack(state) {
   apStates.set(state.id, state);
 }
 async function renderAutopost() {
-  setTitle("ФДГ");
+  setTitle("ФДГ", "публикация объявлений");
   removeFab();
   // глушим poll-циклы прошлого рендера (карточки пересоздаются с нуля ниже)
   apStates.forEach(s => { s.alive = false; });
