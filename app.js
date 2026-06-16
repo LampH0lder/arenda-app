@@ -1008,7 +1008,7 @@ function listingCard(l, onSend, openable = true, thumb = true, select = null) {
         <div class="btn-row" style="margin-top:12px">
           ${onSend ? `<button class="btn btn-green sm" style="flex:1" data-send>${icon('send')} Отправить</button>` : ""}
           ${l.url ? `<button class="btn btn-soft sm" style="flex:1" data-open>${icon('ext-link')} Пост</button>` : ""}
-          <button class="btn btn-soft sm" style="flex:1" data-detail>Подробнее ›</button>
+          <button class="btn btn-soft sm" style="flex:1" data-detail>Подробнее&nbsp;›</button>
         </div>
       </div>
     </div>`);
@@ -1411,7 +1411,7 @@ async function renderAutopost() {
   }
 
   wrap.appendChild(el(`<div class="card">
-    <div class="ed-label">Ссылки (Циан/Авито) — до ${AP_MAX}, каждая с новой строки</div>
+    <div class="ed-label">Ссылки Циан/Авито — до ${AP_MAX} штук</div>
     <textarea class="input" id="apUrls" rows="4" placeholder="https://www.cian.ru/rent/flat/...&#10;https://www.avito.ru/..." autocomplete="off" inputmode="url" style="min-height:88px;font-family:inherit"></textarea>
     <button class="btn btn-primary" id="apGo" style="margin-top:10px;width:100%">Обработать</button>
     <div class="muted" style="margin-top:8px">Обработаю все по очереди (парсинг + чистка фото). Перед публикацией каждого покажу превью — подтверждаешь сам.</div>
