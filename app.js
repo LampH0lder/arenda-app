@@ -64,6 +64,7 @@ _ICONS['bell']='<path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1
 _ICONS['trash']='<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>';
 _ICONS['heart']='<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>';
 _ICONS['comment']='<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>';
+_ICONS['sort']='<path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/>';
 function icon(n){return '<svg class="lic" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.16em;flex:none" aria-hidden="true">'+(_ICONS[n]||'')+'</svg>';}
 
 
@@ -398,7 +399,7 @@ async function renderHome() {
       <button class="quick-btn" id="qFav"><span class="qi">${icon('heart')}</span><span class="qt">Избранное</span><span class="qs">сохранённые объекты</span></button>
     </div>
     ${(!acc.connected) ? `
-    <div class="card" id="connCard" style="border-color:var(--accent);margin-top:6px">
+    <div class="card" id="connCard" style="border-color:var(--accent);margin-top:28px">
       <div style="font-weight:640;margin-bottom:4px">${icon('smartphone')} Подключите свой Telegram</div>
       <div class="muted" style="margin-bottom:10px">Чтобы отправлять варианты клиентам от вашего имени.</div>
       <button class="btn btn-primary sm" id="connBtn">Подключить</button>
@@ -711,7 +712,7 @@ async function renderListings() {
     if (!sel.size) { selBar.classList.add("hidden"); return; }
     selBar.classList.remove("hidden");
     selBar.innerHTML = `
-      <button class="btn btn-green sm" style="flex:1" data-multisend>${icon('send-h')} Отправить выбранные (${sel.size}) одному</button>
+      <button class="btn btn-green sm" style="flex:1" data-multisend>${icon('send-h')} Отправить (${sel.size}) одному</button>
       <button class="btn btn-soft sm" data-multiclear>Сброс</button>`;
     selBar.querySelector("[data-multisend]").onclick = () => {
       const chosen = listings.filter(l => sel.has(l.id));
@@ -970,7 +971,7 @@ async function renderMap(source = "all", pick = null, initialPolys = null) {
     function refreshBar() {
       if (!sel.size) { selBar.classList.add("hidden"); return; }
       selBar.classList.remove("hidden");
-      selBar.innerHTML = `<button class="btn btn-green sm" style="flex:1" data-ms>${icon('send-h')} Отправить выбранные (${sel.size}) одному</button>
+      selBar.innerHTML = `<button class="btn btn-green sm" style="flex:1" data-ms>${icon('send-h')} Отправить (${sel.size}) одному</button>
         <button class="btn btn-soft sm" data-mc>Сброс</button>`;
       selBar.querySelector("[data-ms]").onclick = () => {
         const chosen = items.filter(l => sel.has(l.id));
@@ -1058,16 +1059,16 @@ async function renderListingDetail(id) {
     ${l.is_owner ? `<button class="btn btn-soft sm" id="bEdit" style="width:100%;margin-top:10px">${icon('pencil')} Править объявление</button>` : ""}
     ${l.raw_text ? `<div class="section-title">Текст объявления</div><div class="card muted" style="white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;color:var(--txt)">${esc(l.raw_text)}</div>` : ""}
     <div class="btn btn-green" id="bSend" style="margin-top:18px">${icon('send')} Отправить клиенту</div>
-    <div class="btn-row" style="margin-top:10px">
-      ${l.url ? `<button class="btn btn-soft" id="bOpen">${icon('ext-link')} Открыть пост</button>` : ""}
-      <button class="btn btn-soft" id="bBroad">${icon('megaphone')} Рассылка</button>
+    <div class="btn-row" style="margin-top:10px;flex-wrap:nowrap">
+      ${l.url ? `<button class="btn btn-soft" id="bOpen" style="white-space:nowrap">${icon('ext-link')} Пост</button>` : ""}
+      <button class="btn btn-soft" id="bBroad" style="white-space:nowrap;flex:1">${icon('megaphone')} Рассылка</button>
       <button class="btn btn-soft fav-toggle ${FAVS.has(l.id) ? "on" : ""}" id="bFav" title="В избранное">${icon('heart')}</button>
     </div>
     <div class="section-title">${icon('comment')} Комментарии</div>
     <div id="cmts" class="cmts"><div class="loader" style="height:50px"><div class="spin"></div></div></div>
     <div class="cmt-form">
-      <textarea class="input" id="cmtInput" rows="2" placeholder="Комментарий для команды…"></textarea>
-      <button class="btn btn-green sm" id="cmtSend">${icon('send-h')} Отправить</button>
+      <textarea class="input" id="cmtInput" rows="2" placeholder="Комментарий для команды…" style="resize:none"></textarea>
+      <button class="btn btn-green sm" id="cmtSend" title="Отправить">${icon('send-h')}</button>
     </div>`;
   view.appendChild(wrap);
   // обложка (через fetch+blob, чтобы обойти заглушку ngrok) — сначала мелкое, потом резкое
@@ -1411,7 +1412,7 @@ async function renderAutopost() {
 
   wrap.appendChild(el(`<div class="card">
     <div class="ed-label">Ссылки (Циан/Авито) — до ${AP_MAX}, каждая с новой строки</div>
-    <textarea class="input" id="apUrls" rows="4" placeholder="https://www.cian.ru/rent/flat/...&#10;https://www.avito.ru/..." autocomplete="off" inputmode="url" style="resize:vertical;min-height:88px;font-family:inherit"></textarea>
+    <textarea class="input" id="apUrls" rows="4" placeholder="https://www.cian.ru/rent/flat/...&#10;https://www.avito.ru/..." autocomplete="off" inputmode="url" style="min-height:88px;font-family:inherit"></textarea>
     <button class="btn btn-primary" id="apGo" style="margin-top:10px;width:100%">Обработать</button>
     <div class="muted" style="margin-top:8px">Обработаю все по очереди (парсинг + чистка фото). Перед публикацией каждого покажу превью — подтверждаешь сам.</div>
   </div>`));
@@ -1744,7 +1745,7 @@ function filterControlsEl(ctx) {
       <button class="mini-chip ${advOn ? "act" : ""}" data-adv title="Расширенные фильтры">${icon('sliders')}${advOn ? dot : ""}</button>
       <button class="mini-chip ${src !== "all" ? "act" : ""}" data-msrc title="Источник">${icon('folder')}${src !== "all" ? dot : ""}</button>
       <button class="mini-chip ${comm !== null ? "act" : ""}" data-mcomm title="Комиссия">${icon('percent')}${comm !== null ? dot : ""}</button>
-      <button class="mini-chip ${sort ? "act" : ""}" data-msort title="Сортировка" style="font-size:14px;font-weight:700">⇅${sort ? dot : ""}</button>
+      <button class="mini-chip ${sort ? "act" : ""}" data-msort title="Сортировка">${icon('sort')}${sort ? dot : ""}</button>
       <button class="mini-chip ${onlyJk ? "act" : ""}" data-mjk title="Только с ЖК">${icon('building')}${onlyJk ? dot : ""}</button>
       ${advOn ? `<button class="mini-chip" data-advc title="Сбросить фильтры">${icon('x')}</button>` : ""}
     </div>`);
@@ -2058,8 +2059,8 @@ async function sheetClientPicker(onPick, status = "active") {
 function sheetAddClient() {
   const b = openSheet(`<div class="sheet-title">Новый клиент</div>
     <div class="field"><label>Имя</label><input class="input" id="nName" placeholder="Например, Вероника"></div>
-    <div class="field"><label>Telegram (@username или id) — чтобы писать ему</label><input class="input" id="nUser" placeholder="@username"></div>
-    <div class="field"><label>Критерии — текстом или голосом (необязательно)</label>
+    <div class="field"><label>Telegram</label><input class="input" id="nUser" placeholder="@username или id"></div>
+    <div class="field"><label>Критерии (необязательно)</label>
     <textarea class="input" id="nCrit" placeholder="2к юго-запад до 150, с животными"></textarea>
     <div class="btn-row" style="margin-top:8px"><span id="nVoice" style="flex:1;display:flex"></span></div></div>
     <button class="btn btn-primary" id="nSave">Создать клиента</button>`);
@@ -2141,7 +2142,7 @@ function sheetFilters(init, onApply) {
     <div class="sheet-title">Фильтры</div>
     <div class="ed-label">Комнаты</div>
     <div class="chipsel" id="fRooms">
-      ${ROOM_OPTS.map(([v, t]) => `<button class="chsel ${curRooms.has(v) ? "on" : ""}" data-v="${v}">${t}</button>`).join("")}
+      ${ROOM_OPTS.map(([v, t]) => `<button class="chsel sm2 ${curRooms.has(v) ? "on" : ""}" data-v="${v}">${t}</button>`).join("")}
     </div>
     <div class="ed-label">Бюджет, ₽/мес</div>
     <div class="two">
@@ -2153,7 +2154,7 @@ function sheetFilters(init, onApply) {
       <input class="input" id="fAmin" inputmode="numeric" placeholder="от" value="${init.area_min || ""}">
       <input class="input" id="fAmax" inputmode="numeric" placeholder="до" value="${init.area_max || ""}">
     </div>
-    <div class="ed-label">ЖК <span class="muted" style="font-weight:400">— Enter добавляет, можно несколько</span></div>
+    <div class="ed-label">ЖК</div>
     <div class="tags" id="fJkTags"></div>
     <input class="input" id="fJk" placeholder="введите ЖК и нажмите Enter">
     <div class="ed-label">Местоположение</div>
@@ -2166,16 +2167,16 @@ function sheetFilters(init, onApply) {
     <div class="chipsel" id="fZones" style="margin-top:8px">
       ${ZONE_CHIPS.map(([v, t]) => `<button class="chsel sm2" data-z="${v}">${t}</button>`).join("")}
     </div>
-    <div class="ed-label">Метро <span class="muted" style="font-weight:400">(отдельно; Enter добавляет)</span></div>
+    <div class="ed-label">Метро</div>
     <div class="tags" id="fMetroTags"></div>
     <input class="input" id="fMetro" placeholder="станция + Enter (Фили, Университет…)">
-    <div class="ed-label">${icon('compass')} Гео-точка <span class="muted" style="font-weight:400">— по времени в пути</span></div>
+    <div class="ed-label">Гео-точка</div>
     <input class="input" id="fGeoAddr" placeholder="метро Савёловская / улица, дом" value="${esc((init.geo && init.geo[0] && (init.geo[0].address || init.geo[0].label)) || "")}">
-    <div class="two" style="margin-top:6px">
-      <input class="input" id="fGeoMin" inputmode="numeric" placeholder="макс. минут" value="${(init.geo && init.geo[0] && init.geo[0].max_minutes) || ""}">
-      <div class="chipsel" id="fGeoTr">
-        ${[["transit",icon('train')+" транспорт"],["foot",icon('footprints')+" пешком"],["car",icon('car')+" машина"]].map(([v,t])=>`<button class="chsel sm2 ${((init.geo&&init.geo[0]&&init.geo[0].transport)||"transit")===v?"on":""}" data-tr="${v}">${t}</button>`).join("")}
-      </div>
+    <div class="chipsel" id="fGeoMin" style="margin-top:6px">
+      ${[10,15,20,30,45,60].map(m=>`<button class="chsel sm2 ${((init.geo&&init.geo[0]&&init.geo[0].max_minutes)===m)?"on":""}" data-min="${m}">${m} мин</button>`).join("")}
+    </div>
+    <div class="chipsel" id="fGeoTr" style="margin-top:8px">
+      ${[["transit",icon('train')+" транспорт"],["foot",icon('footprints')+" пешком"],["car",icon('car')+" машина"]].map(([v,t])=>`<button class="chsel sm2 ${((init.geo&&init.geo[0]&&init.geo[0].transport)||"transit")===v?"on":""}" data-tr="${v}">${t}</button>`).join("")}
     </div>
     <div class="ed-label">Комиссия</div>
     <div class="chipsel" id="fComm">
@@ -2183,9 +2184,9 @@ function sheetFilters(init, onApply) {
       <button class="chsel ${init.commission_max === 0 ? "on" : ""}" data-cm="0">Без комиссии</button>
       <button class="chsel ${init.commission_max === 50 ? "on" : ""}" data-cm="50">До 50%</button>
     </div>
-    <div class="btn-row" style="margin-top:20px">
-      <button class="btn btn-soft" id="fReset" style="flex:1">Сбросить</button>
-      <button class="btn btn-primary" id="fApply" style="flex:2">Применить</button>
+    <div class="btn-row" style="margin-top:24px">
+      <button class="btn btn-soft sm filter-apply-row btn-reset-icon" id="fReset" title="Сбросить фильтры">${icon('eraser')}</button>
+      <button class="btn btn-primary" id="fApply" style="flex:1">Применить</button>
     </div>`);
   // поле-теги: Enter/запятая добавляют значение чипом, можно несколько
   function tagify(inputId, tagsId, initialCSV) {
@@ -2230,6 +2231,11 @@ function sheetFilters(init, onApply) {
     b.querySelectorAll("#fGeoTr .chsel").forEach(c => c.classList.remove("on"));
     x.classList.add("on");
   });
+  b.querySelectorAll("#fGeoMin .chsel").forEach(x => x.onclick = () => {
+    haptic();
+    b.querySelectorAll("#fGeoMin .chsel").forEach(c => c.classList.remove("on"));
+    x.classList.toggle("on");
+  });
   const num = (id) => { const v = parseInt((b.querySelector(id).value || "").replace(/\D/g, "")); return isNaN(v) ? "" : v; };
   const readForm = () => {
     const rooms = [...b.querySelectorAll("#fRooms .chsel.on")].map(x => x.dataset.v);
@@ -2251,7 +2257,8 @@ function sheetFilters(init, onApply) {
   // одна гео-точка: адрес/метро + лимит минут + транспорт. Активна, только если задан и адрес, и минуты.
   function geoFilter() {
     const addr = (b.querySelector("#fGeoAddr").value || "").trim();
-    const min = num("#fGeoMin");
+    const minEl = b.querySelector("#fGeoMin .chsel.on");
+    const min = minEl ? parseInt(minEl.dataset.min) : 0;
     if (!addr || !min) return null;
     const trEl = b.querySelector("#fGeoTr .chsel.on");
     const tr = trEl ? trEl.dataset.tr : "transit";
