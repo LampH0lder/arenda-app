@@ -89,7 +89,7 @@ async function api(path, opts = {}) {
       if (isGet && attempt < maxTries && [502, 503, 504].includes(r.status)) {
         await sleep(700 * attempt); continue;
       }
-      if (!r.ok) { const b = await r.json().catch(() => ({})); const e = new Error(b.error || r.status); if (b.existing_id) e.existing_id = b.existing_id; throw e; }
+      if (!r.ok) { const b = await r.json().catch(() => ({})); const e = new Error(b.error || r.status); if (b.existing_id) { e.existing_id = b.existing_id; e.existing_status = b.existing_status; e.existing_arendok_url = b.existing_arendok_url; } throw e; }
       return r.json();
     } catch (e) {
       lastErr = e;
@@ -1527,10 +1527,10 @@ async function renderAutopost() {
 }
 
 // Статус карточки ФДГ: SVG-иконка + текст (без эмодзи). cls: '' | 'ok' | 'err'
-function apSt(stEl, name, txt, cls) {
+function apSt(stEl, name, txt, cls, isHtml) {
   if (!stEl) return;
   const col = cls === "ok" ? "var(--green)" : cls === "err" ? "var(--red)" : "var(--txt-2)";
-  stEl.innerHTML = `<span style="color:${col};display:inline-flex;align-items:center;gap:4px">${icon(name)} ${esc(txt)}</span>`;
+  stEl.innerHTML = `<span style="color:${col};display:inline-flex;align-items:center;gap:4px">${icon(name)} ${isHtml ? txt : esc(txt)}</span>`;
 }
 
 function apBuildItem(url, q) {
@@ -1566,7 +1566,11 @@ async function apEnqueueOne(url, q) {
     state.id = r.id;
     apTrack(state);
   } catch (e) {
-    apSt(stEl, 'alert', (e.message || e), "err");
+    let errHtml = esc(e.message || String(e));
+    if (e.existing_id && e.existing_arendok_url) {
+      errHtml += ` <a href="${esc(e.existing_arendok_url)}" target="_blank" style="color:var(--mint);text-decoration:underline">смотреть →</a>`;
+    }
+    apSt(stEl, 'alert', errHtml, "err", /*isHtml=*/true);
     item.style.borderColor = "var(--red)";
     if (e.existing_id) setTimeout(() => item.remove(), 4000);
     return;
