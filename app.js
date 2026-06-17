@@ -89,7 +89,7 @@ async function api(path, opts = {}) {
       if (isGet && attempt < maxTries && [502, 503, 504].includes(r.status)) {
         await sleep(700 * attempt); continue;
       }
-      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.status);
+      if (!r.ok) { const b = await r.json().catch(() => ({})); const e = new Error(b.error || r.status); if (b.existing_id) e.existing_id = b.existing_id; throw e; }
       return r.json();
     } catch (e) {
       lastErr = e;
@@ -1478,8 +1478,8 @@ async function renderAutopost() {
     for (const rec of (r.items || [])) apRestoreItem(rec, q);
   } catch (e) {}
 
-  // B2: опубликовать все готовые превью — последовательно (бэкенд сериализует по owner-локу),
-  // ждём завершения каждого для честного прогресса.
+  // B2: опубликовать все готовые превью — ставим все в очередь сразу, бэкенд сериализует
+  // по owner-локу сам. Карточки перерисуются в статусе "публикую…" через renderAutopost().
   $("#apPubAll").onclick = async () => {
     if (!ark.connected && !ark.owner) { notify("error"); return toast("Сначала подключи Arendok в «Профиле»", "err"); }
     let list; try { list = await api("/autopost/list"); } catch (e) { return toast("Не загрузить очередь", "err"); }
@@ -1488,23 +1488,14 @@ async function renderAutopost() {
     if (!await confirmA(`Опубликовать все готовые превью (${ready.length})?`)) return;
     haptic();
     const btn = $("#apPubAll"); btn.disabled = true;
-    let ok = 0, fail = 0, i = 0;
+    btn.innerHTML = `${icon('send-h')} Ставлю в очередь…`;
+    let queued = 0, fail = 0;
     for (const rec of ready) {
-      i++; btn.innerHTML = `${icon('send-h')} Публикую ${i}/${ready.length}…`;
-      try {
-        await api(`/autopost/${rec.id}/publish`, { method: "POST" });
-        let done = false;
-        for (let k = 0; k < 40 && !done; k++) {
-          await sleep(3000);
-          let st; try { st = await api(`/autopost/${rec.id}`); } catch (e) { continue; }
-          if (st.status === "done") { ok++; done = true; }
-          else if (st.status === "error") { fail++; done = true; }
-        }
-        if (!done) fail++;
-      } catch (e) { fail++; }
+      try { await api(`/autopost/${rec.id}/publish`, { method: "POST" }); queued++; }
+      catch (e) { fail++; }
     }
     btn.disabled = false; btn.innerHTML = `${icon('check')} Опубликовать все готовые`;
-    toast(`Готово: опубликовано ${ok}${fail ? ", ошибок " + fail : ""}`, fail ? "err" : "ok");
+    toast(queued ? `Поставил ${queued} в очередь публикации${fail ? ` (${fail} не удалось)` : ""}` : "Не удалось поставить в очередь", fail && !queued ? "err" : "ok");
     renderAutopost();
   };
 
@@ -1577,6 +1568,7 @@ async function apEnqueueOne(url, q) {
   } catch (e) {
     apSt(stEl, 'alert', (e.message || e), "err");
     item.style.borderColor = "var(--red)";
+    if (e.existing_id) setTimeout(() => item.remove(), 4000);
     return;
   }
   if (!state.alive) { try { await api(`/autopost/${state.id}/cancel`, { method: "POST" }); } catch (e) {} return; }
