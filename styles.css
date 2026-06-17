@@ -833,8 +833,8 @@ body{font-family:'Onest',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helv
 :root:not([data-theme="light"]) #app::before{
   content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
   background-image:
-    radial-gradient(ellipse 85% 45% at 20% 0%, rgba(155,125,255,.10) 0%, transparent 60%),
-    radial-gradient(ellipse 65% 40% at 90% 100%, rgba(52,214,168,.06) 0%, transparent 55%);
+    radial-gradient(ellipse 120% 60% at 12% -10%, rgba(155,125,255,.09) 0%, transparent 72%),
+    radial-gradient(ellipse 85% 55% at 92% 110%, rgba(52,214,168,.05) 0%, transparent 70%);
 }
 :root:not([data-theme="light"]) #app::after{
   content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.4;mix-blend-mode:overlay;
@@ -861,9 +861,9 @@ body{font-family:'Onest',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helv
   box-shadow:0 1px 0 var(--topedge) inset,0 10px 28px rgba(0,0,0,.4),0 2px 6px rgba(0,0,0,.28);
 }
 
-/* — CTA glow (только тёмная) — */
-:root:not([data-theme="light"]) .btn-green{box-shadow:0 6px 20px rgba(52,214,168,.38),0 1px 0 rgba(255,255,255,.22) inset;}
-:root:not([data-theme="light"]) .btn-primary{box-shadow:0 6px 20px rgba(155,125,255,.4),0 1px 0 rgba(255,255,255,.2) inset;}
+/* — CTA glow (только тёмная) — компактный, чтобы свечение не залезало на соседние кнопки в ряду — */
+:root:not([data-theme="light"]) .btn-green{box-shadow:0 3px 12px rgba(52,214,168,.26),0 1px 0 rgba(255,255,255,.22) inset;}
+:root:not([data-theme="light"]) .btn-primary{box-shadow:0 3px 12px rgba(155,125,255,.28),0 1px 0 rgba(255,255,255,.2) inset;}
 
 /* — стекло таб-бара (только тёмная) — */
 :root:not([data-theme="light"]) #tabbar{backdrop-filter:blur(20px) saturate(1.4);box-shadow:0 -1px 0 rgba(255,255,255,.05) inset;}
@@ -1025,5 +1025,6 @@ body{font-family:'Onest',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helv
 #fRooms .chsel{padding:8px 11px;font-size:13.5px;}
 /* Минут чипсы: такие же */
 #fGeoMin .chsel{padding:8px 12px;font-size:13px;}
-/* Кнопки фильтров низа — стёрка вровень с «Применить» (align-self:stretch = одна высота) */
-.btn-reset-icon{flex:0 0 auto;padding:14px 18px;align-self:stretch;}
+/* Кнопки фильтров низа: стёрка компактная (width:auto бьёт .btn{width:100%}), не растягивается
+   и не толкает «Применить»; высота = ряду (btn-row align-items:stretch по умолчанию). */
+.btn-reset-icon{flex:0 0 auto;width:auto;padding:14px 18px;}
