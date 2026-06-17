@@ -45,8 +45,10 @@ function openPost(url) {
   window.open(url, "_blank", "noopener");
 }
 
-// показываемая версия (фиксированная семантическая); кэш-бастер ?v=N — отдельно и невидим
-const APP_VERSION = "v1.5.1";
+// показываемая версия — зафиксирована намеренно (1.4.8.8), не меняется; внутренние
+// обновления катятся через невидимый кэш-бастер ?v=N (см. index.html), а не через этот номер
+const APP_VERSION = "1.4.8.8";
+const CONTACT_HANDLE = "egor_den14";  // контакт для связи (баги/идеи) — кликабелен на главной
 
 /* ── API ──
    Фронт может быть на другом домене (GitHub Pages, чистый HTTPS без заглушки),
@@ -436,7 +438,10 @@ async function renderHome() {
       <div class="muted" style="margin-bottom:10px">Чтобы отправлять варианты клиентам от вашего имени.</div>
       <button class="btn btn-primary sm" id="connBtn">Подключить</button>
     </div>` : ""}`;
-  wrap.appendChild(el(`<div class="app-ver">Риелти · ${APP_VERSION}</div>`));
+  const verBox = el(`<div class="app-ver">Риелти · ${APP_VERSION}<br>
+    <span class="app-contact" data-contact>Баги и пожелания — @${CONTACT_HANDLE}</span></div>`);
+  verBox.querySelector("[data-contact]").onclick = () => { haptic(); openPost("https://t.me/" + CONTACT_HANDLE); };
+  wrap.appendChild(verBox);
   view.appendChild(wrap);
   $("#homeAll").onclick = () => switchTab("listings");
   loadHomeCarousel();
@@ -920,6 +925,9 @@ async function renderMap(source = "all", pick = null, initialPolys = null) {
     fns.forEach(f => { if (map[f]) on ? map[f].disable() : map[f].enable(); });
     mapEl.style.cursor = on ? "crosshair" : "";
     mapEl.classList.toggle("drawing", on);
+    // на телефоне вертикальный свайп оттягивает/закрывает само окно Telegram — карта
+    // «уезжает вниз» при обводке. Гасим жест телеги на время рисования, потом возвращаем.
+    try { on ? tg?.disableVerticalSwipes?.() : tg?.enableVerticalSwipes?.(); } catch (e) {}
   }
 
   // объект попадает в выборку, если он внутри ЛЮБОЙ из обведённых областей
@@ -1044,7 +1052,6 @@ function listingCard(l, onSend, openable = true, thumb = true, select = null) {
         <div class="btn-row" style="margin-top:12px">
           ${onSend ? `<button class="btn btn-green sm" style="flex:1.3" data-send>${icon('send')} Отправить</button>` : ""}
           ${l.url ? `<button class="btn btn-soft sm" style="flex:.8" data-open>${icon('ext-link')} Пост</button>` : ""}
-          <button class="btn btn-soft sm" style="flex:1.1" data-detail>Подробнее&nbsp;›</button>
         </div>
       </div>
     </div>`);
@@ -1063,7 +1070,6 @@ function listingCard(l, onSend, openable = true, thumb = true, select = null) {
   if (onSend) card.querySelector("[data-send]").onclick = (e) => { e.stopPropagation(); haptic(); onSend(); };
   const openBtn = card.querySelector("[data-open]");
   if (openBtn) openBtn.onclick = (e) => { e.stopPropagation(); haptic(); openPost(l.url); };
-  card.querySelector("[data-detail]").onclick = (e) => { e.stopPropagation(); haptic(); go(() => renderListingDetail(l.id)); };
   // тап по любому месту карточки → подробнее (кнопки/галочка перехватывают свой клик)
   if (openable) card.onclick = () => { haptic(); go(() => renderListingDetail(l.id)); };
   return card;
@@ -2260,7 +2266,7 @@ function sheetFilters(init, onApply) {
       <button class="chsel ${init.commission_max === 50 ? "on" : ""}" data-cm="50">До 50%</button>
     </div>
     <div class="btn-row" style="margin-top:24px">
-      <button class="btn btn-soft sm filter-apply-row btn-reset-icon" id="fReset" title="Сбросить фильтры">${icon('eraser')}</button>
+      <button class="btn btn-soft btn-reset-icon" id="fReset" title="Сбросить фильтры">${icon('eraser')}</button>
       <button class="btn btn-primary" id="fApply" style="flex:1">Применить</button>
     </div>`);
   // поле-теги: Enter/запятая добавляют значение чипом, можно несколько
