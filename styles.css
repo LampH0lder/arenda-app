@@ -503,7 +503,9 @@ html,body,#app,#view{max-width:100%;overflow-x:hidden;}
 #view>*{max-width:100%;}
 
 /* ── Версия (незаметно) ── */
-.app-ver{text-align:center;color:var(--txt-3);font-size:11px;letter-spacing:.06em;margin:26px 0 8px;opacity:.7;}
+.app-ver{text-align:center;color:var(--txt-3);font-size:11px;letter-spacing:.06em;margin:26px 0 8px;opacity:.7;line-height:1.8;}
+.app-contact{display:inline-block;color:var(--accent);opacity:.8;cursor:pointer;letter-spacing:0;}
+.app-contact:active{opacity:.55;}
 
 /* ФДГ — превью фото */
 .ap-photos{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
@@ -1023,6 +1025,5 @@ body{font-family:'Onest',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helv
 #fRooms .chsel{padding:8px 11px;font-size:13.5px;}
 /* Минут чипсы: такие же */
 #fGeoMin .chsel{padding:8px 12px;font-size:13px;}
-/* Кнопки фильтров низа — правки layout */
-.filter-apply-row{display:flex;gap:8px;margin-top:20px;align-items:center;}
-.filter-apply-row .btn-reset-icon{flex:0 0 auto;padding:10px 14px;}
+/* Кнопки фильтров низа — стёрка вровень с «Применить» (align-self:stretch = одна высота) */
+.btn-reset-icon{flex:0 0 auto;padding:14px 18px;align-self:stretch;}
