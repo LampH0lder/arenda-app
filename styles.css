@@ -1,5 +1,5 @@
-:root{
-  /* ── ТЁМНАЯ тема (дефолт). Палитра под бренд АрендОК: мятный (действия) + фиолет (акцент) ── */
+﻿:root{
+  /* в”Ђв”Ђ РўРЃРњРќРђРЇ С‚РµРјР° (РґРµС„РѕР»С‚). РџР°Р»РёС‚СЂР° РїРѕРґ Р±СЂРµРЅРґ РђСЂРµРЅРґРћРљ: РјСЏС‚РЅС‹Р№ (РґРµР№СЃС‚РІРёСЏ) + С„РёРѕР»РµС‚ (Р°РєС†РµРЅС‚) в”Ђв”Ђ */
   --bg:#0d0f12;
   --bg-soft:#14171c;
   --card:#181b21;
@@ -9,24 +9,24 @@
   --txt:#eef1f6;
   --txt-2:#9aa3b2;
   --txt-3:#5f6877;
-  --accent:#9b7dff;                       /* фиолет — активное/выделения/эксклюзив/primary */
+  --accent:#9b7dff;                       /* С„РёРѕР»РµС‚ вЂ” Р°РєС‚РёРІРЅРѕРµ/РІС‹РґРµР»РµРЅРёСЏ/СЌРєСЃРєР»СЋР·РёРІ/primary */
   --accent-2:#b4a0ff;
   --accent-soft:rgba(155,125,255,.15);
   --accent-ring:rgba(155,125,255,.22);
-  --green:#34d6a8;                         /* мятный — действия (Отправить) + выбор */
-  --green-soft:rgba(52,214,168,.15);
+  --green:#36d9be;                         /* РјСЏС‚РЅС‹Р№ вЂ” РґРµР№СЃС‚РІРёСЏ (РћС‚РїСЂР°РІРёС‚СЊ) + РІС‹Р±РѕСЂ */
+  --green-soft:rgba(54,217,190,.15);
   --amber:#f5b945;
   --red:#ff6b6b;
   --pet:#c98bff;
-  --panel:rgba(20,24,30,.97);              /* плавающие панели (очередь, sel-bar) */
-  --bar:rgba(18,21,26,.86);                /* нижнее таб-меню */
-  --bar-fade:rgba(13,15,18,.85);           /* нижний край шапки (градиент) */
-  --shim-1:#171b21; --shim-2:#20242d;      /* shimmer-плейсхолдер фото */
+  --panel:rgba(20,24,30,.97);              /* РїР»Р°РІР°СЋС‰РёРµ РїР°РЅРµР»Рё (РѕС‡РµСЂРµРґСЊ, sel-bar) */
+  --bar:rgba(18,21,26,.86);                /* РЅРёР¶РЅРµРµ С‚Р°Р±-РјРµРЅСЋ */
+  --bar-fade:rgba(13,15,18,.85);           /* РЅРёР¶РЅРёР№ РєСЂР°Р№ С€Р°РїРєРё (РіСЂР°РґРёРµРЅС‚) */
+  --shim-1:#171b21; --shim-2:#20242d;      /* shimmer-РїР»РµР№СЃС…РѕР»РґРµСЂ С„РѕС‚Рѕ */
   --nophoto-1:#171b21; --nophoto-2:#191d24;
-  --scrim:rgba(13,15,18,.66);              /* затемнение над фото (бейджи) */
-  --av-1:#2a3140; --av-2:#1b2029;          /* градиент аватара */
+  --scrim:rgba(13,15,18,.66);              /* Р·Р°С‚РµРјРЅРµРЅРёРµ РЅР°Рґ С„РѕС‚Рѕ (Р±РµР№РґР¶Рё) */
+  --av-1:#2a3140; --av-2:#1b2029;          /* РіСЂР°РґРёРµРЅС‚ Р°РІР°С‚Р°СЂР° */
   --map-bg:#1a1d23;
-  --hdr:#0d0f12;                           /* цвет шапки/фона Telegram под тему */
+  --hdr:#0d0f12;                           /* С†РІРµС‚ С€Р°РїРєРё/С„РѕРЅР° Telegram РїРѕРґ С‚РµРјСѓ */
   --radius:18px;
   --radius-sm:13px;
   --shadow:0 8px 30px rgba(0,0,0,.45);
@@ -34,7 +34,7 @@
   --safe-bot:env(safe-area-inset-bottom,0px);
 }
 :root[data-theme="light"]{
-  /* ── СВЕТЛАЯ тема (под сайт АрендОК: белый фон, светло-серые карточки) ── */
+  /* в”Ђв”Ђ РЎР’Р•РўР›РђРЇ С‚РµРјР° (РїРѕРґ СЃР°Р№С‚ РђСЂРµРЅРґРћРљ: Р±РµР»С‹Р№ С„РѕРЅ, СЃРІРµС‚Р»Рѕ-СЃРµСЂС‹Рµ РєР°СЂС‚РѕС‡РєРё) в”Ђв”Ђ */
   --bg:#f4f5f7;
   --bg-soft:#eef0f3;
   --card:#ffffff;
@@ -48,8 +48,8 @@
   --accent-2:#6b4ce0;
   --accent-soft:rgba(124,92,252,.12);
   --accent-ring:rgba(124,92,252,.20);
-  --green:#10c39c;
-  --green-soft:rgba(16,195,156,.14);
+  --green:#0fc4b0;
+  --green-soft:rgba(15,196,176,.14);
   --amber:#c98313;
   --red:#e04646;
   --pet:#8b5cf6;
@@ -75,12 +75,12 @@ body{
   overscroll-behavior-y:none;
   -webkit-font-smoothing:antialiased;
 }
-/* height (а не min-height) — чтобы скроллился ВНУТРЕННИЙ #view, а не всё окно.
-   Иначе #view (overflow-y:auto) не получал чёткую высоту, скроллился body, и не
-   работали: sticky-меню, reveal при скролле, подсветка шапки, сброс прокрутки. */
+/* height (Р° РЅРµ min-height) вЂ” С‡С‚РѕР±С‹ СЃРєСЂРѕР»Р»РёР»СЃСЏ Р’РќРЈРўР Р•РќРќРР™ #view, Р° РЅРµ РІСЃС‘ РѕРєРЅРѕ.
+   РРЅР°С‡Рµ #view (overflow-y:auto) РЅРµ РїРѕР»СѓС‡Р°Р» С‡С‘С‚РєСѓСЋ РІС‹СЃРѕС‚Сѓ, СЃРєСЂРѕР»Р»РёР»СЃСЏ body, Рё РЅРµ
+   СЂР°Р±РѕС‚Р°Р»Рё: sticky-РјРµРЅСЋ, reveal РїСЂРё СЃРєСЂРѕР»Р»Рµ, РїРѕРґСЃРІРµС‚РєР° С€Р°РїРєРё, СЃР±СЂРѕСЃ РїСЂРѕРєСЂСѓС‚РєРё. */
 #app{display:flex;flex-direction:column;height:var(--tg-vh,100vh);min-height:0;}
 
-/* ── Top bar ── */
+/* в”Ђв”Ђ Top bar в”Ђв”Ђ */
 #topbar{
   position:sticky;top:0;z-index:20;
   padding:calc(var(--safe-top) + 10px) 16px 10px;
@@ -93,10 +93,10 @@ body{
 .tb-title{font-size:25px;font-weight:740;letter-spacing:-.02em;}
 .tb-sub{font-size:12.5px;color:var(--txt-2);margin-top:1px;}
 
-/* ── Main view ── */
+/* в”Ђв”Ђ Main view в”Ђв”Ђ */
 #view{flex:1;padding:12px 16px 96px;overflow-y:auto;}
 
-/* ── Tab bar ── */
+/* в”Ђв”Ђ Tab bar в”Ђв”Ђ */
 #tabbar{
   position:fixed;left:0;right:0;bottom:0;z-index:30;
   display:flex;
@@ -116,7 +116,7 @@ body{
 .tab.active{color:var(--accent-2);}
 .tab:active{transform:scale(.92);}
 
-/* ── Cards ── */
+/* в”Ђв”Ђ Cards в”Ђв”Ђ */
 .card{
   background:var(--card);border:1px solid var(--line);
   border-radius:var(--radius);padding:16px;margin-bottom:12px;
@@ -131,7 +131,7 @@ body{
 }
 .section-title:first-child{margin-top:8px;}
 
-/* ── Stats grid ── */
+/* в”Ђв”Ђ Stats grid в”Ђв”Ђ */
 .stats-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
 .stat{
   background:var(--card);border:1px solid var(--line);
@@ -146,7 +146,7 @@ body{
 .stat.am .glow{background:var(--amber);}
 .stat.p .glow{background:var(--pet);}
 
-/* ── Quick actions ── */
+/* в”Ђв”Ђ Quick actions в”Ђв”Ђ */
 .quick{display:grid;grid-template-columns:1fr 1fr;gap:12px;grid-auto-rows:1fr;}
 .quick-btn{
   background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
@@ -159,7 +159,7 @@ body{
 .quick-btn .qt{font-weight:650;font-size:14.5px;}
 .quick-btn .qs{font-size:12px;color:var(--txt-2);}
 
-/* ── Client row ── */
+/* в”Ђв”Ђ Client row в”Ђв”Ђ */
 .client-row{display:flex;align-items:center;gap:13px;}
 .avatar{
   width:46px;height:46px;border-radius:50%;flex:none;
@@ -178,7 +178,7 @@ body{
 .client-crit{font-size:12.5px;color:var(--txt-2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .chev{color:var(--txt-3);font-size:19px;flex:none;}
 
-/* ── Chips / pills ── */
+/* в”Ђв”Ђ Chips / pills в”Ђв”Ђ */
 .chips{display:flex;flex-wrap:wrap;gap:7px;}
 .chip{
   background:var(--card-2);border:1px solid var(--line);
@@ -189,7 +189,7 @@ body{
 .chip.green{background:var(--green-soft);color:var(--green);border-color:transparent;}
 .chip.pet{background:rgba(201,139,255,.14);color:var(--pet);border-color:transparent;}
 
-/* ── Segmented control ── */
+/* в”Ђв”Ђ Segmented control в”Ђв”Ђ */
 .seg{
   display:flex;background:var(--bg-soft);border:1px solid var(--line);
   border-radius:13px;padding:4px;gap:3px;margin:4px 0 14px;
@@ -201,7 +201,7 @@ body{
 }
 .seg button.on{background:var(--card-2);color:var(--txt);box-shadow:0 1px 4px rgba(0,0,0,.3);}
 
-/* ── Listing card ── */
+/* в”Ђв”Ђ Listing card в”Ђв”Ђ */
 .listing-price{font-size:21px;font-weight:740;letter-spacing:-.02em;}
 .listing-title{font-weight:620;font-size:15.5px;margin-top:2px;}
 .listing-meta{font-size:12.5px;color:var(--txt-2);margin-top:4px;}
@@ -211,7 +211,7 @@ body{
 }
 .geo-line{font-size:12.5px;color:var(--txt-2);margin-top:5px;}
 
-/* ── Buttons ── */
+/* в”Ђв”Ђ Buttons в”Ђв”Ђ */
 .btn{
   display:flex;align-items:center;justify-content:center;gap:8px;
   width:100%;padding:14px;border-radius:14px;border:none;cursor:pointer;
@@ -226,7 +226,7 @@ body{
 .btn-row{display:flex;gap:10px;}
 .btn.sm{padding:10px 14px;font-size:13.5px;width:auto;border-radius:11px;}
 
-/* ── Inputs ── */
+/* в”Ђв”Ђ Inputs в”Ђв”Ђ */
 .field{margin-bottom:14px;}
 .field label{display:block;font-size:12.5px;color:var(--txt-2);margin-bottom:6px;font-weight:600;}
 .input,textarea.input{
@@ -236,10 +236,10 @@ body{
 }
 .input:focus,textarea.input:focus{outline:none;border-color:var(--accent);}
 textarea.input{resize:vertical;min-height:70px;}
-/* Поле поиска: одна строка по дефолту, авто-рост задаётся из JS (sGrow). */
+/* РџРѕР»Рµ РїРѕРёСЃРєР°: РѕРґРЅР° СЃС‚СЂРѕРєР° РїРѕ РґРµС„РѕР»С‚Сѓ, Р°РІС‚Рѕ-СЂРѕСЃС‚ Р·Р°РґР°С‘С‚СЃСЏ РёР· JS (sGrow). */
 textarea.input#sInput{resize:none;min-height:0;height:auto;max-height:140px;overflow-y:auto;line-height:1.4;}
 
-/* ── Плашка техработ: одна строка, бегущая строка (marquee) ── */
+/* в”Ђв”Ђ РџР»Р°С€РєР° С‚РµС…СЂР°Р±РѕС‚: РѕРґРЅР° СЃС‚СЂРѕРєР°, Р±РµРіСѓС‰Р°СЏ СЃС‚СЂРѕРєР° (marquee) в”Ђв”Ђ */
 #maintBanner{position:relative;z-index:5;background:#7c5e10;color:#ffe9a8;
   font-size:12px;height:26px;line-height:26px;overflow:hidden;white-space:nowrap;}
 #maintBanner .maint-track{display:flex;width:max-content;will-change:transform;
@@ -254,7 +254,7 @@ textarea.input#sInput{resize:none;min-height:0;height:auto;max-height:140px;over
   #maintBanner .maint-track span{padding-right:0;}
 }
 
-/* ── Detail header ── */
+/* в”Ђв”Ђ Detail header в”Ђв”Ђ */
 .detail-hero{display:flex;align-items:center;gap:15px;margin-bottom:18px;}
 .detail-hero .avatar{width:62px;height:62px;font-size:23px;}
 .detail-hero h2{margin:0;font-size:21px;font-weight:720;letter-spacing:-.02em;}
@@ -265,7 +265,7 @@ textarea.input#sInput{resize:none;min-height:0;height:auto;max-height:140px;over
 .kv .k{color:var(--txt-2);}
 .kv .v{font-weight:600;text-align:right;}
 
-/* ── Bottom sheet ── */
+/* в”Ђв”Ђ Bottom sheet в”Ђв”Ђ */
 .sheet{position:fixed;inset:0;z-index:100;display:flex;align-items:flex-end;}
 .sheet.hidden{display:none;}
 .sheet-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(2px);animation:fade .2s;}
@@ -281,7 +281,7 @@ textarea.input#sInput{resize:none;min-height:0;height:auto;max-height:140px;over
 @keyframes slideup{from{transform:translateY(100%);}to{transform:translateY(0);}}
 @keyframes fade{from{opacity:0;}to{opacity:1;}}
 
-/* ── Misc ── */
+/* в”Ђв”Ђ Misc в”Ђв”Ђ */
 .loader{display:flex;justify-content:center;padding:60px 0;}
 .spin{width:30px;height:30px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:rot .8s linear infinite;}
 @keyframes rot{to{transform:rotate(360deg);}}
@@ -310,7 +310,7 @@ textarea.input#sInput{resize:none;min-height:0;height:auto;max-height:140px;over
   transition:background .15s,border-color .15s;
 }
 .check.on{background:var(--green);border-color:var(--green);}
-/* ── Миниатюра объекта ── */
+/* в”Ђв”Ђ РњРёРЅРёР°С‚СЋСЂР° РѕР±СЉРµРєС‚Р° в”Ђв”Ђ */
 .card.pad0{padding:0;overflow:hidden;}
 .card-body{padding:16px;}
 .card-thumb{
@@ -331,7 +331,7 @@ textarea.input#sInput{resize:none;min-height:0;height:auto;max-height:140px;over
   background:repeating-linear-gradient(135deg,var(--nophoto-1),var(--nophoto-1) 12px,var(--nophoto-2) 12px,var(--nophoto-2) 24px);
 }
 .card-thumb.nophoto::after{
-  content:"нет фото";position:absolute;left:14px;top:50%;transform:translateY(-50%);
+  content:"РЅРµС‚ С„РѕС‚Рѕ";position:absolute;left:14px;top:50%;transform:translateY(-50%);
   color:var(--txt-3);font-size:12.5px;
 }
 .src-badge{
@@ -342,7 +342,7 @@ textarea.input#sInput{resize:none;min-height:0;height:auto;max-height:140px;over
   margin-left:6px;font-size:0.78em;font-weight:400;
   opacity:0.35;letter-spacing:.01em;
 }
-/* «Анонс» — объект пока не актуален/без фото: яркий янтарный бейдж, чтобы не сливался */
+/* В«РђРЅРѕРЅСЃВ» вЂ” РѕР±СЉРµРєС‚ РїРѕРєР° РЅРµ Р°РєС‚СѓР°Р»РµРЅ/Р±РµР· С„РѕС‚Рѕ: СЏСЂРєРёР№ СЏРЅС‚Р°СЂРЅС‹Р№ Р±РµР№РґР¶, С‡С‚РѕР±С‹ РЅРµ СЃР»РёРІР°Р»СЃСЏ */
 .anons-badge{
   display:inline-flex;align-items:center;gap:4px;vertical-align:middle;margin-right:3px;
   font-size:11px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;
@@ -350,7 +350,7 @@ textarea.input#sInput{resize:none;min-height:0;height:auto;max-height:140px;over
 }
 .anons-badge svg{width:12px;height:12px;}
 
-/* ── Чипы-кнопки выбора (циан-стиль) ── */
+/* в”Ђв”Ђ Р§РёРїС‹-РєРЅРѕРїРєРё РІС‹Р±РѕСЂР° (С†РёР°РЅ-СЃС‚РёР»СЊ) в”Ђв”Ђ */
 .chipsel{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px;}
 .chsel{
   background:var(--bg-soft);border:1px solid var(--line);color:var(--txt);
@@ -363,7 +363,7 @@ textarea.input#sInput{resize:none;min-height:0;height:auto;max-height:140px;over
 .ed-label{font-size:12.5px;color:var(--txt-2);font-weight:650;margin:16px 2px 8px;}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 
-/* ── Кнопка записи голоса ── */
+/* в”Ђв”Ђ РљРЅРѕРїРєР° Р·Р°РїРёСЃРё РіРѕР»РѕСЃР° в”Ђв”Ђ */
 .voicebtn.rec{background:rgba(255,107,107,.16);color:var(--red);border-color:transparent;animation:pulse 1.1s ease-in-out infinite;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.55;}}
 
@@ -375,12 +375,12 @@ textarea.input#sInput{resize:none;min-height:0;height:auto;max-height:140px;over
 }
 .fab:active{transform:scale(.9);}
 
-/* ── Поиск объявления по номеру ── */
+/* в”Ђв”Ђ РџРѕРёСЃРє РѕР±СЉСЏРІР»РµРЅРёСЏ РїРѕ РЅРѕРјРµСЂСѓ в”Ђв”Ђ */
 .idsearch{display:flex;gap:8px;margin-bottom:12px;}
 .idsearch .input{flex:1;}
 .idsearch .btn{white-space:nowrap;}
 
-/* ── История отправок ── */
+/* в”Ђв”Ђ РСЃС‚РѕСЂРёСЏ РѕС‚РїСЂР°РІРѕРє в”Ђв”Ђ */
 .hist-ic{
   width:40px;height:40px;flex:0 0 40px;border-radius:11px;display:flex;align-items:center;
   justify-content:center;font-size:18px;background:var(--green-soft);color:var(--green);
@@ -388,7 +388,7 @@ textarea.input#sInput{resize:none;min-height:0;height:auto;max-height:140px;over
 .hist-meta{font-size:12px;color:var(--txt-3);margin-top:4px;}
 .hist-meta b{color:var(--txt-2);font-weight:600;}
 
-/* ── Очередь отправки (плавающая панель) ── */
+/* в”Ђв”Ђ РћС‡РµСЂРµРґСЊ РѕС‚РїСЂР°РІРєРё (РїР»Р°РІР°СЋС‰Р°СЏ РїР°РЅРµР»СЊ) в”Ђв”Ђ */
 #sendq{
   position:fixed;left:10px;right:10px;bottom:calc(var(--safe-bot) + 88px);
   z-index:60;background:var(--panel);border:1px solid var(--line);
@@ -414,7 +414,7 @@ textarea.input#sInput{resize:none;min-height:0;height:auto;max-height:140px;over
 .sq-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--txt);}
 .sq-sub{font-size:11px;color:var(--txt-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-/* ── Выбор нескольких объявлений (галочка на карточке) ── */
+/* в”Ђв”Ђ Р’С‹Р±РѕСЂ РЅРµСЃРєРѕР»СЊРєРёС… РѕР±СЉСЏРІР»РµРЅРёР№ (РіР°Р»РѕС‡РєР° РЅР° РєР°СЂС‚РѕС‡РєРµ) в”Ђв”Ђ */
 .lc-check{
   flex:0 0 26px;width:26px;height:26px;margin-left:10px;border-radius:50%;
   border:2px solid var(--line);display:flex;align-items:center;justify-content:center;
@@ -429,13 +429,13 @@ textarea.input#sInput{resize:none;min-height:0;height:auto;max-height:140px;over
   box-shadow:0 8px 22px rgba(0,0,0,.28);backdrop-filter:blur(10px);animation:sqIn .2s ease;
   transition:opacity .18s cubic-bezier(.22,.9,.3,1),transform .18s cubic-bezier(.22,.9,.3,1);
 }
-/* уход панели выбора: опускается + растворяется (visibility с задержкой убирает её после анимации) */
+/* СѓС…РѕРґ РїР°РЅРµР»Рё РІС‹Р±РѕСЂР°: РѕРїСѓСЃРєР°РµС‚СЃСЏ + СЂР°СЃС‚РІРѕСЂСЏРµС‚СЃСЏ (visibility СЃ Р·Р°РґРµСЂР¶РєРѕР№ СѓР±РёСЂР°РµС‚ РµС‘ РїРѕСЃР»Рµ Р°РЅРёРјР°С†РёРё) */
 .sel-bar.hidden{
   opacity:0;transform:translateY(16px);pointer-events:none;visibility:hidden;
   transition:opacity .16s ease,transform .16s ease,visibility 0s linear .16s;
 }
 
-/* ── Галочка выбора: заметнее ── */
+/* в”Ђв”Ђ Р“Р°Р»РѕС‡РєР° РІС‹Р±РѕСЂР°: Р·Р°РјРµС‚РЅРµРµ в”Ђв”Ђ */
 .lc-check{
   width:30px;height:30px;flex:0 0 30px;margin-left:12px;border-radius:50%;
   border:2px solid var(--green);background:var(--green-soft);
@@ -449,13 +449,13 @@ textarea.input#sInput{resize:none;min-height:0;height:auto;max-height:140px;over
   padding:9px 12px;margin:0 0 12px;line-height:1.35;
 }
 
-/* ── Прогрессивное превью: low-quality сначала размыто ── */
+/* в”Ђв”Ђ РџСЂРѕРіСЂРµСЃСЃРёРІРЅРѕРµ РїСЂРµРІСЊСЋ: low-quality СЃРЅР°С‡Р°Р»Р° СЂР°Р·РјС‹С‚Рѕ в”Ђв”Ђ */
 .card-thumb.lq{filter:blur(7px) saturate(1.05);transform:scale(1.04);}
 .card-thumb{transition:filter .35s ease;}
 img.listing-thumb.lq{filter:blur(8px) saturate(1.05);}
 img.listing-thumb{transition:filter .35s ease;}
 
-/* ── Очередь отправки: окно отмены ── */
+/* в”Ђв”Ђ РћС‡РµСЂРµРґСЊ РѕС‚РїСЂР°РІРєРё: РѕРєРЅРѕ РѕС‚РјРµРЅС‹ в”Ђв”Ђ */
 .sq-row.pending{opacity:1;}
 .sq-row.pending .sq-ic{color:var(--amber);}
 .sq-cancel{
@@ -464,7 +464,7 @@ img.listing-thumb{transition:filter .35s ease;}
 }
 .sq-x.danger{color:var(--red);}
 
-/* ── Карта (обвести область) ── */
+/* в”Ђв”Ђ РљР°СЂС‚Р° (РѕР±РІРµСЃС‚Рё РѕР±Р»Р°СЃС‚СЊ) в”Ђв”Ђ */
 .map-tools{display:flex;gap:8px;align-items:center;margin-bottom:10px;}
 .map-box{height:58vh;min-height:340px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--card-2);}
 .map-box.drawing{touch-action:none;}
@@ -481,44 +481,44 @@ img.listing-thumb{transition:filter .35s ease;}
 .area-x:active{background:rgba(127,127,127,.3);}
 .leaflet-container{background:var(--map-bg);font:inherit;}
 
-/* ── Карусель последних объектов (Главная) ── */
+/* в”Ђв”Ђ РљР°СЂСѓСЃРµР»СЊ РїРѕСЃР»РµРґРЅРёС… РѕР±СЉРµРєС‚РѕРІ (Р“Р»Р°РІРЅР°СЏ) в”Ђв”Ђ */
 .carousel{display:flex;gap:12px;overflow-x:auto;padding:4px 8px 16px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;}
 .carousel::-webkit-scrollbar{display:none;}
 .ccard{flex:0 0 196px;scroll-snap-align:start;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;cursor:pointer;transition:transform .1s;}
 .ccard:active{transform:scale(.98);}
 .cc-thumb{height:118px;background:var(--card-2);background-size:cover;background-position:center;position:relative;display:flex;align-items:flex-start;}
 .cc-thumb.nophoto{background:repeating-linear-gradient(135deg,var(--nophoto-1),var(--nophoto-1) 12px,var(--nophoto-2) 12px,var(--nophoto-2) 24px);}
-.cc-thumb.nophoto::after{content:"нет фото";position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--txt-3);font-size:12px;}
+.cc-thumb.nophoto::after{content:"РЅРµС‚ С„РѕС‚Рѕ";position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--txt-3);font-size:12px;}
 .cc-body{padding:10px 12px 12px;}
 .cc-price{font-weight:740;font-size:16px;letter-spacing:-.02em;}
 .cc-title{font-size:13px;font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .cc-meta{font-size:11.5px;color:var(--txt-2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-/* ── Ссылка «все ›» в шапке карусели (без рамки кнопки) ── */
+/* в”Ђв”Ђ РЎСЃС‹Р»РєР° В«РІСЃРµ вЂєВ» РІ С€Р°РїРєРµ РєР°СЂСѓСЃРµР»Рё (Р±РµР· СЂР°РјРєРё РєРЅРѕРїРєРё) в”Ђв”Ђ */
 .link-all{background:none;border:none;color:var(--accent-2);font-size:13px;font-weight:600;cursor:pointer;padding:4px 0;width:auto;}
 .link-all:active{opacity:.6;}
 
-/* ── Убираем горизонтальное переполнение (чёрные краюшки при переходах) ── */
+/* в”Ђв”Ђ РЈР±РёСЂР°РµРј РіРѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅРѕРµ РїРµСЂРµРїРѕР»РЅРµРЅРёРµ (С‡С‘СЂРЅС‹Рµ РєСЂР°СЋС€РєРё РїСЂРё РїРµСЂРµС…РѕРґР°С…) в”Ђв”Ђ */
 html,body,#app,#view{max-width:100%;overflow-x:hidden;}
 #view>*{max-width:100%;}
 
-/* ── Версия (незаметно) ── */
+/* в”Ђв”Ђ Р’РµСЂСЃРёСЏ (РЅРµР·Р°РјРµС‚РЅРѕ) в”Ђв”Ђ */
 .app-ver{text-align:center;color:var(--txt-3);font-size:11px;letter-spacing:.06em;margin:26px 0 8px;opacity:.7;line-height:1.8;}
 .app-contact{display:inline-block;color:var(--accent);opacity:.8;cursor:pointer;letter-spacing:0;}
 .app-contact:active{opacity:.55;}
 
-/* ФДГ — превью фото */
+/* Р¤Р”Р“ вЂ” РїСЂРµРІСЊСЋ С„РѕС‚Рѕ */
 .ap-photos{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
 .ap-thumb{aspect-ratio:1/1;border-radius:10px;background:var(--card-2) center/cover no-repeat;border:1px solid var(--line)}
 
-/* ── Лёгкий лоск ── */
+/* в”Ђв”Ђ Р›С‘РіРєРёР№ Р»РѕСЃРє в”Ђв”Ђ */
 .ccard{box-shadow:0 2px 8px rgba(0,0,0,.12);}
 .cc-thumb::after{content:"";position:absolute;left:0;right:0;bottom:0;height:38px;background:linear-gradient(180deg,transparent,rgba(13,15,18,.45));pointer-events:none;}
 .cc-thumb.nophoto::after{background:none;}
 .carousel{scroll-padding-left:2px;}
 .section-title{color:var(--txt-2);}
 
-/* ── Фото в детальном просмотре: во всю ширину, без чёрных уголков ── */
+/* в”Ђв”Ђ Р¤РѕС‚Рѕ РІ РґРµС‚Р°Р»СЊРЅРѕРј РїСЂРѕСЃРјРѕС‚СЂРµ: РІРѕ РІСЃСЋ С€РёСЂРёРЅСѓ, Р±РµР· С‡С‘СЂРЅС‹С… СѓРіРѕР»РєРѕРІ в”Ђв”Ђ */
 .detail-photo{
   display:block;width:calc(100% + 32px);max-width:none;margin:-6px -16px 16px;
   height:248px;object-fit:cover;background:var(--card-2);transition:filter .35s ease;
@@ -526,7 +526,7 @@ html,body,#app,#view{max-width:100%;overflow-x:hidden;}
 .detail-photo.lq{filter:blur(8px) saturate(1.05);}
 .gal-img.lq{filter:blur(10px) saturate(1.05);}
 
-/* ── Полоска миниатюр под обложкой объекта ── */
+/* в”Ђв”Ђ РџРѕР»РѕСЃРєР° РјРёРЅРёР°С‚СЋСЂ РїРѕРґ РѕР±Р»РѕР¶РєРѕР№ РѕР±СЉРµРєС‚Р° в”Ђв”Ђ */
 .detail-thumbs{
   display:flex;gap:6px;overflow-x:auto;margin:0 0 10px;padding-bottom:4px;
   -webkit-overflow-scrolling:touch;scrollbar-width:none;
@@ -540,8 +540,8 @@ html,body,#app,#view{max-width:100%;overflow-x:hidden;}
 .dthumb.loaded{opacity:1;}
 .dthumb:active{transform:scale(.94);}
 
-/* ── Шапка: 3-колоночный grid [лево: ‹+тексты | центр: лого | право: колокол] ── */
-/* 1fr | auto | 1fr → лого ВСЕГДА строго по центру экрана, не зависит от длины заголовка */
+/* в”Ђв”Ђ РЁР°РїРєР°: 3-РєРѕР»РѕРЅРѕС‡РЅС‹Р№ grid [Р»РµРІРѕ: вЂ№+С‚РµРєСЃС‚С‹ | С†РµРЅС‚СЂ: Р»РѕРіРѕ | РїСЂР°РІРѕ: РєРѕР»РѕРєРѕР»] в”Ђв”Ђ */
+/* 1fr | auto | 1fr в†’ Р»РѕРіРѕ Р’РЎР•Р“Р”Рђ СЃС‚СЂРѕРіРѕ РїРѕ С†РµРЅС‚СЂСѓ СЌРєСЂР°РЅР°, РЅРµ Р·Р°РІРёСЃРёС‚ РѕС‚ РґР»РёРЅС‹ Р·Р°РіРѕР»РѕРІРєР° */
 .tb-head{width:100%;}
 .back-btn{
   flex:0 0 auto;background:none;border:none;color:var(--accent-2);
@@ -549,13 +549,13 @@ html,body,#app,#view{max-width:100%;overflow-x:hidden;}
 }
 .back-btn.hidden{display:none;}
 .back-btn:active{opacity:.55;}
-/* Когда есть back — заголовок чуть мельче (рядом стрелка) */
+/* РљРѕРіРґР° РµСЃС‚СЊ back вЂ” Р·Р°РіРѕР»РѕРІРѕРє С‡СѓС‚СЊ РјРµР»СЊС‡Рµ (СЂСЏРґРѕРј СЃС‚СЂРµР»РєР°) */
 #topbar.has-back .tb-title{font-size:20px;}
 
-/* ── 4 вкладки → шрифт крупнее ── */
+/* в”Ђв”Ђ 4 РІРєР»Р°РґРєРё в†’ С€СЂРёС„С‚ РєСЂСѓРїРЅРµРµ в”Ђв”Ђ */
 .tab{font-size:11.5px;}
 
-/* ── Строка поиска (в Объектах) ── */
+/* в”Ђв”Ђ РЎС‚СЂРѕРєР° РїРѕРёСЃРєР° (РІ РћР±СЉРµРєС‚Р°С…) в”Ђв”Ђ */
 .search-bar{
   width:100%;display:flex;align-items:center;gap:10px;text-align:left;
   background:var(--bg-soft);border:1px solid var(--line);border-radius:13px;
@@ -565,7 +565,7 @@ html,body,#app,#view{max-width:100%;overflow-x:hidden;}
 .search-bar .sb-ic{font-size:18px;color:var(--txt-2);}
 .search-bar:active{border-color:var(--accent);}
 
-/* ── Теги-чипы в фильтрах (несколько ЖК/районов/метро) ── */
+/* в”Ђв”Ђ РўРµРіРё-С‡РёРїС‹ РІ С„РёР»СЊС‚СЂР°С… (РЅРµСЃРєРѕР»СЊРєРѕ Р–Рљ/СЂР°Р№РѕРЅРѕРІ/РјРµС‚СЂРѕ) в”Ђв”Ђ */
 .tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
 .tags:empty{display:none;}
 .tag{
@@ -575,13 +575,13 @@ html,body,#app,#view{max-width:100%;overflow-x:hidden;}
 .tag-x{cursor:pointer;font-size:16px;line-height:1;opacity:.8;}
 .tag-x:active{opacity:.5;}
 
-/* ── Метка эксклюзива ── */
+/* в”Ђв”Ђ РњРµС‚РєР° СЌРєСЃРєР»СЋР·РёРІР° в”Ђв”Ђ */
 .excl-line{font-size:12px;font-weight:600;color:var(--accent);margin-top:5px;}
 
-/* ════════════════════════ Онбординг (spotlight-тур) ════════════════════════ */
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ РћРЅР±РѕСЂРґРёРЅРі (spotlight-С‚СѓСЂ) в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 #onb{position:fixed;inset:0;z-index:1000;}
 #onb.hidden{display:none;}
-/* «дырка» подсветки: прозрачный блок, вокруг него огромная тень = затемнение всего */
+/* В«РґС‹СЂРєР°В» РїРѕРґСЃРІРµС‚РєРё: РїСЂРѕР·СЂР°С‡РЅС‹Р№ Р±Р»РѕРє, РІРѕРєСЂСѓРі РЅРµРіРѕ РѕРіСЂРѕРјРЅР°СЏ С‚РµРЅСЊ = Р·Р°С‚РµРјРЅРµРЅРёРµ РІСЃРµРіРѕ */
 #onbHole{
   position:absolute;border-radius:14px;
   box-shadow:0 0 0 9999px rgba(8,10,13,.80);
@@ -590,7 +590,7 @@ html,body,#app,#view{max-width:100%;overflow-x:hidden;}
   outline:2px solid var(--accent);outline-offset:2px;
 }
 #onbHole.center{box-shadow:0 0 0 9999px rgba(8,10,13,.86);outline:none;}
-/* перехват кликов мимо подсказки, чтобы юзер не тыкал по приложению во время тура */
+/* РїРµСЂРµС…РІР°С‚ РєР»РёРєРѕРІ РјРёРјРѕ РїРѕРґСЃРєР°Р·РєРё, С‡С‚РѕР±С‹ СЋР·РµСЂ РЅРµ С‚С‹РєР°Р» РїРѕ РїСЂРёР»РѕР¶РµРЅРёСЋ РІРѕ РІСЂРµРјСЏ С‚СѓСЂР° */
 #onbCatch{position:absolute;inset:0;}
 .onb-card{
   position:absolute;left:16px;right:16px;
@@ -610,7 +610,7 @@ html,body,#app,#view{max-width:100%;overflow-x:hidden;}
 .onb-skip{background:none;border:none;color:var(--txt-3);font-size:13px;cursor:pointer;font-family:inherit;padding:6px 2px;}
 .onb-skip:active{color:var(--txt-2);}
 
-/* ════════════════════════ Галерея фото объекта ════════════════════════ */
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ Р“Р°Р»РµСЂРµСЏ С„РѕС‚Рѕ РѕР±СЉРµРєС‚Р° в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 .detail-photo-wrap{position:relative;}
 .gal-count{
   position:absolute;right:10px;bottom:10px;
@@ -621,7 +621,7 @@ html,body,#app,#view{max-width:100%;overflow-x:hidden;}
   position:fixed;inset:0;z-index:1100;background:#000;
   display:flex;flex-direction:column;
   animation:onbPop .2s ease both;
-  overscroll-behavior:none;touch-action:none;  /* не триггерим pull-to-refresh/back-жест браузера */
+  overscroll-behavior:none;touch-action:none;  /* РЅРµ С‚СЂРёРіРіРµСЂРёРј pull-to-refresh/back-Р¶РµСЃС‚ Р±СЂР°СѓР·РµСЂР° */
 }
 .gal-top{
   display:flex;align-items:center;justify-content:space-between;
@@ -647,7 +647,7 @@ html,body,#app,#view{max-width:100%;overflow-x:hidden;}
 .gal-bottom{padding:14px 16px calc(var(--safe-bot) + 16px);display:flex;justify-content:center;}
 .gal-cover.is-cover{background:var(--green);color:#06281d;}
 
-/* Компактные иконки-фильтры (источник/комиссия/сортировка/расш.фильтры) */
+/* РљРѕРјРїР°РєС‚РЅС‹Рµ РёРєРѕРЅРєРё-С„РёР»СЊС‚СЂС‹ (РёСЃС‚РѕС‡РЅРёРє/РєРѕРјРёСЃСЃРёСЏ/СЃРѕСЂС‚РёСЂРѕРІРєР°/СЂР°СЃС€.С„РёР»СЊС‚СЂС‹) */
 .mini-row{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;margin-bottom:8px;}
 .mini-row::-webkit-scrollbar{display:none;}
 .mini-chip{flex:none;position:relative;background:var(--card-2);border:1px solid var(--line);
@@ -656,12 +656,12 @@ html,body,#app,#view{max-width:100%;overflow-x:hidden;}
 .mini-chip.act{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-2);}
 .mini-chip:active{opacity:.8;}
 .mc-dot{position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--accent);}
-/* Строка поиска по агенту на вкладке Объекты */
+/* РЎС‚СЂРѕРєР° РїРѕРёСЃРєР° РїРѕ Р°РіРµРЅС‚Сѓ РЅР° РІРєР»Р°РґРєРµ РћР±СЉРµРєС‚С‹ */
 .list-search{position:relative;margin-bottom:10px;display:flex;align-items:center;}
 .list-search .ls-ic{position:absolute;left:12px;color:var(--txt-3);pointer-events:none;display:flex;z-index:1;}
 .list-search input{padding:12px 36px 12px 38px;width:100%;box-sizing:border-box;font-size:15px;}
 .list-search .ls-clr{position:absolute;right:10px;background:none;border:none;color:var(--txt-2);font-size:18px;cursor:pointer;padding:4px;line-height:1;}
-/* Шторка одиночного выбора */
+/* РЁС‚РѕСЂРєР° РѕРґРёРЅРѕС‡РЅРѕРіРѕ РІС‹Р±РѕСЂР° */
 .pick-list{display:flex;flex-direction:column;gap:6px;}
 .pick-row{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;
   background:var(--card-2);border:1px solid var(--line);color:var(--txt);border-radius:12px;
@@ -670,11 +670,11 @@ html,body,#app,#view{max-width:100%;overflow-x:hidden;}
 .pick-row:active{opacity:.8;}
 .pick-ok{color:var(--accent-2);font-size:17px;}
 
-/* ── Когда видна панель «отправить выбранные» — поднимаем низ списка, чтобы она не
-   перекрывала кнопку «Загрузить ещё». :has() — без JS (мягкая деградация на старье). ── */
+/* в”Ђв”Ђ РљРѕРіРґР° РІРёРґРЅР° РїР°РЅРµР»СЊ В«РѕС‚РїСЂР°РІРёС‚СЊ РІС‹Р±СЂР°РЅРЅС‹РµВ» вЂ” РїРѕРґРЅРёРјР°РµРј РЅРёР· СЃРїРёСЃРєР°, С‡С‚РѕР±С‹ РѕРЅР° РЅРµ
+   РїРµСЂРµРєСЂС‹РІР°Р»Р° РєРЅРѕРїРєСѓ В«Р—Р°РіСЂСѓР·РёС‚СЊ РµС‰С‘В». :has() вЂ” Р±РµР· JS (РјСЏРіРєР°СЏ РґРµРіСЂР°РґР°С†РёСЏ РЅР° СЃС‚Р°СЂСЊРµ). в”Ђв”Ђ */
 body:has(.sel-bar:not(.hidden)) #view{padding-bottom:calc(var(--safe-bot) + 170px);}
 
-/* ── Skeleton-загрузка (вместо спиннера): мерцающие карточки формы объявления ── */
+/* в”Ђв”Ђ Skeleton-Р·Р°РіСЂСѓР·РєР° (РІРјРµСЃС‚Рѕ СЃРїРёРЅРЅРµСЂР°): РјРµСЂС†Р°СЋС‰РёРµ РєР°СЂС‚РѕС‡РєРё С„РѕСЂРјС‹ РѕР±СЉСЏРІР»РµРЅРёСЏ в”Ђв”Ђ */
 .sk-list{display:flex;flex-direction:column;gap:14px;padding-top:6px;}
 .sk-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;}
 .sk-photo{height:180px;border-radius:12px;margin-bottom:12px;}
@@ -688,39 +688,39 @@ body:has(.sel-bar:not(.hidden)) #view{padding-bottom:calc(var(--safe-bot) + 170p
 }
 @keyframes sk-shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
 
-/* ── Светлая тема: точечные доводки (размытые блики мутнеют на белом) ── */
+/* в”Ђв”Ђ РЎРІРµС‚Р»Р°СЏ С‚РµРјР°: С‚РѕС‡РµС‡РЅС‹Рµ РґРѕРІРѕРґРєРё (СЂР°Р·РјС‹С‚С‹Рµ Р±Р»РёРєРё РјСѓС‚РЅРµСЋС‚ РЅР° Р±РµР»РѕРј) в”Ђв”Ђ */
 :root[data-theme="light"] .stat .glow{opacity:.28;filter:blur(22px);}
 :root[data-theme="light"] .seg button.on{box-shadow:0 1px 4px rgba(20,30,50,.1);}
 
-/* ── Шапка: заголовок+подзаголовок слева · лого по центру · колокольчик справа ── */
-.tb-head{overflow:visible;}  /* visible — чтобы значок колокольчика не обрезался */
-/* 1fr | auto | 1fr: боковые колонки равны → центр-лого ровно по середине экрана */
+/* в”Ђв”Ђ РЁР°РїРєР°: Р·Р°РіРѕР»РѕРІРѕРє+РїРѕРґР·Р°РіРѕР»РѕРІРѕРє СЃР»РµРІР° В· Р»РѕРіРѕ РїРѕ С†РµРЅС‚СЂСѓ В· РєРѕР»РѕРєРѕР»СЊС‡РёРє СЃРїСЂР°РІР° в”Ђв”Ђ */
+.tb-head{overflow:visible;}  /* visible вЂ” С‡С‚РѕР±С‹ Р·РЅР°С‡РѕРє РєРѕР»РѕРєРѕР»СЊС‡РёРєР° РЅРµ РѕР±СЂРµР·Р°Р»СЃСЏ */
+/* 1fr | auto | 1fr: Р±РѕРєРѕРІС‹Рµ РєРѕР»РѕРЅРєРё СЂР°РІРЅС‹ в†’ С†РµРЅС‚СЂ-Р»РѕРіРѕ СЂРѕРІРЅРѕ РїРѕ СЃРµСЂРµРґРёРЅРµ СЌРєСЂР°РЅР° */
 .tb-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;column-gap:7px;min-width:0;}
-/* левая зона: стрелка + блок текстов (заголовок над подзаголовком, выровнены по левому краю) */
+/* Р»РµРІР°СЏ Р·РѕРЅР°: СЃС‚СЂРµР»РєР° + Р±Р»РѕРє С‚РµРєСЃС‚РѕРІ (Р·Р°РіРѕР»РѕРІРѕРє РЅР°Рґ РїРѕРґР·Р°РіРѕР»РѕРІРєРѕРј, РІС‹СЂРѕРІРЅРµРЅС‹ РїРѕ Р»РµРІРѕРјСѓ РєСЂР°СЋ) */
 .tb-left{grid-column:1;display:flex;align-items:center;gap:5px;min-width:0;}
 .tb-titles{display:flex;flex-direction:column;min-width:0;}
 .tb-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .tb-sub{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-/* лого в центральной auto-колонке, не ловит тапы */
+/* Р»РѕРіРѕ РІ С†РµРЅС‚СЂР°Р»СЊРЅРѕР№ auto-РєРѕР»РѕРЅРєРµ, РЅРµ Р»РѕРІРёС‚ С‚Р°РїС‹ */
 .brand-logo{grid-column:2;height:13px;width:auto;margin:0;color:var(--txt);pointer-events:none;}
 .bell-btn{grid-column:3;justify-self:end;margin-left:0;}
 
-/* ── Расширяем tap-область мелких крестиков/кнопок до 44×44 (визуал не трогаем) ──
-   Невидимый псевдоэлемент по центру ловит палец — клик уходит на родителя. */
+/* в”Ђв”Ђ Р Р°СЃС€РёСЂСЏРµРј tap-РѕР±Р»Р°СЃС‚СЊ РјРµР»РєРёС… РєСЂРµСЃС‚РёРєРѕРІ/РєРЅРѕРїРѕРє РґРѕ 44Г—44 (РІРёР·СѓР°Р» РЅРµ С‚СЂРѕРіР°РµРј) в”Ђв”Ђ
+   РќРµРІРёРґРёРјС‹Р№ РїСЃРµРІРґРѕСЌР»РµРјРµРЅС‚ РїРѕ С†РµРЅС‚СЂСѓ Р»РѕРІРёС‚ РїР°Р»РµС† вЂ” РєР»РёРє СѓС…РѕРґРёС‚ РЅР° СЂРѕРґРёС‚РµР»СЏ. */
 .area-x,.tag-x,.ls-clr,.gal-close,.sq-cancel,.ap-rm{position:relative;}
 .area-x::after,.tag-x::after,.ls-clr::after,.gal-close::after,.sq-cancel::after,.ap-rm::after{
   content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
   width:44px;height:44px;
 }
 
-/* ── Выходные анимации слоёв (зеркалят входы, короче по времени) ── */
+/* в”Ђв”Ђ Р’С‹С…РѕРґРЅС‹Рµ Р°РЅРёРјР°С†РёРё СЃР»РѕС‘РІ (Р·РµСЂРєР°Р»СЏС‚ РІС…РѕРґС‹, РєРѕСЂРѕС‡Рµ РїРѕ РІСЂРµРјРµРЅРё) в”Ђв”Ђ */
 .sheet.closing .sheet-body{animation:none;transform:translateY(100%);transition:transform .2s cubic-bezier(.22,.9,.3,1);}
 .sheet.closing .sheet-backdrop{animation:none;opacity:0;transition:opacity .2s ease;}
 #sendq.leaving{opacity:0;transform:translateY(16px);transition:opacity .18s ease,transform .18s ease;}
 .gallery-ov.closing{opacity:0;transition:opacity .18s ease;}
 .toast.out{opacity:0;transform:translate(-50%,8px);transition:opacity .2s ease,transform .2s ease;}
 
-/* ── Уважаем системную настройку «уменьшить движение» (a11y) ── */
+/* в”Ђв”Ђ РЈРІР°Р¶Р°РµРј СЃРёСЃС‚РµРјРЅСѓСЋ РЅР°СЃС‚СЂРѕР№РєСѓ В«СѓРјРµРЅСЊС€РёС‚СЊ РґРІРёР¶РµРЅРёРµВ» (a11y) в”Ђв”Ђ */
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{
     animation-duration:.001ms!important;animation-iteration-count:1!important;
@@ -728,7 +728,7 @@ body:has(.sel-bar:not(.hidden)) #view{padding-bottom:calc(var(--safe-bot) + 170p
   }
 }
 
-/* ════════ Колокольчик уведомлений (в шапке справа) ════════ */
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ РљРѕР»РѕРєРѕР»СЊС‡РёРє СѓРІРµРґРѕРјР»РµРЅРёР№ (РІ С€Р°РїРєРµ СЃРїСЂР°РІР°) в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 .bell-btn{
   flex:0 0 auto;position:relative;background:none;border:none;color:var(--txt-2);
   padding:4px;margin-left:auto;cursor:pointer;display:inline-flex;align-items:center;
@@ -742,7 +742,7 @@ body:has(.sel-bar:not(.hidden)) #view{padding-bottom:calc(var(--safe-bot) + 170p
 }
 .bell-badge.hidden{display:none;}
 
-/* ════════ Звезда «в избранное» ════════ */
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ Р—РІРµР·РґР° В«РІ РёР·Р±СЂР°РЅРЅРѕРµВ» в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 .fav-btn{
   position:absolute;bottom:8px;right:8px;z-index:2;
   width:34px;height:34px;border-radius:50%;border:none;cursor:pointer;
@@ -757,28 +757,28 @@ body:has(.sel-bar:not(.hidden)) #view{padding-bottom:calc(var(--safe-bot) + 170p
 .fav-toggle.on{color:var(--amber);border-color:var(--amber);}
 .fav-toggle.on .lic{fill:var(--amber);}
 
-/* ════════ Reveal-on-scroll «менюшка» (поиск+фильтры) ════════ */
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ Reveal-on-scroll В«РјРµРЅСЋС€РєР°В» (РїРѕРёСЃРє+С„РёР»СЊС‚СЂС‹) в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 .sticky-menu{
   position:sticky;top:0;z-index:15;background:var(--bg);
-  padding:10px 0 6px;margin-top:0;   /* воздух СВЕРХУ внутри менюшки (не лип к шапке) */
+  padding:10px 0 6px;margin-top:0;   /* РІРѕР·РґСѓС… РЎР’Р•Р РҐРЈ РІРЅСѓС‚СЂРё РјРµРЅСЋС€РєРё (РЅРµ Р»РёРї Рє С€Р°РїРєРµ) */
   transition:transform .25s ease,opacity .25s ease;
 }
 .sticky-menu.hdr-hidden{transform:translateY(-135%);opacity:0;pointer-events:none;}
-/* На «Объектах» (менюшка — первый ребёнок #view) убираем фоновое ambient-свечение целиком:
-   непрозрачная sticky-менюшка резала его некрасиво. Менюшка остаётся как была (плотный фон). */
+/* РќР° В«РћР±СЉРµРєС‚Р°С…В» (РјРµРЅСЋС€РєР° вЂ” РїРµСЂРІС‹Р№ СЂРµР±С‘РЅРѕРє #view) СѓР±РёСЂР°РµРј С„РѕРЅРѕРІРѕРµ ambient-СЃРІРµС‡РµРЅРёРµ С†РµР»РёРєРѕРј:
+   РЅРµРїСЂРѕР·СЂР°С‡РЅР°СЏ sticky-РјРµРЅСЋС€РєР° СЂРµР·Р°Р»Р° РµРіРѕ РЅРµРєСЂР°СЃРёРІРѕ. РњРµРЅСЋС€РєР° РѕСЃС‚Р°С‘С‚СЃСЏ РєР°Рє Р±С‹Р»Р° (РїР»РѕС‚РЅС‹Р№ С„РѕРЅ). */
 :root:not([data-theme="light"]) #app:has(> #view > .sticky-menu:first-child)::before{display:none;}
-/* Менюшку клеим ВПЛОТНУЮ к шапке (padding-top:0), а воздух над поиском даёт сама
-   .sticky-menu (padding-top:10px выше). Точечно ТОЛЬКО на вкладках, где первый
-   элемент — sticky-менюшка (Объекты/Поиск). Прочие вкладки сохраняют дефолтный отступ. */
+/* РњРµРЅСЋС€РєСѓ РєР»РµРёРј Р’РџР›РћРўРќРЈР® Рє С€Р°РїРєРµ (padding-top:0), Р° РІРѕР·РґСѓС… РЅР°Рґ РїРѕРёСЃРєРѕРј РґР°С‘С‚ СЃР°РјР°
+   .sticky-menu (padding-top:10px РІС‹С€Рµ). РўРѕС‡РµС‡РЅРѕ РўРћР›Р¬РљРћ РЅР° РІРєР»Р°РґРєР°С…, РіРґРµ РїРµСЂРІС‹Р№
+   СЌР»РµРјРµРЅС‚ вЂ” sticky-РјРµРЅСЋС€РєР° (РћР±СЉРµРєС‚С‹/РџРѕРёСЃРє). РџСЂРѕС‡РёРµ РІРєР»Р°РґРєРё СЃРѕС…СЂР°РЅСЏСЋС‚ РґРµС„РѕР»С‚РЅС‹Р№ РѕС‚СЃС‚СѓРї. */
 #view:has(> .sticky-menu:first-child){padding-top:0;}
-/* Поиск: менюшка-фильтры вложена в .search-wrap (не первый ребёнок #view), поэтому
-   правило выше её не ловит. Убираем верхний padding #view, а воздух у поля поиска
-   даёт сама .search-wrap — тогда при скролле панель фильтров клеится к шапке без дырки. */
+/* РџРѕРёСЃРє: РјРµРЅСЋС€РєР°-С„РёР»СЊС‚СЂС‹ РІР»РѕР¶РµРЅР° РІ .search-wrap (РЅРµ РїРµСЂРІС‹Р№ СЂРµР±С‘РЅРѕРє #view), РїРѕСЌС‚РѕРјСѓ
+   РїСЂР°РІРёР»Рѕ РІС‹С€Рµ РµС‘ РЅРµ Р»РѕРІРёС‚. РЈР±РёСЂР°РµРј РІРµСЂС…РЅРёР№ padding #view, Р° РІРѕР·РґСѓС… Сѓ РїРѕР»СЏ РїРѕРёСЃРєР°
+   РґР°С‘С‚ СЃР°РјР° .search-wrap вЂ” С‚РѕРіРґР° РїСЂРё СЃРєСЂРѕР»Р»Рµ РїР°РЅРµР»СЊ С„РёР»СЊС‚СЂРѕРІ РєР»РµРёС‚СЃСЏ Рє С€Р°РїРєРµ Р±РµР· РґС‹СЂРєРё. */
 #view:has(> .search-wrap){padding-top:0;}
 .search-wrap{padding-top:12px;}
 
-/* ── Кнопка «наверх»: всплывает при долгом скролле. Справа снизу; если на экране есть
-   FAB (он тоже справа) — поднимаемся над ним. .hidden тут — фейд, не display:none. ── */
+/* в”Ђв”Ђ РљРЅРѕРїРєР° В«РЅР°РІРµСЂС…В»: РІСЃРїР»С‹РІР°РµС‚ РїСЂРё РґРѕР»РіРѕРј СЃРєСЂРѕР»Р»Рµ. РЎРїСЂР°РІР° СЃРЅРёР·Сѓ; РµСЃР»Рё РЅР° СЌРєСЂР°РЅРµ РµСЃС‚СЊ
+   FAB (РѕРЅ С‚РѕР¶Рµ СЃРїСЂР°РІР°) вЂ” РїРѕРґРЅРёРјР°РµРјСЃСЏ РЅР°Рґ РЅРёРј. .hidden С‚СѓС‚ вЂ” С„РµР№Рґ, РЅРµ display:none. в”Ђв”Ђ */
 .to-top{
   position:fixed;right:16px;bottom:calc(var(--safe-bot) + 78px);
   width:44px;height:44px;border-radius:50%;
@@ -787,12 +787,12 @@ body:has(.sel-bar:not(.hidden)) #view{padding-bottom:calc(var(--safe-bot) + 170p
   box-shadow:0 6px 18px rgba(0,0,0,.28);z-index:24;cursor:pointer;
   opacity:1;transform:translateY(0);transition:opacity .2s ease,transform .2s ease;
 }
-/* когда есть FAB — кнопка «наверх» встаёт над ним (FAB 54px + зазор) */
+/* РєРѕРіРґР° РµСЃС‚СЊ FAB вЂ” РєРЅРѕРїРєР° В«РЅР°РІРµСЂС…В» РІСЃС‚Р°С‘С‚ РЅР°Рґ РЅРёРј (FAB 54px + Р·Р°Р·РѕСЂ) */
 body:has(#fab) .to-top{bottom:calc(var(--safe-bot) + 144px);}
 .to-top:active{transform:scale(.92);}
 .to-top.hidden{opacity:0;transform:translateY(14px);pointer-events:none;}
 
-/* ════════ Комментарии к объекту ════════ */
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ РљРѕРјРјРµРЅС‚Р°СЂРёРё Рє РѕР±СЉРµРєС‚Сѓ в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 .cmts{display:flex;flex-direction:column;gap:8px;}
 .cmt{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;}
 .cmt-head{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
@@ -805,20 +805,20 @@ body:has(#fab) .to-top{bottom:calc(var(--safe-bot) + 144px);}
 .cmt-form .input{flex:1;min-height:44px;}
 .cmt-form .btn{flex:0 0 auto;white-space:nowrap;}
 
-/* ════════ Лента уведомлений (в шторке) ════════ */
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ Р›РµРЅС‚Р° СѓРІРµРґРѕРјР»РµРЅРёР№ (РІ С€С‚РѕСЂРєРµ) в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 .notif-list{display:flex;flex-direction:column;gap:8px;max-height:62vh;overflow:auto;}
 .notif{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 13px;}
 .notif.unread{border-color:var(--accent);background:var(--accent-soft);}
 .notif-text{font-size:14px;line-height:1.42;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;}
 .notif-date{font-size:11.5px;color:var(--txt-3);margin-top:5px;}
 
-/* ════════════════════════════════════════════════════════════════════════
-   REDESIGN LAYER v46 — слой «живости» поверх базы. Логику НЕ меняет.
-   Откат: удалить весь блок ниже + вернуть styles.css?v=45 в index.html.
-   Тяжёлые эффекты завёрнуты в :root:not([data-theme="light"]) → светлая тема цела.
-   ════════════════════════════════════════════════════════════════════════ */
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+   REDESIGN LAYER v46 вЂ” СЃР»РѕР№ В«Р¶РёРІРѕСЃС‚РёВ» РїРѕРІРµСЂС… Р±Р°Р·С‹. Р›РѕРіРёРєСѓ РќР• РјРµРЅСЏРµС‚.
+   РћС‚РєР°С‚: СѓРґР°Р»РёС‚СЊ РІРµСЃСЊ Р±Р»РѕРє РЅРёР¶Рµ + РІРµСЂРЅСѓС‚СЊ styles.css?v=45 РІ index.html.
+   РўСЏР¶С‘Р»С‹Рµ СЌС„С„РµРєС‚С‹ Р·Р°РІС‘СЂРЅСѓС‚С‹ РІ :root:not([data-theme="light"]) в†’ СЃРІРµС‚Р»Р°СЏ С‚РµРјР° С†РµР»Р°.
+   в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 
-/* — токены: палитра ТЁМНОЙ (светлую перебьёт её же правило выше по спец.) + новые — */
+/* вЂ” С‚РѕРєРµРЅС‹: РїР°Р»РёС‚СЂР° РўРЃРњРќРћР™ (СЃРІРµС‚Р»СѓСЋ РїРµСЂРµР±СЊС‘С‚ РµС‘ Р¶Рµ РїСЂР°РІРёР»Рѕ РІС‹С€Рµ РїРѕ СЃРїРµС†.) + РЅРѕРІС‹Рµ вЂ” */
 :root{
   --bg:#0a0c11;
   --card:#161921;
@@ -828,16 +828,16 @@ body:has(#fab) .to-top{bottom:calc(var(--safe-bot) + 144px);}
   --font-display:'Unbounded','Onest',-apple-system,sans-serif;
 }
 
-/* — шрифт интерфейса (обе темы, живая кириллица) — */
+/* вЂ” С€СЂРёС„С‚ РёРЅС‚РµСЂС„РµР№СЃР° (РѕР±Рµ С‚РµРјС‹, Р¶РёРІР°СЏ РєРёСЂРёР»Р»РёС†Р°) вЂ” */
 body{font-family:'Onest',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
 
-/* — фон: ambient-свечение + зерно (только тёмная; под контентом, не мешает скроллу) — */
+/* вЂ” С„РѕРЅ: ambient-СЃРІРµС‡РµРЅРёРµ + Р·РµСЂРЅРѕ (С‚РѕР»СЊРєРѕ С‚С‘РјРЅР°СЏ; РїРѕРґ РєРѕРЅС‚РµРЅС‚РѕРј, РЅРµ РјРµС€Р°РµС‚ СЃРєСЂРѕР»Р»Сѓ) вЂ” */
 #app{position:relative;}
 :root:not([data-theme="light"]) #app::before{
   content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
   background-image:
     radial-gradient(ellipse 120% 60% at 12% -10%, rgba(155,125,255,.09) 0%, transparent 72%),
-    radial-gradient(ellipse 85% 55% at 92% 110%, rgba(52,214,168,.05) 0%, transparent 70%);
+    radial-gradient(ellipse 85% 55% at 92% 110%, rgba(54,217,190,.05) 0%, transparent 70%);
 }
 :root:not([data-theme="light"]) #app::after{
   content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.4;mix-blend-mode:overlay;
@@ -845,12 +845,12 @@ body{font-family:'Onest',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helv
 }
 #topbar,#view,#tabbar{position:relative;z-index:1;}
 
-/* — типографика: цены/числа дисплейным Unbounded, секции без CAPS + линия — */
+/* вЂ” С‚РёРїРѕРіСЂР°С„РёРєР°: С†РµРЅС‹/С‡РёСЃР»Р° РґРёСЃРїР»РµР№РЅС‹Рј Unbounded, СЃРµРєС†РёРё Р±РµР· CAPS + Р»РёРЅРёСЏ вЂ” */
 .listing-price,.stat .num{font-family:var(--font-display);font-variant-numeric:tabular-nums;font-weight:700;letter-spacing:-.02em;}
 .section-title{text-transform:none;letter-spacing:.02em;display:flex;align-items:center;gap:9px;}
 .section-title::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent);}
 
-/* — пружина на тапе — */
+/* вЂ” РїСЂСѓР¶РёРЅР° РЅР° С‚Р°РїРµ вЂ” */
 .card{transition:transform .14s var(--ease-spring),border-color .18s,box-shadow .2s;}
 .card.tap:active{transform:scale(.985);}
 .btn{transition:transform .12s var(--ease-spring),opacity .15s,box-shadow .25s;}
@@ -858,43 +858,43 @@ body{font-family:'Onest',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helv
 .tab:active{transform:scale(.9);}
 .chip:active{transform:scale(.94);}
 
-/* — глубина: top-edge + тени (только тёмная, светлая остаётся плоской) — */
+/* вЂ” РіР»СѓР±РёРЅР°: top-edge + С‚РµРЅРё (С‚РѕР»СЊРєРѕ С‚С‘РјРЅР°СЏ, СЃРІРµС‚Р»Р°СЏ РѕСЃС‚Р°С‘С‚СЃСЏ РїР»РѕСЃРєРѕР№) вЂ” */
 :root:not([data-theme="light"]) .card,
 :root:not([data-theme="light"]) .stat{
   box-shadow:0 1px 0 var(--topedge) inset,0 10px 28px rgba(0,0,0,.4),0 2px 6px rgba(0,0,0,.28);
 }
 
-/* — CTA glow (только тёмная) — компактный, чтобы свечение не залезало на соседние кнопки в ряду — */
-:root:not([data-theme="light"]) .btn-green{box-shadow:0 3px 12px rgba(52,214,168,.26),0 1px 0 rgba(255,255,255,.22) inset;}
+/* вЂ” CTA glow (С‚РѕР»СЊРєРѕ С‚С‘РјРЅР°СЏ) вЂ” РєРѕРјРїР°РєС‚РЅС‹Р№, С‡С‚РѕР±С‹ СЃРІРµС‡РµРЅРёРµ РЅРµ Р·Р°Р»РµР·Р°Р»Рѕ РЅР° СЃРѕСЃРµРґРЅРёРµ РєРЅРѕРїРєРё РІ СЂСЏРґСѓ вЂ” */
+:root:not([data-theme="light"]) .btn-green{box-shadow:0 3px 12px rgba(54,217,190,.26),0 1px 0 rgba(255,255,255,.22) inset;}
 :root:not([data-theme="light"]) .btn-primary{box-shadow:0 3px 12px rgba(155,125,255,.28),0 1px 0 rgba(255,255,255,.2) inset;}
 
-/* — стекло таб-бара (только тёмная) — */
+/* вЂ” СЃС‚РµРєР»Рѕ С‚Р°Р±-Р±Р°СЂР° (С‚РѕР»СЊРєРѕ С‚С‘РјРЅР°СЏ) вЂ” */
 :root:not([data-theme="light"]) #tabbar{backdrop-filter:blur(20px) saturate(1.4);box-shadow:0 -1px 0 rgba(255,255,255,.05) inset;}
 
-/* — цветные числа статов (только тёмная) — */
+/* вЂ” С†РІРµС‚РЅС‹Рµ С‡РёСЃР»Р° СЃС‚Р°С‚РѕРІ (С‚РѕР»СЊРєРѕ С‚С‘РјРЅР°СЏ) вЂ” */
 :root:not([data-theme="light"]) .stat.a .num{color:#bfb0ff;}
 :root:not([data-theme="light"]) .stat.g .num{color:#5fe7c4;}
 :root:not([data-theme="light"]) .stat.am .num{color:#f7c662;}
 :root:not([data-theme="light"]) .stat.p .num{color:#d2a3ff;}
 
-/* — живой градиентный обвод эксклюзива (фолбэк: webview без :has() просто без обвода) — */
+/* вЂ” Р¶РёРІРѕР№ РіСЂР°РґРёРµРЅС‚РЅС‹Р№ РѕР±РІРѕРґ СЌРєСЃРєР»СЋР·РёРІР° (С„РѕР»Р±СЌРє: webview Р±РµР· :has() РїСЂРѕСЃС‚Рѕ Р±РµР· РѕР±РІРѕРґР°) вЂ” */
 .card:has(.excl-line){position:relative;border-color:transparent;}
 .card:has(.excl-line)::before{
   content:"";position:absolute;inset:0;border-radius:inherit;padding:1.5px;z-index:4;pointer-events:none;
-  background:linear-gradient(135deg,#9b7dff,rgba(255,255,255,.5) 35%,#34d6a8 70%,#9b7dff);
+  background:linear-gradient(135deg,#9b7dff,rgba(255,255,255,.5) 35%,#36d9be 70%,#9b7dff);
   background-size:300% 300%;animation:flow 6s linear infinite;
   -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
   -webkit-mask-composite:xor;mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask-composite:exclude;
 }
 @keyframes flow{to{background-position:300% 0;}}
 
-/* ════════════════════════════════════════════════════════════════════════
-   REDESIGN PHASE 2 v47 — полировка: карточки/списки, экран объекта, галерея,
-   комментарии, уведомления. Логику/JS НЕ меняет (CSS-only). Тяжёлое —
-   в :root:not([data-theme="light"]). Откат: удалить блок + вернуть v46.
-   ════════════════════════════════════════════════════════════════════════ */
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+   REDESIGN PHASE 2 v47 вЂ” РїРѕР»РёСЂРѕРІРєР°: РєР°СЂС‚РѕС‡РєРё/СЃРїРёСЃРєРё, СЌРєСЂР°РЅ РѕР±СЉРµРєС‚Р°, РіР°Р»РµСЂРµСЏ,
+   РєРѕРјРјРµРЅС‚Р°СЂРёРё, СѓРІРµРґРѕРјР»РµРЅРёСЏ. Р›РѕРіРёРєСѓ/JS РќР• РјРµРЅСЏРµС‚ (CSS-only). РўСЏР¶С‘Р»РѕРµ вЂ”
+   РІ :root:not([data-theme="light"]). РћС‚РєР°С‚: СѓРґР°Р»РёС‚СЊ Р±Р»РѕРє + РІРµСЂРЅСѓС‚СЊ v46.
+   в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 
-/* — Карточка объекта: обложка обрезается по радиусу + читаемый нижний скрим — */
+/* вЂ” РљР°СЂС‚РѕС‡РєР° РѕР±СЉРµРєС‚Р°: РѕР±Р»РѕР¶РєР° РѕР±СЂРµР·Р°РµС‚СЃСЏ РїРѕ СЂР°РґРёСѓСЃСѓ + С‡РёС‚Р°РµРјС‹Р№ РЅРёР¶РЅРёР№ СЃРєСЂРёРј вЂ” */
 .card.pad0{overflow:hidden;}
 .card-thumb::after{
   content:"";position:absolute;inset:0;pointer-events:none;
@@ -908,7 +908,7 @@ body{font-family:'Onest',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helv
 .lid-badge{opacity:.4;}
 .listing-meta,.cc-meta,.notif-date,.hist-meta{font-variant-numeric:tabular-nums;}
 
-/* — Звезда избранного: стеклянная, мягкая пружина — */
+/* вЂ” Р—РІРµР·РґР° РёР·Р±СЂР°РЅРЅРѕРіРѕ: СЃС‚РµРєР»СЏРЅРЅР°СЏ, РјСЏРіРєР°СЏ РїСЂСѓР¶РёРЅР° вЂ” */
 .fav-btn{
   width:32px;height:32px;background:rgba(10,12,17,.5);backdrop-filter:blur(8px);
   box-shadow:0 2px 8px rgba(0,0,0,.32);
@@ -917,25 +917,25 @@ body{font-family:'Onest',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helv
 .fav-btn:active{transform:scale(.82);}
 .fav-btn.on{background:rgba(245,185,69,.2);}
 
-/* — Экран объекта: обложка со скруглением снизу + тень, миниатюры с пружиной — */
+/* вЂ” Р­РєСЂР°РЅ РѕР±СЉРµРєС‚Р°: РѕР±Р»РѕР¶РєР° СЃРѕ СЃРєСЂСѓРіР»РµРЅРёРµРј СЃРЅРёР·Сѓ + С‚РµРЅСЊ, РјРёРЅРёР°С‚СЋСЂС‹ СЃ РїСЂСѓР¶РёРЅРѕР№ вЂ” */
 .detail-photo{border-radius:0 0 18px 18px;}
 :root:not([data-theme="light"]) .detail-photo{box-shadow:0 12px 30px rgba(0,0,0,.45);}
 .dthumb{transition:opacity .25s ease,transform .14s var(--ease-spring);}
 .dthumb:active{transform:scale(.9);}
 
-/* — Характеристики (kv): хайрлайны между строк, числа табличные, выравнивание — */
+/* вЂ” РҐР°СЂР°РєС‚РµСЂРёСЃС‚РёРєРё (kv): С…Р°Р№СЂР»Р°Р№РЅС‹ РјРµР¶РґСѓ СЃС‚СЂРѕРє, С‡РёСЃР»Р° С‚Р°Р±Р»РёС‡РЅС‹Рµ, РІС‹СЂР°РІРЅРёРІР°РЅРёРµ вЂ” */
 .kv{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 0;font-variant-numeric:tabular-nums;}
 .kv+.kv{border-top:1px solid var(--line);}
 .kv .k{color:var(--txt-2);font-size:13.5px;}
 .kv .v{font-weight:620;text-align:right;}
 
-/* — Комментарии: акцентная полоса слева, имя дисплейным шрифтом, пружина — */
+/* вЂ” РљРѕРјРјРµРЅС‚Р°СЂРёРё: Р°РєС†РµРЅС‚РЅР°СЏ РїРѕР»РѕСЃР° СЃР»РµРІР°, РёРјСЏ РґРёСЃРїР»РµР№РЅС‹Рј С€СЂРёС„С‚РѕРј, РїСЂСѓР¶РёРЅР° вЂ” */
 .cmt{border-left:2px solid var(--accent-ring);transition:transform .14s var(--ease-spring);}
 .cmt:active{transform:scale(.99);}
 .cmt-author{font-family:var(--font-display);font-size:12.5px;font-weight:600;}
 .cmt-form .input{border-radius:14px;}
 
-/* — Уведомления: непрочитанные с точкой и свечением, плавное появление — */
+/* вЂ” РЈРІРµРґРѕРјР»РµРЅРёСЏ: РЅРµРїСЂРѕС‡РёС‚Р°РЅРЅС‹Рµ СЃ С‚РѕС‡РєРѕР№ Рё СЃРІРµС‡РµРЅРёРµРј, РїР»Р°РІРЅРѕРµ РїРѕСЏРІР»РµРЅРёРµ вЂ” */
 .notif{transition:transform .14s var(--ease-spring),border-color .18s;animation:notifIn .3s var(--ease-spring) both;}
 .notif:active{transform:scale(.99);}
 @keyframes notifIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
@@ -945,40 +945,40 @@ body{font-family:'Onest',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helv
   background:var(--accent);margin-right:8px;vertical-align:middle;
 }
 
-/* — Колокольчик: значок «выскакивает» пружиной при появлении — */
+/* вЂ” РљРѕР»РѕРєРѕР»СЊС‡РёРє: Р·РЅР°С‡РѕРє В«РІС‹СЃРєР°РєРёРІР°РµС‚В» РїСЂСѓР¶РёРЅРѕР№ РїСЂРё РїРѕСЏРІР»РµРЅРёРё вЂ” */
 .bell-badge:not(.hidden){animation:bellPop .32s var(--ease-spring);}
 @keyframes bellPop{from{transform:scale(0);}to{transform:scale(1);}}
 
-/* — Быстрые действия + карусель: глубина и пружина (только тёмная) — */
+/* вЂ” Р‘С‹СЃС‚СЂС‹Рµ РґРµР№СЃС‚РІРёСЏ + РєР°СЂСѓСЃРµР»СЊ: РіР»СѓР±РёРЅР° Рё РїСЂСѓР¶РёРЅР° (С‚РѕР»СЊРєРѕ С‚С‘РјРЅР°СЏ) вЂ” */
 .quick-btn{transition:transform .14s var(--ease-spring),border-color .18s,box-shadow .2s;}
 .quick-btn:active{transform:scale(.96);}
 .ccard{transition:transform .14s var(--ease-spring),box-shadow .2s;}
 :root:not([data-theme="light"]) .quick-btn{box-shadow:0 1px 0 var(--topedge) inset,0 6px 18px rgba(0,0,0,.3);}
 :root:not([data-theme="light"]) .ccard{box-shadow:0 1px 0 var(--topedge) inset,0 8px 22px rgba(0,0,0,.35);}
 
-/* — Пустые состояния мягче — */
+/* вЂ” РџСѓСЃС‚С‹Рµ СЃРѕСЃС‚РѕСЏРЅРёСЏ РјСЏРіС‡Рµ вЂ” */
 .empty .em-ic{opacity:.5;}
 
-/* ════════════════════════════════════════════════════════════════════════
-   REDESIGN PHASE 3 v48 — акцент на СТЕКЛЕ + избранное СЕРДЕЧКОМ (красное) +
-   кружок-выбора и сердце на одной линии (на фото) + видимый обвод эксклюзива
-   на СВЕТЛОЙ теме. CSS-only. Откат: удалить блок + вернуть styles.css?v=47.
-   ════════════════════════════════════════════════════════════════════════ */
+/* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+   REDESIGN PHASE 3 v48 вЂ” Р°РєС†РµРЅС‚ РЅР° РЎРўР•РљР›Р• + РёР·Р±СЂР°РЅРЅРѕРµ РЎР•Р Р”Р•Р§РљРћРњ (РєСЂР°СЃРЅРѕРµ) +
+   РєСЂСѓР¶РѕРє-РІС‹Р±РѕСЂР° Рё СЃРµСЂРґС†Рµ РЅР° РѕРґРЅРѕР№ Р»РёРЅРёРё (РЅР° С„РѕС‚Рѕ) + РІРёРґРёРјС‹Р№ РѕР±РІРѕРґ СЌРєСЃРєР»СЋР·РёРІР°
+   РЅР° РЎР’Р•РўР›РћР™ С‚РµРјРµ. CSS-only. РћС‚РєР°С‚: СѓРґР°Р»РёС‚СЊ Р±Р»РѕРє + РІРµСЂРЅСѓС‚СЊ styles.css?v=47.
+   в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
 
-/* — Избранное: красное сердце (вместо янтарной звезды) — */
+/* вЂ” РР·Р±СЂР°РЅРЅРѕРµ: РєСЂР°СЃРЅРѕРµ СЃРµСЂРґС†Рµ (РІРјРµСЃС‚Рѕ СЏРЅС‚Р°СЂРЅРѕР№ Р·РІРµР·РґС‹) вЂ” */
 .fav-btn.on{background:rgba(255,77,77,.22);color:var(--red);}
 .fav-btn.on .lic{fill:var(--red);}
 .fav-toggle.on{color:var(--red);border-color:var(--red);}
 .fav-toggle.on .lic{fill:var(--red);}
 #qFav .qi,#favBtn .lic{color:var(--red);}
 
-/* — Источник вниз-влево над скримом; сердце на фото выровнено по правому краю тела (16px),
-     чтобы быть на ОДНОЙ ВЕРТИКАЛИ с кружком выбора (кружок на своём месте в теле) — */
+/* вЂ” РСЃС‚РѕС‡РЅРёРє РІРЅРёР·-РІР»РµРІРѕ РЅР°Рґ СЃРєСЂРёРјРѕРј; СЃРµСЂРґС†Рµ РЅР° С„РѕС‚Рѕ РІС‹СЂРѕРІРЅРµРЅРѕ РїРѕ РїСЂР°РІРѕРјСѓ РєСЂР°СЋ С‚РµР»Р° (16px),
+     С‡С‚РѕР±С‹ Р±С‹С‚СЊ РЅР° РћР”РќРћР™ Р’Р•Р РўРРљРђР›Р СЃ РєСЂСѓР¶РєРѕРј РІС‹Р±РѕСЂР° (РєСЂСѓР¶РѕРє РЅР° СЃРІРѕС‘Рј РјРµСЃС‚Рµ РІ С‚РµР»Рµ) вЂ” */
 .card-thumb{justify-content:flex-start;}
 .src-badge{position:absolute;left:0;bottom:0;margin:10px;z-index:5;}
 .fav-btn{position:absolute;top:12px;right:16px;margin:0;z-index:6;}
 
-/* — СТЕКЛО: полупрозрачные поверхности + блюр фона (только тёмная, светлая плоская) — */
+/* вЂ” РЎРўР•РљР›Рћ: РїРѕР»СѓРїСЂРѕР·СЂР°С‡РЅС‹Рµ РїРѕРІРµСЂС…РЅРѕСЃС‚Рё + Р±Р»СЋСЂ С„РѕРЅР° (С‚РѕР»СЊРєРѕ С‚С‘РјРЅР°СЏ, СЃРІРµС‚Р»Р°СЏ РїР»РѕСЃРєР°СЏ) вЂ” */
 :root:not([data-theme="light"]) .chip,
 :root:not([data-theme="light"]) .seg,
 :root:not([data-theme="light"]) .stat,
@@ -998,10 +998,10 @@ body{font-family:'Onest',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helv
 }
 :root:not([data-theme="light"]) .sel-bar{background:rgba(20,24,30,.66);backdrop-filter:blur(18px) saturate(1.4);}
 :root:not([data-theme="light"]) #topbar{backdrop-filter:blur(18px) saturate(1.4);}
-/* лёгкое стекло на шторке и в светлой теме (поверх контента) */
+/* Р»С‘РіРєРѕРµ СЃС‚РµРєР»Рѕ РЅР° С€С‚РѕСЂРєРµ Рё РІ СЃРІРµС‚Р»РѕР№ С‚РµРјРµ (РїРѕРІРµСЂС… РєРѕРЅС‚РµРЅС‚Р°) */
 :root[data-theme="light"] .sheet-body{background:rgba(255,255,255,.82);backdrop-filter:blur(22px) saturate(1.2);}
 
-/* — Эксклюзив: видимый обвод на СВЕТЛОЙ теме (убираем невидимый белый сегмент) — */
+/* вЂ” Р­РєСЃРєР»СЋР·РёРІ: РІРёРґРёРјС‹Р№ РѕР±РІРѕРґ РЅР° РЎР’Р•РўР›РћР™ С‚РµРјРµ (СѓР±РёСЂР°РµРј РЅРµРІРёРґРёРјС‹Р№ Р±РµР»С‹Р№ СЃРµРіРјРµРЅС‚) вЂ” */
 :root[data-theme="light"] .card:has(.excl-line){background:linear-gradient(180deg,rgba(124,92,252,.05),#fff);}
 :root[data-theme="light"] .card:has(.excl-line)::before{
   padding:2px;
@@ -1009,25 +1009,27 @@ body{font-family:'Onest',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helv
   background-size:300% 300%;
 }
 
-/* ── Правки пакет 16.06 ── */
-/* Кнопки в карточке — не вылезать из flex, текст не переносить */
+/* в”Ђв”Ђ РџСЂР°РІРєРё РїР°РєРµС‚ 16.06 в”Ђв”Ђ */
+/* РљРЅРѕРїРєРё РІ РєР°СЂС‚РѕС‡РєРµ вЂ” РЅРµ РІС‹Р»РµР·Р°С‚СЊ РёР· flex, С‚РµРєСЃС‚ РЅРµ РїРµСЂРµРЅРѕСЃРёС‚СЊ */
 .card-body .btn{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-/* в ряду карточки кнопки тесные (3 шт на узком экране) — поджимаем паддинг/зазор иконки */
+/* РІ СЂСЏРґСѓ РєР°СЂС‚РѕС‡РєРё РєРЅРѕРїРєРё С‚РµСЃРЅС‹Рµ (3 С€С‚ РЅР° СѓР·РєРѕРј СЌРєСЂР°РЅРµ) вЂ” РїРѕРґР¶РёРјР°РµРј РїР°РґРґРёРЅРі/Р·Р°Р·РѕСЂ РёРєРѕРЅРєРё */
 .card-body .btn.sm{padding:10px 11px;gap:6px;}
-/* Кнопки в sel-bar — не переносить */
+/* РљРЅРѕРїРєРё РІ sel-bar вЂ” РЅРµ РїРµСЂРµРЅРѕСЃРёС‚СЊ */
 .sel-bar .btn{white-space:nowrap;}
-/* Поля в шторке — бОльший отступ */
+/* РџРѕР»СЏ РІ С€С‚РѕСЂРєРµ вЂ” Р±РћР»СЊС€РёР№ РѕС‚СЃС‚СѓРї */
 .sheet-body .field{margin-bottom:20px;}
-/* Glow на btn-green в detail — убрать лишнее расстояние (mб вниз, не тень) */
+/* Glow РЅР° btn-green РІ detail вЂ” СѓР±СЂР°С‚СЊ Р»РёС€РЅРµРµ СЂР°СЃСЃС‚РѕСЏРЅРёРµ (mР± РІРЅРёР·, РЅРµ С‚РµРЅСЊ) */
 #bSend{margin-bottom:4px;}
-/* cmt-form: кнопка отправки узкая (иконка) */
+/* cmt-form: РєРЅРѕРїРєР° РѕС‚РїСЂР°РІРєРё СѓР·РєР°СЏ (РёРєРѕРЅРєР°) */
 .cmt-form .btn{padding:13px 16px;}
-/* ФДГ / любой card: первый ed-label без лишнего верхнего отступа */
+/* Р¤Р”Р“ / Р»СЋР±РѕР№ card: РїРµСЂРІС‹Р№ ed-label Р±РµР· Р»РёС€РЅРµРіРѕ РІРµСЂС…РЅРµРіРѕ РѕС‚СЃС‚СѓРїР° */
 .card > .ed-label:first-child{margin-top:0;}
-/* Чипы комнат: sm-паддинг чтобы влезли в 1 строку */
+/* Р§РёРїС‹ РєРѕРјРЅР°С‚: sm-РїР°РґРґРёРЅРі С‡С‚РѕР±С‹ РІР»РµР·Р»Рё РІ 1 СЃС‚СЂРѕРєСѓ */
 #fRooms .chsel{padding:8px 11px;font-size:13.5px;}
-/* Минут чипсы: такие же */
+/* РњРёРЅСѓС‚ С‡РёРїСЃС‹: С‚Р°РєРёРµ Р¶Рµ */
 #fGeoMin .chsel{padding:8px 12px;font-size:13px;}
-/* Кнопки фильтров низа: стёрка компактная (width:auto бьёт .btn{width:100%}), не растягивается
-   и не толкает «Применить»; высота = ряду (btn-row align-items:stretch по умолчанию). */
+/* РљРЅРѕРїРєРё С„РёР»СЊС‚СЂРѕРІ РЅРёР·Р°: СЃС‚С‘СЂРєР° РєРѕРјРїР°РєС‚РЅР°СЏ (width:auto Р±СЊС‘С‚ .btn{width:100%}), РЅРµ СЂР°СЃС‚СЏРіРёРІР°РµС‚СЃСЏ
+   Рё РЅРµ С‚РѕР»РєР°РµС‚ В«РџСЂРёРјРµРЅРёС‚СЊВ»; РІС‹СЃРѕС‚Р° = СЂСЏРґСѓ (btn-row align-items:stretch РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ). */
 .btn-reset-icon{flex:0 0 auto;width:auto;padding:14px 18px;}
+
+
