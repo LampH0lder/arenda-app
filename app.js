@@ -81,10 +81,15 @@ async function api(path, opts = {}) {
   let lastErr;
   for (let attempt = 1; attempt <= maxTries; attempt++) {
     try {
-      const r = await fetch(API_BASE + "/api" + path, {
-        method, headers,
-        body: opts.body ? JSON.stringify(opts.body) : undefined,
-      });
+      const ctrl = new AbortController();
+      const tid = setTimeout(() => ctrl.abort(), 12000);
+      let r;
+      try {
+        r = await fetch(API_BASE + "/api" + path, {
+          method, headers, signal: ctrl.signal,
+          body: opts.body ? JSON.stringify(opts.body) : undefined,
+        });
+      } finally { clearTimeout(tid); }
       // 502/503/504 — типичные ошибки лежащего туннеля; для GET повторяем с backoff
       if (isGet && attempt < maxTries && [502, 503, 504].includes(r.status)) {
         await sleep(700 * attempt); continue;
@@ -2960,6 +2965,6 @@ loadFavs();
   if (!done) setTimeout(() => startOnboarding(), 600);
   else if (!CONN.tg || !CONN.arendok) {
     // обучение уже пройдено, но профиль не подключён — мягко напомним
-    setTimeout(() => { switchTab("profile"); toast("Подключи Telegram и Arendok, чтобы начать", ""); }, 400);
+    setTimeout(() => toast("Зайди в Профиль и подключи Telegram и Arendok", ""), 800);
   }
 })();
