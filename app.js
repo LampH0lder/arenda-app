@@ -304,8 +304,11 @@ $("#sheet").addEventListener("click", (e) => { if (e.target.classList.contains("
 let stack = [];
 function go(fn, push = true) {
   if (push) {
-    if (stack.length) stack[stack.length - 1].y = view.scrollTop; // запомнить, где стоял список
-    stack.push({ fn, y: 0 });
+    if (stack.length) {
+      stack[stack.length - 1].y = view.scrollTop;
+      stack[stack.length - 1].snapshot = view.innerHTML; // снапшот для swipe-back
+    }
+    stack.push({ fn, y: 0, snapshot: "" });
   }
   fn();                       // fn рисует skeleton сразу, контент догружается асинхронно
   if (push) view.scrollTop = 0;
@@ -336,24 +339,143 @@ function updateBack() {
 tg?.BackButton?.onClick(() => { haptic(); back(); });
 $("#backBtn")?.addEventListener("click", () => { haptic(); back(); });
 
-/* ── Свайп от левого края вправо → назад (как в iOS) ── */
-let _swipe = null;
-document.addEventListener("touchstart", (e) => {
-  if (e.touches.length !== 1) { _swipe = null; return; }
-  const t = e.touches[0];
-  // от левого края (~48px), не на скроллящихся/интерактивных элементах
-  if (t.clientX > 48) { _swipe = null; return; }
-  if (e.target.closest(".carousel,.map-box,.leaflet-container,textarea,input,.sheet,.seg,.gallery-ov")) { _swipe = null; return; }
-  _swipe = { x: t.clientX, y: t.clientY };
-}, { passive: true });
-document.addEventListener("touchend", (e) => {
-  if (!_swipe) return;
-  const t = e.changedTouches[0];
-  const dx = t.clientX - _swipe.x, dy = t.clientY - _swipe.y;
-  _swipe = null;
-  // явный горизонтальный свайп вправо
-  if (dx > 55 && dx > Math.abs(dy) * 1.4 && stack.length > 1) { haptic(); back(); }
-}, { passive: true });
+/* ── iOS-style интерактивный swipe-back от левого края ── */
+(function () {
+  const EDGE = 24;        // зона активации (px от левого края)
+  const COMMIT_R = 0.35;  // порог % ширины для подтверждения жеста
+  const COMMIT_V = 0.4;   // порог скорости (px/ms) для быстрого свайпа
+  const PAR = 0.25;        // параллакс: предыдущий экран движется в 4× медленнее
+
+  let on = false, blocked = false;
+  let sx = 0, sy = 0, st = 0, cx = 0;
+  let rafId = null, pend = null;
+  let $f = null, $b = null;
+
+  const _skip = (el) => !!el.closest(
+    ".carousel,.map-box,.leaflet-container,textarea,input,.sheet,.seg,.gallery-ov"
+  );
+
+  function _overlayCSS(z) {
+    const topH = document.getElementById("topbar")?.offsetHeight || 56;
+    const botH = document.querySelector("nav")?.offsetHeight || 64;
+    return `position:fixed;top:${topH}px;bottom:${botH}px;left:0;right:0;` +
+           `z-index:${z};overflow-y:auto;overflow-x:hidden;will-change:transform;` +
+           `background:var(--bg);padding:12px 16px 96px;box-sizing:border-box;transition:none;`;
+  }
+
+  function _begin() {
+    on = true;
+    const W = window.innerWidth;
+    const prev = stack[stack.length - 2];
+
+    $b = document.createElement("div");
+    $b.style.cssText = _overlayCSS(190) + `transform:translateX(${-W * PAR}px);`;
+    $b.innerHTML = prev?.snapshot || "";
+    if (prev?.y) $b.scrollTop = prev.y;
+    const dim = document.createElement("div");
+    dim.style.cssText = "position:absolute;inset:0;background:rgba(0,0,0,.28);pointer-events:none;";
+    $b.appendChild(dim); $b._dim = dim;
+    document.body.appendChild($b);
+
+    $f = document.createElement("div");
+    $f.style.cssText = _overlayCSS(200) + `transform:translateX(0);box-shadow:-6px 0 28px rgba(0,0,0,.5);`;
+    $f.innerHTML = view.innerHTML;
+    $f.scrollTop = view.scrollTop;
+    document.body.appendChild($f);
+
+    cx = 0;
+  }
+
+  function _raf() {
+    rafId = null;
+    if (!on || pend === null) return;
+    const x = pend; pend = null; cx = x;
+    const W = window.innerWidth;
+    $f.style.transform = `translateX(${x}px)`;
+    $b.style.transform = `translateX(${-W * PAR + x * PAR}px)`;
+    if ($b._dim) $b._dim.style.opacity = String(0.28 * (1 - x / W));
+  }
+
+  function _cleanup() {
+    on = false; blocked = false; sx = 0; cx = 0; pend = null;
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    if ($f) { $f.remove(); $f = null; }
+  }
+
+  function _done() {
+    if (!on) { sx = 0; blocked = false; return; }
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+
+    const W = window.innerWidth;
+    const vel = cx / Math.max(1, Date.now() - st);
+    const commit = cx > W * COMMIT_R || (vel > COMMIT_V && cx > 50);
+    const ease = "cubic-bezier(0.25,0.46,0.45,0.94)";
+    const dur = commit
+      ? Math.max(80, Math.min(260, (W - cx) / 1.5))
+      : Math.max(120, Math.min(280, cx * 0.9 + 80));
+
+    $f.style.transition = `transform ${dur}ms ${ease}`;
+    $b.style.transition = `transform ${dur}ms ${ease}`;
+    if ($b._dim) $b._dim.style.transition = `opacity ${dur}ms linear`;
+
+    if (commit) {
+      $f.style.transform = `translateX(${W}px)`;
+      $b.style.transform = "translateX(0)";
+      if ($b._dim) $b._dim.style.opacity = "0";
+      setTimeout(() => {
+        _cleanup();
+        haptic();
+        stack.pop();
+        const top = stack[stack.length - 1];
+        const p = top.fn();
+        restoreScroll(top.y, p);
+        hideToTop(); updateBack();
+        const fade = () => {
+          if (!$b) return;
+          $b.style.transition = "opacity 180ms ease";
+          $b.style.opacity = "0";
+          setTimeout(() => { if ($b) { $b.remove(); $b = null; } }, 190);
+        };
+        if (p && typeof p.then === "function") p.then(fade, fade);
+        else setTimeout(fade, 220);
+      }, dur + 16);
+    } else {
+      $f.style.transform = "translateX(0)";
+      $b.style.transform = `translateX(${-W * PAR}px)`;
+      if ($b._dim) $b._dim.style.opacity = "0.28";
+      setTimeout(() => {
+        _cleanup();
+        if ($b) { $b.remove(); $b = null; }
+      }, dur + 16);
+    }
+  }
+
+  document.addEventListener("touchstart", (e) => {
+    if (on || stack.length < 2 || e.touches.length !== 1) return;
+    const t = e.touches[0];
+    if (t.clientX > EDGE || _skip(e.target)) return;
+    sx = t.clientX; sy = t.clientY; st = Date.now(); blocked = false;
+  }, { passive: true });
+
+  document.addEventListener("touchmove", (e) => {
+    if (blocked || (!on && !sx)) return;
+    const t = e.touches[0];
+    const dx = t.clientX - sx, dy = t.clientY - sy;
+    if (!on) {
+      if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
+      if (Math.abs(dy) > Math.abs(dx) * 0.8 || dx <= 0) {
+        blocked = true; sx = 0; return;
+      }
+      _begin();
+    }
+    e.preventDefault();
+    pend = Math.max(0, dx);
+    if (!rafId) rafId = requestAnimationFrame(_raf);
+  }, { passive: false });
+
+  document.addEventListener("touchend", _done, { passive: true });
+  document.addEventListener("touchcancel", _done, { passive: true });
+}());
 
 let activeTab = "home";
 function switchTab(tab) {
