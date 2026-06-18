@@ -802,7 +802,7 @@ body:has(#fab) .to-top{bottom:calc(var(--safe-bot) + 144px);}
 .cmt-del:active{color:var(--red);}
 .cmt-text{font-size:14px;line-height:1.4;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;}
 .cmt-form{display:flex;gap:8px;align-items:flex-end;margin-top:10px;}
-.cmt-form .input{flex:1;min-height:unset;}
+.cmt-form textarea.input{flex:1;min-height:unset !important;height:auto;}
 .cmt-form .btn{flex:0 0 auto;white-space:nowrap;}
 
 /* в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ Р›РµРЅС‚Р° СѓРІРµРґРѕРјР»РµРЅРёР№ (РІ С€С‚РѕСЂРєРµ) в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ */
