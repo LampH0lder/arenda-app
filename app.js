@@ -1241,7 +1241,7 @@ async function renderListingDetail(id) {
     <div class="section-title">${icon('comment')} Комментарии</div>
     <div id="cmts" class="cmts"><div class="loader" style="height:50px"><div class="spin"></div></div></div>
     <div class="cmt-form">
-      <textarea class="input" id="cmtInput" rows="1" placeholder="Комментарий для команды…" style="resize:none;overflow:hidden;min-height:0;height:48px"></textarea>
+      <input type="text" class="input" id="cmtInput" placeholder="Комментарий для команды…">
       <button class="btn btn-green sm" id="cmtSend" title="Отправить">${icon('send-h')}</button>
     </div>`;
   view.appendChild(wrap);
