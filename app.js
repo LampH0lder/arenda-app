@@ -341,12 +341,12 @@ $("#backBtn")?.addEventListener("click", () => { haptic(); back(); });
 
 /* ── iOS-style интерактивный swipe-back от левого края ── */
 (function () {
-  const EDGE = 24;        // зона активации (px от левого края)
+  const EDGE = 50;         // зона активации (px от левого края)
   const COMMIT_R = 0.35;  // порог % ширины для подтверждения жеста
   const COMMIT_V = 0.4;   // порог скорости (px/ms) для быстрого свайпа
   const PAR = 0.25;        // параллакс: предыдущий экран движется в 4× медленнее
 
-  let on = false, blocked = false;
+  let on = false, blocked = false, ready = false;
   let sx = 0, sy = 0, st = 0, cx = 0;
   let rafId = null, pend = null;
   let $f = null, $b = null;
@@ -397,13 +397,13 @@ $("#backBtn")?.addEventListener("click", () => { haptic(); back(); });
   }
 
   function _cleanup() {
-    on = false; blocked = false; sx = 0; cx = 0; pend = null;
+    on = false; blocked = false; ready = false; sx = 0; cx = 0; pend = null;
     if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
     if ($f) { $f.remove(); $f = null; }
   }
 
   function _done() {
-    if (!on) { sx = 0; blocked = false; return; }
+    if (!on) { sx = 0; ready = false; blocked = false; return; }
     if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
 
     const W = window.innerWidth;
@@ -454,17 +454,17 @@ $("#backBtn")?.addEventListener("click", () => { haptic(); back(); });
     if (on || stack.length < 2 || e.touches.length !== 1) return;
     const t = e.touches[0];
     if (t.clientX > EDGE || _skip(e.target)) return;
-    sx = t.clientX; sy = t.clientY; st = Date.now(); blocked = false;
+    sx = t.clientX; sy = t.clientY; st = Date.now(); blocked = false; ready = true;
   }, { passive: true });
 
   document.addEventListener("touchmove", (e) => {
-    if (blocked || (!on && !sx)) return;
+    if (blocked || (!on && !ready)) return;
     const t = e.touches[0];
     const dx = t.clientX - sx, dy = t.clientY - sy;
     if (!on) {
       if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
-      if (Math.abs(dy) > Math.abs(dx) * 0.8 || dx <= 0) {
-        blocked = true; sx = 0; return;
+      if (Math.abs(dy) > Math.abs(dx) * 1.2 || dx <= 0) {
+        blocked = true; ready = false; sx = 0; return;
       }
       _begin();
     }
